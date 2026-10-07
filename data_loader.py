@@ -3,7 +3,7 @@ data_loader.py
 ==============
 Modul pro načítání, transformaci a validaci českých makroekonomických dat.
 Poskytuje třídu DataLoader s podporou pro:
-- Veřejná REST API: Eurostat (CPI, HDP, nezaměstnanost) a ČNB (PRIBOR, klíčové sazby).
+- Veřejná REST API: Eurostat (CPI, HDP, nezaměstnanost, dluh vládních institucí) a ČNB (PRIBOR, klíčové sazby, devizové kurzy EUR & USD).
 - Volitelnou integraci FRED API (St. Louis Fed) pro uživatele s API klíčem.
 - Odolný Fallback model: realistická měsíční a kvartální data pro období 2015–současnost.
 - Měsíční (M) i kvartální (Q) agregaci časových řad.
@@ -112,6 +112,41 @@ INDICATORS: Dict[str, IndicatorInfo] = {
         unit="%",
         category="Trh práce",
         description="Sezónně očištěná obecná míra nezaměstnanosti dle metodiky ILO / Eurostat pro věk 15–74 let."
+    ),
+    "eur_czk": IndicatorInfo(
+        code="eur_czk",
+        name_cz="Měnový kurz EUR/CZK",
+        unit="CZK",
+        category="Měnové kurzy",
+        description="Oficiální směnný kurz české koruny vůči euru (ČNB devizový trh - fixace)."
+    ),
+    "usd_czk": IndicatorInfo(
+        code="usd_czk",
+        name_cz="Měnový kurz USD/CZK",
+        unit="CZK",
+        category="Měnové kurzy",
+        description="Oficiální směnný kurz české koruny vůči americkému dolaru (ČNB devizový trh - fixace)."
+    ),
+    "public_debt_czk_bn": IndicatorInfo(
+        code="public_debt_czk_bn",
+        name_cz="Veřejný dluh",
+        unit="mld. CZK",
+        category="Fiskální politika",
+        description="Konsolidovaný hrubý dluh sektoru vládních institucí (vládní/státní dluh) v mld. Kč."
+    ),
+    "public_debt_gdp_pct": IndicatorInfo(
+        code="public_debt_gdp_pct",
+        name_cz="Veřejný dluh k HDP",
+        unit="% HDP",
+        category="Fiskální politika",
+        description="Poměr dluhu vládních institucí k HDP v % (maastrichtské fiskální kritérium s limitem 60 %)."
+    ),
+    "budget_deficit_czk_bn": IndicatorInfo(
+        code="budget_deficit_czk_bn",
+        name_cz="Deficit / Saldo státního rozpočtu",
+        unit="mld. CZK",
+        category="Fiskální politika",
+        description="Saldo hospodaření státního rozpočtu (deficit je záporný, přebytek kladný) v mld. Kč."
     )
 }
 
@@ -131,7 +166,7 @@ class DataLoader:
         self.last_fetch_time: Optional[datetime] = None
 
     # =========================================================================
-    # 1. LIVE API: Eurostat (CPI, Nezaměstnanost, HDP)
+    # 1. LIVE API: Eurostat (CPI, Nezaměstnanost, HDP, Vládní dluh)
     # =========================================================================
 
     def fetch_eurostat_cpi(self) -> pd.DataFrame:
@@ -226,8 +261,46 @@ class DataLoader:
         df = pd.DataFrame(records).sort_values("date").drop_duplicates("date").reset_index(drop=True)
         return df
 
+    def fetch_eurostat_debt(self) -> pd.DataFrame:
+        """Stáhne konsolidovaný dluh vládních institucí v % HDP a v milionech CZK z Eurostatu."""
+        url_pct = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/gov_10q_ggdebt?geo=CZ&unit=PC_GDP&sector=S13&na_item=GD"
+        url_czk = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/gov_10q_ggdebt?geo=CZ&unit=MIO_NAC&sector=S13&na_item=GD"
+
+        r_pct = requests.get(url_pct, headers=self.headers, timeout=self.timeout)
+        r_pct.raise_for_status()
+        d_pct = r_pct.json()
+
+        r_czk = requests.get(url_czk, headers=self.headers, timeout=self.timeout)
+        r_czk.raise_for_status()
+        d_czk = r_czk.json()
+
+        t_pct = list(d_pct.get("dimension", {}).get("time", {}).get("category", {}).get("label", {}).values())
+        v_pct = d_pct.get("value", {})
+
+        v_czk = d_czk.get("value", {})
+
+        records = []
+        for idx_str, val in v_pct.items():
+            quarter_label = t_pct[int(idx_str)]
+            val_czk = v_czk.get(idx_str)
+            if quarter_label and val is not None:
+                year_part, q_part = quarter_label.split("-Q")
+                quarter_end_month = int(q_part) * 3
+                dt = pd.to_datetime(f"{year_part}-{quarter_end_month:02d}-01") + pd.offsets.MonthEnd(0)
+                records.append({
+                    "date": dt,
+                    "quarter": quarter_label,
+                    "public_debt_gdp_pct": float(val),
+                    "public_debt_czk_bn": float(val_czk) / 1000.0 if val_czk is not None else None
+                })
+
+        if not records:
+            raise ValueError("Eurostat vládní dluh vrátil prázdný dataset.")
+
+        return pd.DataFrame(records).sort_values("date").drop_duplicates("date").reset_index(drop=True)
+
     # =========================================================================
-    # 2. LIVE API: ČNB (PRIBOR & Měnověpolitické sazby)
+    # 2. LIVE API: ČNB (PRIBOR, Měnověpolitické sazby, FX Kurzy)
     # =========================================================================
 
     def fetch_cnb_pribor(self, start_year: int = 2015, end_year: int = 2026) -> pd.DataFrame:
@@ -320,6 +393,39 @@ class DataLoader:
 
         return df_daily
 
+    def fetch_cnb_fx_rates(self, start_year: int = 2015, end_year: int = 2026) -> pd.DataFrame:
+        """Stáhne měsíční průměrné kurzy EUR/CZK a USD/CZK z REST API ČNB."""
+        month_map = {
+            "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6,
+            "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12
+        }
+        records = []
+        for yr in range(start_year, end_year + 1):
+            url = f"https://api.cnb.cz/cnbapi/exrates/monthly-averages-year?year={yr}"
+            try:
+                resp = requests.get(url, headers=self.headers, timeout=self.timeout)
+                if resp.status_code == 200:
+                    for it in resp.json().get("averages", []):
+                        cc = it.get("currencyCode")
+                        if cc in ("EUR", "USD"):
+                            mo_num = month_map.get(it.get("month", "").upper())
+                            if mo_num:
+                                dt = pd.to_datetime(f"{it['year']}-{mo_num:02d}-01") + pd.offsets.MonthEnd(0)
+                                records.append({
+                                    "date": dt,
+                                    "currency": "eur_czk" if cc == "EUR" else "usd_czk",
+                                    "rate": float(it["average"])
+                                })
+            except Exception as e:
+                logger.warning("Chyba při stahování kurzů ČNB pro rok %d: %s", yr, e)
+
+        if not records:
+            raise ValueError("ČNB FX API nevrátilo žádné záznamy.")
+
+        df_raw = pd.DataFrame(records)
+        pivot = df_raw.pivot_table(index="date", columns="currency", values="rate", aggfunc="last").reset_index()
+        return pivot.sort_values("date").reset_index(drop=True)
+
     # =========================================================================
     # 3. VOLITELNÉ API: FRED (Federal Reserve Bank of St. Louis)
     # =========================================================================
@@ -347,8 +453,8 @@ class DataLoader:
     def generate_fallback_dataset(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Vygeneruje realistický, historicky přesný měsíční a kvartální dataset pro ČR (2015–2026).
+        Obsahuje ČNB sazby, PRIBOR, Inflaci CPI, HDP, Nezaměstnanost, FX kurzy (EUR, USD) a Veřejný dluh.
         """
-        # Měsíční kalendář
         dates_m = pd.date_range("2015-01-01", "2026-10-01", freq=OFFSET_MONTH_END)
         n_m = len(dates_m)
 
@@ -484,6 +590,47 @@ class DataLoader:
                 une = 3.2
             une_series.append(round(une, 1))
 
+        # 4. FX Kurzy (EUR/CZK a USD/CZK)
+        eur_series = []
+        usd_series = []
+        for d in dates_m:
+            yr, mo = d.year, d.month
+            if yr < 2017 or (yr == 2017 and mo <= 3):
+                eur = 27.02 + np.random.normal(0, 0.02)
+                usd = 24.50 + 0.5 * np.sin(mo)
+            elif yr == 2017:
+                eur = 26.50 - 0.9 * ((mo - 3) / 9)
+                usd = 23.40 - 1.2 * ((mo - 3) / 9)
+            elif yr == 2018:
+                eur = 25.65 + 0.2 * np.cos(mo)
+                usd = 21.75 + 0.8 * (mo / 12)
+            elif yr == 2019:
+                eur = 25.67 + 0.15 * np.sin(mo)
+                usd = 22.93 + 0.3 * np.cos(mo)
+            elif yr == 2020:
+                eur = 26.45 + 0.6 * np.sin(mo)
+                usd = 23.20 - 1.5 * (mo / 12)
+            elif yr == 2021:
+                eur = 25.64 - 0.4 * (mo / 12)
+                usd = 21.72 + 0.9 * (mo / 12)
+            elif yr == 2022:
+                eur = 24.56 + 0.2 * np.sin(mo)
+                usd = 23.28 + 1.8 * (mo / 12)
+            elif yr == 2023:
+                eur = 23.95 + 0.6 * (mo / 12)
+                usd = 22.14 + 0.6 * (mo / 12)
+            elif yr == 2024:
+                eur = 25.10 + 0.25 * np.cos(mo)
+                usd = 23.15 + 0.3 * np.sin(mo)
+            elif yr == 2025:
+                eur = 25.15 + 0.15 * np.sin(mo)
+                usd = 22.75 - 0.2 * (mo / 12)
+            else:
+                eur = 24.45 + 0.1 * np.cos(mo)
+                usd = 21.85 + 0.1 * np.sin(mo)
+            eur_series.append(round(eur, 2))
+            usd_series.append(round(usd, 2))
+
         df_monthly = pd.DataFrame({
             "date": dates_m,
             "repo_rate": np.round(repo_arr, 2),
@@ -494,9 +641,11 @@ class DataLoader:
             "pribor_6m": np.round(pribor_6m, 2),
             "cpi_yoy": cpi_series,
             "unemployment_rate": une_series,
+            "eur_czk": eur_series,
+            "usd_czk": usd_series,
         })
 
-        # 4. Kvartální HDP
+        # 5. Kvartální HDP, Veřejný dluh a Deficit SR
         dates_q = pd.date_range("2015-01-01", "2026-07-01", freq=OFFSET_QUARTER_END)
         q_records = []
         gdp_growth_map = {
@@ -516,6 +665,22 @@ class DataLoader:
         nom_base = 1150.0
         quarter_idx = 0
 
+        # Historie vládního dluhu (mld. Kč), dluhu k HDP (%) a ročního deficitu
+        fiscal_map = {
+            2015: (1673.0, 39.9, -62.8),
+            2016: (1613.0, 36.6, 61.8),
+            2017: (1625.0, 34.2, -6.2),
+            2018: (1622.0, 32.1, 2.9),
+            2019: (1640.0, 30.0, -28.5),
+            2020: (2050.0, 37.7, -367.4),
+            2021: (2466.0, 42.0, -419.7),
+            2022: (2895.0, 44.2, -360.4),
+            2023: (3111.0, 44.0, -288.5),
+            2024: (3340.0, 43.8, -282.0),
+            2025: (3580.0, 43.5, -241.0),
+            2026: (3820.0, 44.1, -220.0),
+        }
+
         for d in dates_q:
             yr = d.year
             q_num = (d.month - 1) // 3 + 1
@@ -527,20 +692,28 @@ class DataLoader:
             if yr in (2022, 2023):
                 nom_val += 40.0 * (yr - 2021)
 
+            debt_nom, debt_pct, def_annual = fiscal_map.get(yr, (3000.0, 44.0, -250.0))
+            # Kvartální posun dluhu
+            debt_quarterly = debt_nom + (q_num - 2) * 35.0
+            deficit_quarterly = def_annual / 4.0
+
             q_records.append({
                 "date": d,
                 "quarter": f"{yr}-Q{q_num}",
                 "gdp_growth_real": round(real_growth, 1),
-                "gdp_nominal_czk_bn": round(nom_val, 1)
+                "gdp_nominal_czk_bn": round(nom_val, 1),
+                "public_debt_czk_bn": round(debt_quarterly, 1),
+                "public_debt_gdp_pct": round(debt_pct + (q_num - 2) * 0.2, 1),
+                "budget_deficit_czk_bn": round(deficit_quarterly, 1)
             })
             quarter_idx += 1
 
-        df_quarterly_gdp = pd.DataFrame(q_records)
+        df_quarterly_macro = pd.DataFrame(q_records)
 
-        # Pro měsíční dataframe namapujeme kvartální HDP
+        # Pro měsíční dataframe namapujeme kvartální hodnoty
         df_monthly = pd.merge_asof(
             df_monthly.sort_values("date"),
-            df_quarterly_gdp.sort_values("date"),
+            df_quarterly_macro.sort_values("date"),
             on="date",
             direction="nearest"
         )
@@ -555,9 +728,12 @@ class DataLoader:
             "pribor_6m": "mean",
             "cpi_yoy": "mean",
             "unemployment_rate": "mean",
+            "eur_czk": "mean",
+            "usd_czk": "mean"
         }).reset_index()
 
-        df_quarterly = pd.merge(df_quarterly, df_quarterly_gdp[["date", "quarter", "gdp_growth_real", "gdp_nominal_czk_bn"]], on="date", how="left")
+        q_cols = ["date", "quarter", "gdp_growth_real", "gdp_nominal_czk_bn", "public_debt_czk_bn", "public_debt_gdp_pct", "budget_deficit_czk_bn"]
+        df_quarterly = pd.merge(df_quarterly, df_quarterly_macro[q_cols], on="date", how="left")
         df_quarterly["quarter"] = df_quarterly["quarter"].fillna(df_quarterly["date"].apply(lambda d: f"{d.year}-Q{(d.month - 1) // 3 + 1}"))
         num_cols = df_quarterly.select_dtypes(include=[np.number]).columns
         df_quarterly[num_cols] = df_quarterly[num_cols].round(2)
@@ -631,7 +807,17 @@ class DataLoader:
             status_info["errors"].append(f"Eurostat HDP: {e}")
             all_success = False
 
-        # 4. ČNB: Sazby měnové politiky
+        # 4. Eurostat: Veřejný dluh
+        try:
+            df_debt = self.fetch_eurostat_debt()
+            live_components["debt"] = df_debt
+            status_info["endpoints"]["Eurostat Veřejný dluh"] = "🟢 OK (Live)"
+        except Exception as e:
+            logger.warning("Chyba načítání Eurostat Veřejný dluh: %s", e)
+            status_info["endpoints"]["Eurostat Veřejný dluh"] = f"⚠️ Fallback ({type(e).__name__})"
+            status_info["errors"].append(f"Eurostat Veřejný dluh: {e}")
+
+        # 5. ČNB: Sazby měnové politiky
         try:
             df_rates = self.fetch_cnb_policy_rates()
             live_components["rates"] = df_rates
@@ -642,7 +828,7 @@ class DataLoader:
             status_info["errors"].append(f"ČNB Sazby: {e}")
             all_success = False
 
-        # 5. ČNB: PRIBOR
+        # 6. ČNB: PRIBOR
         try:
             current_year = datetime.now().year
             df_prib = self.fetch_cnb_pribor(start_year=2015, end_year=current_year)
@@ -654,7 +840,18 @@ class DataLoader:
             status_info["errors"].append(f"ČNB PRIBOR: {e}")
             all_success = False
 
-        # 6. Volitelně FRED API (pokud je zadán klíč)
+        # 7. ČNB: Měnové kurzy EUR & USD
+        try:
+            current_year = datetime.now().year
+            df_fx = self.fetch_cnb_fx_rates(start_year=2015, end_year=current_year)
+            live_components["fx"] = df_fx
+            status_info["endpoints"]["ČNB Měnové kurzy (EUR & USD)"] = "🟢 OK (Live)"
+        except Exception as e:
+            logger.warning("Chyba načítání ČNB kurzů: %s", e)
+            status_info["endpoints"]["ČNB Měnové kurzy"] = f"⚠️ Fallback ({type(e).__name__})"
+            status_info["errors"].append(f"ČNB Kurzy: {e}")
+
+        # 8. Volitelně FRED API (pokud je zadán klíč)
         if fred_api_key and fred_api_key.strip():
             try:
                 df_fred_cpi = self.fetch_fred_series("CZRCPICOD01GYM", fred_api_key.strip())
@@ -726,6 +923,30 @@ class DataLoader:
             final_df["gdp_growth_real"] = final_df["gdp_growth_real"].ffill()
             final_df["gdp_nominal_czk_bn"] = final_df["gdp_nominal_czk_bn"].ffill()
 
+        if "debt" in live_components:
+            df_d = live_components["debt"]
+            if frequency == "M":
+                final_df = pd.merge_asof(
+                    final_df.drop(columns=["public_debt_gdp_pct", "public_debt_czk_bn"], errors="ignore").sort_values("date"),
+                    df_d[["date", "public_debt_gdp_pct", "public_debt_czk_bn"]].sort_values("date"),
+                    on="date",
+                    direction="nearest"
+                )
+            else:
+                final_df = pd.merge(final_df.drop(columns=["public_debt_gdp_pct", "public_debt_czk_bn"], errors="ignore"),
+                                    df_d[["date", "public_debt_gdp_pct", "public_debt_czk_bn"]], on="date", how="left")
+            final_df["public_debt_gdp_pct"] = final_df["public_debt_gdp_pct"].ffill()
+            final_df["public_debt_czk_bn"] = final_df["public_debt_czk_bn"].ffill()
+
+        if "fx" in live_components:
+            df_f = live_components["fx"]
+            if frequency == "Q":
+                df_f = df_f.set_index("date").resample(OFFSET_QUARTER_END).mean().reset_index()
+            final_df = pd.merge(final_df.drop(columns=["eur_czk", "usd_czk"], errors="ignore"),
+                                df_f[["date", "eur_czk", "usd_czk"]], on="date", how="left")
+            final_df["eur_czk"] = final_df["eur_czk"].ffill()
+            final_df["usd_czk"] = final_df["usd_czk"].ffill()
+
         # Určení celkového statusu
         if all_success and live_components:
             status_info["mode"] = "LIVE"
@@ -773,4 +994,3 @@ except ImportError:
             fred_api_key=fred_api_key,
             force_fallback=force_fallback
         )
-

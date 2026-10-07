@@ -3,7 +3,7 @@ app.py
 ======
 Český Makroekonomický Dashboard ve Streamlit.
 Přehledná, responzivní a modulární aplikace pro vizualizaci klíčových makroekonomických
-indikátorů České republiky v čase (ČNB, Inflace, HDP a Trh práce).
+indikátorů České republiky v čase (ČNB, Inflace, HDP, Trh práce, FX kurzy a Veřejný dluh).
 """
 
 from __future__ import annotations
@@ -26,13 +26,12 @@ from data_loader import DataLoader, INDICATORS, get_cached_macro_data
 # =============================================================================
 
 st.set_page_config(
-    page_title="Český Makroekonomický Dashboard | ČNB, HDP, Inflace",
+    page_title="Český Makroekonomický Dashboard | ČNB, HDP, Inflace, FX, Dluh",
     page_icon="🇨🇿",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS pro profesionální design a čitelnost
 CUSTOM_CSS = """
 <style>
     /* Hlavní kontejner a písmo */
@@ -105,9 +104,9 @@ CUSTOM_CSS = """
     
     /* Styl záložek (Tabs) */
     button[data-baseweb="tab"] {
-        font-size: 1.02rem !important;
+        font-size: 0.98rem !important;
         font-weight: 600 !important;
-        padding: 10px 18px !important;
+        padding: 10px 16px !important;
     }
 </style>
 """
@@ -166,13 +165,35 @@ horizon_option = st.sidebar.radio(
     help="Rychlé předvolby nebo vlastní nastavení kalendářního rozpětí dat."
 )
 
+# Příprava seznamu dostupných měsíců pro combo boxy
+all_month_dates = pd.date_range("2015-01-01", datetime.now(), freq="MS")
+month_options = [d.strftime("%m/%Y") for d in all_month_dates]
+
+start_filter_date = pd.to_datetime("2021-01-01")
+end_filter_date = pd.to_datetime(datetime.now().strftime("%Y-%m-%d"))
+
+# Pokud uživatel vybere "Vlastní rozsah", umístíme combo boxy hned pod to do sidebaru
+if horizon_option == "Vlastní rozsah":
+    st.sidebar.markdown("**Výběr vlastního časového rozpětí:**")
+    col_c1, col_c2 = st.sidebar.columns(2)
+    default_start_idx = max(0, len(month_options) - 36)  # výchozí 3 roky zpět
+    selected_start_str = col_c1.selectbox("Od (měsíc-rok):", options=month_options, index=default_start_idx)
+    selected_end_str = col_c2.selectbox("Do (měsíc-rok):", options=month_options, index=len(month_options) - 1)
+    
+    start_filter_date = pd.to_datetime(selected_start_str, format="%m/%Y")
+    end_filter_date = pd.to_datetime(selected_end_str, format="%m/%Y") + pd.offsets.MonthEnd(0)
+    
+    if start_filter_date > end_filter_date:
+        start_filter_date, end_filter_date = end_filter_date, start_filter_date
+        st.sidebar.warning("Datum 'Od' bylo po 'Do', rozsah byl automaticky upraven.")
+
 # Přepínač frekvence
 st.sidebar.subheader("⏱️ Frekvence dat")
 freq_choice = st.sidebar.radio(
     "Agregace časové řady:",
     options=["Měsíční (Monthly)", "Kvartální (Quarterly)"],
     index=0,
-    help="Měsíční data poskytují vyšší detail sazeb a inflace, kvartální data přesně odpovídají periodicitě HDP."
+    help="Měsíční data poskytují vyšší detail sazeb a inflace, kvartální data přesně odpovídají periodicitě HDP a dluhu."
 )
 frequency_code = "M" if freq_choice.startswith("Měsíční") else "Q"
 
@@ -182,7 +203,9 @@ all_indicator_keys = list(INDICATORS.keys())
 default_indicators = [
     "repo_rate", "discount_rate", "lombard_rate",
     "pribor_3m", "cpi_yoy", "gdp_growth_real",
-    "gdp_nominal_czk_bn", "unemployment_rate"
+    "gdp_nominal_czk_bn", "unemployment_rate",
+    "eur_czk", "usd_czk",
+    "public_debt_gdp_pct", "public_debt_czk_bn", "budget_deficit_czk_bn"
 ]
 
 selected_indicators = st.sidebar.multiselect(
@@ -248,7 +271,7 @@ with st.sidebar.expander("ℹ️ Stav jednotlivých API endpointů"):
 
 
 # =============================================================================
-# 5. FILTROVÁNÍ ČASOVÉHO HORIZONTU
+# 5. APLIKACE ČASOVÉHO HORIZONTU
 # =============================================================================
 
 max_date = df_raw["date"].max()
@@ -266,11 +289,7 @@ elif horizon_option == "5 let":
 elif horizon_option == "Celá historie (od 2015)":
     start_filter_date = min_date
     end_filter_date = max_date
-else:
-    # Vlastní rozsah přes slider/kalendář
-    col_s1, col_s2 = st.sidebar.columns(2)
-    start_filter_date = pd.to_datetime(col_s1.date_input("Od data:", min_date.date()))
-    end_filter_date = pd.to_datetime(col_s2.date_input("Do data:", max_date.date()))
+# Pokud je "Vlastní rozsah", proměnné start_filter_date a end_filter_date jsou již nastaveny výše z combo boxů!
 
 df = df_raw[(df_raw["date"] >= start_filter_date) & (df_raw["date"] <= end_filter_date)].copy()
 df = df.sort_values("date").reset_index(drop=True)
@@ -288,8 +307,8 @@ st.title("🇨🇿 Český Makroekonomický Dashboard")
 st.markdown(
     """
     Interaktivní monitor klíčových ukazatelů české ekonomiky: měnové politiky České národní banky (**ČNB**), 
-    mezibankovního trhu (**PRIBOR**), vývoje spotřebitelských cen (**Inflace CPI**), výkonnosti hospodářství (**HDP**) 
-    a míry nezaměstnanosti v čase.
+    vývoje spotřebitelských cen (**Inflace CPI**), výkonnosti hospodářství (**HDP**), trhu práce, devizových kurzů 
+    (**EUR & USD**) a vývoje **veřejného dluhu a deficitu státního rozpočtu**.
     """
 )
 
@@ -382,7 +401,6 @@ def build_rates_chart(dframe: pd.DataFrame, indicators: List[str]) -> go.Figure:
     """Vytvoří graf měnové politiky ČNB (úrokový koridor) a PRIBOR sazeb."""
     fig = go.Figure()
 
-    # Koridor: Lombardní (horní) a Diskontní (dolní mez)
     if "lombard_rate" in indicators and "lombard_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
             x=dframe["date"],
@@ -405,7 +423,6 @@ def build_rates_chart(dframe: pd.DataFrame, indicators: List[str]) -> go.Figure:
             hoverinfo="x+y+name"
         ))
 
-    # 2T Repo sazba ČNB (Hlavní schodovitá linie)
     if "repo_rate" in indicators and "repo_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
             x=dframe["date"],
@@ -416,7 +433,6 @@ def build_rates_chart(dframe: pd.DataFrame, indicators: List[str]) -> go.Figure:
             hovertemplate="<b>2T Repo sazba</b>: %{y:.2f} %<extra></extra>"
         ))
 
-    # PRIBOR sazby
     pribor_colors = {
         "pribor_1m": ("#06B6D4", "PRIBOR 1M", 1.5),
         "pribor_3m": ("#0D9488", "PRIBOR 3M (benchmark)", 2.4),
@@ -450,7 +466,6 @@ def build_inflation_chart(dframe: pd.DataFrame) -> go.Figure:
     """Vytvoří detailní graf inflace s inflačním cílem ČNB a reálnou úrokovou sazbou."""
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    # Toleranční pásmo ČNB (1.0 % – 3.0 %)
     fig.add_hrect(
         y0=1.0, y1=3.0,
         fillcolor="rgba(34, 197, 94, 0.12)",
@@ -461,7 +476,6 @@ def build_inflation_chart(dframe: pd.DataFrame) -> go.Figure:
         secondary_y=False
     )
 
-    # Inflační cíl ČNB 2.0 %
     fig.add_hline(
         y=2.0,
         line=dict(color="#16A34A", width=1.8, dash="dash"),
@@ -471,7 +485,6 @@ def build_inflation_chart(dframe: pd.DataFrame) -> go.Figure:
         secondary_y=False
     )
 
-    # Inflace CPI
     if "cpi_yoy" in dframe.columns:
         fig.add_trace(
             go.Scatter(
@@ -486,7 +499,6 @@ def build_inflation_chart(dframe: pd.DataFrame) -> go.Figure:
             secondary_y=False
         )
 
-    # Reálná úroková sazba (Repo - CPI) na sekundární ose
     if "repo_rate" in dframe.columns and "cpi_yoy" in dframe.columns:
         real_rate = dframe["repo_rate"] - dframe["cpi_yoy"]
         fig.add_trace(
@@ -521,7 +533,6 @@ def build_gdp_chart(dframe: pd.DataFrame, indicators: List[str]) -> go.Figure:
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     df_gdp_plot = dframe.drop_duplicates(subset=["quarter"] if "quarter" in dframe.columns else ["date"]).copy()
 
-    # 1. Nominální HDP
     if "gdp_nominal_czk_bn" in indicators and "gdp_nominal_czk_bn" in dframe.columns:
         fig.add_trace(
             go.Bar(
@@ -534,7 +545,6 @@ def build_gdp_chart(dframe: pd.DataFrame, indicators: List[str]) -> go.Figure:
             secondary_y=False
         )
 
-    # 2. Reálný růst HDP
     if "gdp_growth_real" in indicators and "gdp_growth_real" in dframe.columns:
         marker_colors = ["#16A34A" if val >= 0 else "#DC2626" for val in df_gdp_plot["gdp_growth_real"]]
         fig.add_trace(
@@ -620,6 +630,135 @@ def build_unemployment_chart(dframe: pd.DataFrame) -> go.Figure:
     return fig
 
 
+def build_fx_chart(dframe: pd.DataFrame) -> go.Figure:
+    """Vytvoří graf měnových kurzů EUR/CZK a USD/CZK."""
+    fig = go.Figure()
+
+    # Křivka EUR/CZK
+    if "eur_czk" in dframe.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe["date"],
+            y=dframe["eur_czk"],
+            mode="lines",
+            name="EUR / CZK (Kč za 1 €)",
+            line=dict(color="#2563EB", width=3.0),
+            hovertemplate="<b>EUR/CZK</b>: %{y:.2f} Kč<extra></extra>"
+        ))
+
+    # Křivka USD/CZK
+    if "usd_czk" in dframe.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe["date"],
+            y=dframe["usd_czk"],
+            mode="lines",
+            name="USD / CZK (Kč za 1 $)",
+            line=dict(color="#059669", width=2.4),
+            hovertemplate="<b>USD/CZK</b>: %{y:.2f} Kč<extra></extra>"
+        ))
+
+    # Referenční linie: kurzový závazek ČNB (27.00 CZK/EUR)
+    fig.add_hline(
+        y=27.00,
+        line=dict(color="#DC2626", width=1.4, dash="dash"),
+        annotation_text="Dřívější kurzový závazek ČNB (27.00 Kč/€)",
+        annotation_position="bottom right",
+        annotation_font=dict(color="#DC2626", size=10)
+    )
+
+    fig.update_layout(
+        height=450,
+        hovermode="x unified",
+        margin=dict(l=20, r=20, t=30, b=20),
+        xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis=dict(title="Směnný kurz (CZK)", ticksuffix=" Kč", showgrid=True, gridcolor="#f1f5f9"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF"
+    )
+    return fig
+
+
+def build_debt_charts(dframe: pd.DataFrame) -> Tuple[go.Figure, go.Figure]:
+    """Vytvoří grafy pro veřejný dluh k HDP a pro saldo státního rozpočtu (deficit/přebytek)."""
+    df_q_plot = dframe.drop_duplicates(subset=["quarter"] if "quarter" in dframe.columns else ["date"]).copy()
+
+    # 1. Graf dluhu k HDP (%)
+    fig_debt = go.Figure()
+    if "public_debt_gdp_pct" in df_q_plot.columns:
+        # Zelená zóna pod 60 % Maastrichtským limitem
+        fig_debt.add_hrect(
+            y0=0, y1=60.0,
+            fillcolor="rgba(34, 197, 94, 0.08)",
+            line_width=0,
+            annotation_text="Pásmo maastrichtského limitu (< 60 % HDP)",
+            annotation_position="top left",
+            annotation_font=dict(color="#15803d", size=11)
+        )
+
+        fig_debt.add_hline(
+            y=60.0,
+            line=dict(color="#DC2626", width=2.0, dash="dash"),
+            annotation_text="Maastrichtský limit (60.0 % HDP)",
+            annotation_position="bottom right",
+            annotation_font=dict(color="#DC2626", size=11)
+        )
+
+        fig_debt.add_trace(go.Scatter(
+            x=df_q_plot["date"],
+            y=df_q_plot["public_debt_gdp_pct"],
+            mode="lines+markers",
+            name="Veřejný dluh ČR (% HDP)",
+            line=dict(color="#4F46E5", width=3.0),
+            marker=dict(size=6, color="#4F46E5"),
+            hovertemplate="<b>Dluh k HDP</b>: %{y:.1f} %<extra></extra>"
+        ))
+
+        # Referenční průměr Eurozóny (~88 % HDP)
+        fig_debt.add_hline(
+            y=88.0,
+            line=dict(color="#94A3B8", width=1.5, dash="dot"),
+            annotation_text="Průměr EU / Eurozóny (~88 % HDP)",
+            annotation_position="top right",
+            annotation_font=dict(color="#64748B", size=10)
+        )
+
+    fig_debt.update_layout(
+        height=400,
+        hovermode="x unified",
+        margin=dict(l=20, r=20, t=30, b=20),
+        xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis=dict(title="Veřejný dluh (% HDP)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9", range=[20, 95]),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF"
+    )
+
+    # 2. Graf salda státního rozpočtu (deficit v mld. CZK)
+    fig_def = go.Figure()
+    if "budget_deficit_czk_bn" in df_q_plot.columns:
+        bar_colors = ["#16A34A" if v >= 0 else "#DC2626" for v in df_q_plot["budget_deficit_czk_bn"]]
+        fig_def.add_trace(go.Bar(
+            x=df_q_plot["date"],
+            y=df_q_plot["budget_deficit_czk_bn"],
+            name="Kvartální saldo rozpočtu",
+            marker=dict(color=bar_colors),
+            hovertemplate="<b>Saldo rozpočtu</b>: %{y:+.1f} mld. CZK<extra></extra>"
+        ))
+        fig_def.add_hline(y=0.0, line=dict(color="#475569", width=1.5))
+
+    fig_def.update_layout(
+        height=380,
+        hovermode="x unified",
+        margin=dict(l=20, r=20, t=30, b=20),
+        xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis=dict(title="Saldo rozpočtu (mld. CZK)", ticksuffix=" mld.", showgrid=True, gridcolor="#f1f5f9"),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF"
+    )
+
+    return fig_debt, fig_def
+
+
 def build_rates_vs_inflation_chart(dframe: pd.DataFrame, indicators: List[str]) -> go.Figure:
     """Vytvoří souhrnný graf měnové politiky vs inflace s duální osou Y."""
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -677,11 +816,13 @@ df_export_cz["Datum"] = df_export_cz["Datum"].dt.strftime("%d.%m.%Y")
 # 10. ZÁLOŽKY (OUŠKA) PRO JEDNOTLIVÉ SEKCE
 # =============================================================================
 
-tab_rates, tab_inflation, tab_gdp, tab_une, tab_all, tab_table = st.tabs([
+tab_rates, tab_inflation, tab_gdp, tab_une, tab_fx, tab_debt, tab_all, tab_table = st.tabs([
     "🏛️ Sazby (ČNB & PRIBOR)",
     "🏷️ Inflace (CPI)",
     "📈 HDP (Růst a objem)",
     "👥 Nezaměstnanost",
+    "💱 Měnové kurzy (FX)",
+    "🏛️ Veřejný dluh a Deficit SR",
     "📊 Všechny grafy",
     "📋 Data a export"
 ])
@@ -693,7 +834,6 @@ with tab_rates:
     st.markdown('<div class="section-header">🏛️ Měnová politika ČNB a mezibankovní sazby PRIBOR</div>', unsafe_allow_html=True)
     st.caption("Úrokový koridor České národní banky: 2T Repo sazba, Diskontní sazba (depozitní facilita) a Lombardní sazba (zápůjční facilita) ve srovnání s tržními sazbami PRIBOR.")
     
-    # Rychlé shrnutí sazeb
     col_r1, col_r2, col_r3, col_r4 = st.columns(4)
     disc_val = last_row.get("discount_rate")
     lomb_val = last_row.get("lombard_rate")
@@ -785,11 +925,79 @@ with tab_une:
     )
 
 # -----------------------------------------------------------------------------
-# TAB 5: VŠECHNY GRAFY POHROMADĚ
+# TAB 5: MĚNOVÉ KURZY (FX: EUR & USD)
+# -----------------------------------------------------------------------------
+with tab_fx:
+    st.markdown('<div class="section-header">💱 Měnové kurzy: Vývoj české koruny vůči EUR a USD</div>', unsafe_allow_html=True)
+    st.caption("Oficiální kurzy devizového trhu České národní banky (ČNB fixing) pro měnové páry EUR/CZK a USD/CZK.")
+
+    col_fx1, col_fx2, col_fx3, col_fx4 = st.columns(4)
+    eur_curr = last_row.get("eur_czk")
+    eur_prev = prev_row.get("eur_czk")
+    eur_delta = (eur_curr - eur_prev) if (eur_curr and eur_prev) else 0.0
+
+    usd_curr = last_row.get("usd_czk")
+    usd_prev = prev_row.get("usd_czk")
+    usd_delta = (usd_curr - usd_prev) if (usd_curr and usd_prev) else 0.0
+
+    cross_eurusd = (eur_curr / usd_curr) if (eur_curr and usd_curr and usd_curr > 0) else None
+
+    col_fx1.metric("EUR / CZK", f"{eur_curr:.2f} Kč" if eur_curr else "N/A", delta=f"{eur_delta:+.2f} Kč", delta_color="off", help="Počet Kč za 1 Euro")
+    col_fx2.metric("USD / CZK", f"{usd_curr:.2f} Kč" if usd_curr else "N/A", delta=f"{usd_delta:+.2f} Kč", delta_color="off", help="Počet Kč za 1 Americký dolar")
+    col_fx3.metric("Křížový poměr EUR / USD", f"{cross_eurusd:.3f} $" if cross_eurusd else "N/A", help="Tržní hodnota 1 EUR v amerických dolarech")
+    min_eur = df["eur_czk"].min() if "eur_czk" in df.columns else None
+    max_eur = df["eur_czk"].max() if "eur_czk" in df.columns else None
+    col_fx4.metric("Rozpětí EUR/CZK (Min – Max)", f"{min_eur:.2f} – {max_eur:.2f} Kč" if (min_eur and max_eur) else "N/A")
+
+    fig_fx = build_fx_chart(df)
+    render_plotly_chart(fig_fx, key="chart_fx")
+
+    st.info(
+        "💡 **Měnový vývoj:** Česká národní banka uplatňovala v letech 2013–2017 tzv. kurzový závazek (umělé oslabení koruny nad 27,00 Kč/EUR). "
+        "V roce 2022 ČNB intervenovala na devizovém trhu prodejem devizových rezerv k zabránění nadměrného oslabení koruny."
+    )
+
+# -----------------------------------------------------------------------------
+# TAB 6: VEŘEJNÝ DLUH A DEFICIT SR
+# -----------------------------------------------------------------------------
+with tab_debt:
+    st.markdown('<div class="section-header">🏛️ Fiskální politika: Veřejný dluh a deficit státního rozpočtu</div>', unsafe_allow_html=True)
+    st.caption("Vývoj zadlužení sektoru vládních institucí vůči HDP (Maastrichtská kritéria) a saldo státního rozpočtu České republiky.")
+
+    col_d1, col_d2, col_d3, col_d4 = st.columns(4)
+    debt_gdp_curr = last_row.get("public_debt_gdp_pct")
+    debt_gdp_prev = prev_row.get("public_debt_gdp_pct")
+    debt_gdp_delta = (debt_gdp_curr - debt_gdp_prev) if (debt_gdp_curr and debt_gdp_prev) else 0.0
+
+    debt_nom_curr = last_row.get("public_debt_czk_bn")
+    deficit_curr = last_row.get("budget_deficit_czk_bn")
+    maastricht_buffer = (60.0 - debt_gdp_curr) if debt_gdp_curr else 0.0
+
+    col_d1.metric("Veřejný dluh k HDP", f"{debt_gdp_curr:.1f} %" if debt_gdp_curr else "N/A", delta=f"{debt_gdp_delta:+.1f} p.b.", delta_color="inverse", help="Maastrichtský strop je 60.0 % HDP")
+    col_d2.metric("Nominální veřejný dluh", f"{debt_nom_curr:,.0f} mld. Kč".replace(",", " ") if debt_nom_curr else "N/A", help="Celkový konsolidovaný dluh vládního sektoru")
+    col_d3.metric("Kvartální saldo rozpočtu", f"{deficit_curr:+.1f} mld. Kč" if deficit_curr else "N/A", delta="Schodek" if (deficit_curr and deficit_curr < 0) else "Přebytek", delta_color="off")
+    col_d4.metric("Rezerva do limitu 60 % HDP", f"{maastricht_buffer:+.1f} p.b.", delta="Bezpečná zóna", delta_color="normal", help="Rozdíl mezi maastrichtským limitem a reálným dluhem ČR")
+
+    fig_debt, fig_def = build_debt_charts(df)
+    
+    st.subheader("1. Vývoj vládního dluhu k HDP (% HDP)")
+    render_plotly_chart(fig_debt, key="chart_debt_gdp")
+
+    st.subheader("2. Saldo hospodaření státního rozpočtu (mld. CZK)")
+    render_plotly_chart(fig_def, key="chart_deficit")
+
+    st.info(
+        "💡 **Maastrichtská fiskální kritéria:** Limit pro bezpečné zadlužení státu je stanoven na **60 % HDP**. "
+        "Česká republika se pohybuje kolem 44 % HDP a řadí se tak dlouhodobě k nejméně zadluženým zemím Evropské unie "
+        "(průměrné zadlužení Eurozóny dosahuje zhruba 88 % HDP)."
+    )
+
+# -----------------------------------------------------------------------------
+# TAB 7: VŠECHNY GRAFY POHROMADĚ
 # -----------------------------------------------------------------------------
 with tab_all:
     st.markdown('<div class="section-header">📊 Souhrnný přehled (Všechny makroekonomické grafy)</div>', unsafe_allow_html=True)
-    st.caption("Kompletní makroekonomický obrázek pro rychlé zhodnocení souvislostí mezi sazbami, inflací, hospodářským růstem a trhem práce.")
+    st.caption("Kompletní makroekonomický obrázek pro rychlé zhodnocení souvislostí mezi sazbami, inflací, hospodářským růstem, trhem práce a kurzy.")
 
     st.subheader("1. Měnová politika & Inflace (ČNB vs. PRIBOR vs. CPI)")
     fig_combo = build_rates_vs_inflation_chart(df, selected_indicators)
@@ -803,8 +1011,16 @@ with tab_all:
     st.subheader("3. Trh práce (Míra nezaměstnanosti)")
     render_plotly_chart(fig_une, key="chart_all_une")
 
+    st.markdown("---")
+    st.subheader("4. Měnové kurzy (EUR/CZK a USD/CZK)")
+    render_plotly_chart(fig_fx, key="chart_all_fx")
+
+    st.markdown("---")
+    st.subheader("5. Veřejný dluh k HDP (%)")
+    render_plotly_chart(fig_debt, key="chart_all_debt")
+
 # -----------------------------------------------------------------------------
-# TAB 6: DATA A EXPORT (CSV)
+# TAB 8: DATA A EXPORT (CSV)
 # -----------------------------------------------------------------------------
 with tab_table:
     st.markdown('<div class="section-header">📋 Přehled surových dat a export do CSV</div>', unsafe_allow_html=True)
@@ -840,17 +1056,18 @@ with st.expander("📚 Metodické vysvětlivky a zdroje dat"):
         """
         ### Oficiální zdroje dat
         1. **Česká národní banka (ČNB)**:
-           - *Otevřená REST API*: Denní fixace referenčních sazeb peněžního trhu **PRIBOR** (1M, 3M, 6M) a operace volného trhu.
+           - *Otevřená REST API*: Denní fixace referenčních sazeb peněžního trhu **PRIBOR** (1M, 3M, 6M) a měnových kurzů (**EUR/CZK**, **USD/CZK**).
            - *Měnověpolitické nástroje*: Oficiální historie nastavení klíčových sazeb – **2T repo sazba**, **diskontní sazba** (depozitní facilita) a **lombardní sazba** (zápůjční facilita).
         2. **Eurostat & Český statistický úřad (ČSÚ)**:
            - *Harmonizovaný index spotřebitelských cen (HICP / CPI)*: Meziroční míra inflace za ČR v %.
            - *Čtvrtletní národní účty (namq_10_gdp)*: Reálný meziroční růst HDP v řetězených objemech a objem nominálního HDP v běžných cenách.
            - *Statistika trhu práce (une_rt_m)*: Měsíční sezónně očištěná míra nezaměstnanosti dle definice ILO.
+           - *Vládní finanční statistika (gov_10q_ggdebt)*: Konsolidovaný dluh sektoru vládních institucí v % HDP a absolutním vyjádření.
         3. **Federal Reserve Bank of St. Louis (FRED)**:
            - Volitelný záložní zdroj agregovaných mezinárodních časových řad pro ČR (při zadání vlastního API klíče).
 
         ### Odolnost aplikace (Resilience & Caching)
         - Všechna data jsou cachována na úrovni aplikačního serveru pomocí Streamlit dekorátoru `@st.cache_data(ttl=3600)`.
-        - V případě výpadku externích REST služeb nebo nedostupnosti sítě aplikace automaticky aktivuje **realistický historický model (2015–současnost)**, který zachovává skutečné ekonomické milníky (konec kurzového závazku, covidové dno, inflační vlnu 2022–2023 s vrcholem sazeb na 7.00 % i následný dezinflační cyklus).
+        - V případě výpadku externích REST služeb nebo nedostupnosti sítě aplikace automaticky aktivuje **realistický historický model (2015–současnost)**, který zachovává skutečné ekonomické milníky (konec kurzového závazku, covidové dno, inflační vlnu 2022–2023 s vrcholem sazeb na 7.00 %, měnové intervence i fiskální schodky).
         """
     )
