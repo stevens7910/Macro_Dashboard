@@ -102,11 +102,61 @@ CUSTOM_CSS = """
         gap: 8px;
     }
     
-    /* Styl záložek (Tabs) */
+    /* ========================================= */
+    /* Dvouřadé responsivní záložky (Tabs)       */
+    /* ========================================= */
+    div[data-baseweb="tab-list"] {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px 10px !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        padding-bottom: 8px !important;
+        margin-bottom: 1.2rem !important;
+        width: 100% !important;
+    }
+
+    /* Skrytí defaultní streamlitské podtrhávací lišty */
+    div[data-baseweb="tab-highlight"],
+    div[data-baseweb="tab-border"] {
+        display: none !important;
+    }
+
+    /* Vzhled neaktivních oušek (kartiček) */
     button[data-baseweb="tab"] {
-        font-size: 0.98rem !important;
+        background-color: #f1f5f9 !important;
+        color: #334155 !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        padding: 8px 16px !important;
+        font-size: 0.92rem !important;
         font-weight: 600 !important;
-        padding: 10px 16px !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        white-space: nowrap !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+        cursor: pointer !important;
+        height: auto !important;
+    }
+
+    button[data-baseweb="tab"]:hover {
+        background-color: #e2e8f0 !important;
+        color: #0f172a !important;
+        border-color: #94a3b8 !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Aktivní (vybraná) záložka - sytý odlišený odstín královské modři a bílý text */
+    button[data-baseweb="tab"][aria-selected="true"] {
+        background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%) !important;
+        border: 1px solid #1e3a8a !important;
+        box-shadow: 0 4px 10px rgba(29, 78, 216, 0.35) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    button[data-baseweb="tab"][aria-selected="true"] p,
+    button[data-baseweb="tab"][aria-selected="true"] span,
+    button[data-baseweb="tab"][aria-selected="true"] div {
+        color: #ffffff !important;
+        font-weight: 700 !important;
     }
 </style>
 """
@@ -205,7 +255,8 @@ default_indicators = [
     "pribor_3m", "cpi_yoy", "gdp_growth_real",
     "gdp_nominal_czk_bn", "unemployment_rate",
     "eur_czk", "usd_czk",
-    "public_debt_gdp_pct", "public_debt_czk_bn", "budget_deficit_czk_bn"
+    "public_debt_gdp_pct", "public_debt_czk_bn", "budget_deficit_czk_bn",
+    "czgb_10y", "czgb_2y", "irs_10y", "czgb_spread_10y_2y"
 ]
 
 selected_indicators = st.sidebar.multiselect(
@@ -789,6 +840,226 @@ def build_rates_vs_inflation_chart(dframe: pd.DataFrame, indicators: List[str]) 
     return fig
 
 
+def build_yield_curve_snapshot(
+    df_row: pd.Series,
+    compare_row: Optional[pd.Series] = None,
+    show_czgb: bool = True,
+    show_irs: bool = True,
+    compare_label: str = "Před 1 rokem"
+) -> go.Figure:
+    """
+    Vytvoří graf časové struktury výnosové křivky (Term Structure):
+    X-osa = Splatnosti (1Y, 2Y, 3Y, 5Y, 7Y, 10Y, 15Y)
+    Y-osa = Výnos do splatnosti / Swapová sazba (% p.a.)
+    """
+    tenor_keys = ["1y", "2y", "3y", "5y", "7y", "10y", "15y"]
+    tenor_labels = ["1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "15Y"]
+
+    fig = go.Figure()
+
+    # 1. České státní dluhopisy (CZGB)
+    if show_czgb:
+        czgb_vals = [df_row.get(f"czgb_{k}") for k in tenor_keys]
+        fig.add_trace(go.Scatter(
+            x=tenor_labels,
+            y=czgb_vals,
+            mode="lines+markers",
+            name="České státní dluhopisy (CZGB)",
+            line=dict(color="#1D4ED8", width=3.5),
+            marker=dict(size=9, color="#1D4ED8", symbol="circle"),
+            hovertemplate="<b>CZGB %{x}</b>: %{y:.2f} % p.a.<extra></extra>"
+        ))
+
+    # 2. Úrokové swapy (IRS)
+    if show_irs:
+        irs_vals = [df_row.get(f"irs_{k}") for k in tenor_keys]
+        asw_texts = []
+        for k in tenor_keys:
+            y_val = df_row.get(f"czgb_{k}")
+            i_val = df_row.get(f"irs_{k}")
+            if y_val is not None and i_val is not None:
+                spread_bps = (i_val - y_val) * 100.0
+                asw_texts.append(f"ASW Spread: +{spread_bps:.0f} bps")
+            else:
+                asw_texts.append("")
+
+        fig.add_trace(go.Scatter(
+            x=tenor_labels,
+            y=irs_vals,
+            mode="lines+markers",
+            name="Úrokové swapy (CZK IRS)",
+            line=dict(color="#0D9488", width=3.0, dash="dash"),
+            marker=dict(size=8, color="#0D9488", symbol="square"),
+            customdata=asw_texts,
+            hovertemplate="<b>CZK IRS %{x}</b>: %{y:.2f} % p.a.<br>%{customdata}<extra></extra>"
+        ))
+
+    # 3. Srovnávací historická křivka (např. před 1 rokem)
+    if compare_row is not None:
+        comp_czgb = [compare_row.get(f"czgb_{k}") for k in tenor_keys]
+        fig.add_trace(go.Scatter(
+            x=tenor_labels,
+            y=comp_czgb,
+            mode="lines+markers",
+            name=f"CZGB ({compare_label})",
+            line=dict(color="#94A3B8", width=2.0, dash="dot"),
+            marker=dict(size=7, color="#94A3B8", symbol="diamond"),
+            hovertemplate=f"<b>CZGB %{{x}} ({compare_label})</b>: %{{y:.2f}} % p.a.<extra></extra>"
+        ))
+
+    dt_obj = df_row.get("date")
+    dt_str = dt_obj.strftime("%d.%m.%Y") if hasattr(dt_obj, "strftime") else "Aktuální"
+
+    fig.update_layout(
+        title=dict(
+            text=f"Výnosová křivka ČR k datu: {dt_str}",
+            font=dict(size=14, color="#1E293B")
+        ),
+        height=440,
+        hovermode="x unified",
+        margin=dict(l=20, r=20, t=50, b=20),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            bgcolor="rgba(255, 255, 255, 0.85)"
+        ),
+        xaxis=dict(
+            title="Doba do splatnosti (Tenor)",
+            showgrid=True,
+            gridcolor="#F1F5F9"
+        ),
+        yaxis=dict(
+            title="Výnos / Sazba swapu (% p.a.)",
+            ticksuffix=" %",
+            showgrid=True,
+            gridcolor="#F1F5F9"
+        ),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF"
+    )
+    return fig
+
+
+def build_yield_history_chart(dframe: pd.DataFrame, show_irs_history: bool = True) -> go.Figure:
+    """Vytvoří časový graf vývoje klíčových výnosů CZGB (2Y, 5Y, 10Y, 15Y) a IRS v čase."""
+    fig = go.Figure()
+
+    if "repo_rate" in dframe.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe["date"],
+            y=dframe["repo_rate"],
+            mode="lines",
+            name="2T Repo sazba ČNB",
+            line=dict(color="#CBD5E1", width=1.8, dash="dash"),
+            hovertemplate="<b>2T Repo</b>: %{y:.2f} %<extra></extra>"
+        ))
+
+    if "czgb_2y" in dframe.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe["date"],
+            y=dframe["czgb_2y"],
+            mode="lines",
+            name="CZGB 2Y (krátký konec)",
+            line=dict(color="#06B6D4", width=2.0),
+            hovertemplate="<b>CZGB 2Y</b>: %{y:.2f} %<extra></extra>"
+        ))
+
+    if "czgb_5y" in dframe.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe["date"],
+            y=dframe["czgb_5y"],
+            mode="lines",
+            name="CZGB 5Y (střed)",
+            line=dict(color="#3B82F6", width=2.0),
+            hovertemplate="<b>CZGB 5Y</b>: %{y:.2f} %<extra></extra>"
+        ))
+
+    if "czgb_10y" in dframe.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe["date"],
+            y=dframe["czgb_10y"],
+            mode="lines",
+            name="CZGB 10Y (benchmark)",
+            line=dict(color="#1D4ED8", width=3.5),
+            hovertemplate="<b>CZGB 10Y</b>: %{y:.2f} %<extra></extra>"
+        ))
+
+    if "czgb_15y" in dframe.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe["date"],
+            y=dframe["czgb_15y"],
+            mode="lines",
+            name="CZGB 15Y (dlouhý konec)",
+            line=dict(color="#7C3AED", width=2.0),
+            hovertemplate="<b>CZGB 15Y</b>: %{y:.2f} %<extra></extra>"
+        ))
+
+    if show_irs_history and "irs_10y" in dframe.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe["date"],
+            y=dframe["irs_10y"],
+            mode="lines",
+            name="CZK IRS 10Y",
+            line=dict(color="#0D9488", width=2.2, dash="dot"),
+            hovertemplate="<b>IRS 10Y</b>: %{y:.2f} %<extra></extra>"
+        ))
+
+    fig.update_layout(
+        title=dict(text="Časový vývoj benchmarkových výnosů CZGB a IRS", font=dict(size=14, color="#1E293B")),
+        height=400,
+        hovermode="x unified",
+        margin=dict(l=20, r=20, t=45, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
+        xaxis=dict(title="", showgrid=True, gridcolor="#F1F5F9"),
+        yaxis=dict(title="Výnos do splatnosti (% p.a.)", ticksuffix=" %", showgrid=True, gridcolor="#F1F5F9"),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF"
+    )
+    return fig
+
+
+def build_curve_spread_chart(dframe: pd.DataFrame) -> go.Figure:
+    """
+    Vytvoří graf sklonu výnosové křivky (Spread 10Y − 2Y v bazických bodech bps)
+    s barevným vyznačením inverzní zóny (< 0 bps).
+    """
+    fig = go.Figure()
+
+    if "czgb_spread_10y_2y" in dframe.columns:
+        spread_bps = dframe["czgb_spread_10y_2y"] * 100.0
+
+        fig.add_trace(go.Scatter(
+            x=dframe["date"],
+            y=spread_bps,
+            mode="lines",
+            name="Sklon křivky (10Y − 2Y)",
+            line=dict(color="#2563EB", width=2.5),
+            hovertemplate="<b>Sklon (10Y - 2Y)</b>: %{y:+.0f} bps<extra></extra>"
+        ))
+
+        fig.add_hline(
+            y=0.0,
+            line=dict(color="#DC2626", width=1.8, dash="dash"),
+            annotation_text="Hranice inverze (0 bps)",
+            annotation_position="top left"
+        )
+
+    fig.update_layout(
+        title=dict(text="Sklon výnosové křivky (Spread 10Y − 2Y v bps) | Indikátor inverze", font=dict(size=14, color="#1E293B")),
+        height=400,
+        hovermode="x unified",
+        margin=dict(l=20, r=20, t=45, b=20),
+        xaxis=dict(title="", showgrid=True, gridcolor="#F1F5F9"),
+        yaxis=dict(title="Rozpětí (bps)", ticksuffix=" bps", showgrid=True, gridcolor="#F1F5F9"),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF"
+    )
+    return fig
+
+
 # =============================================================================
 # 9. PŘÍPRAVA DAT PRO EXPORT
 # =============================================================================
@@ -816,13 +1087,14 @@ df_export_cz["Datum"] = df_export_cz["Datum"].dt.strftime("%d.%m.%Y")
 # 10. ZÁLOŽKY (OUŠKA) PRO JEDNOTLIVÉ SEKCE
 # =============================================================================
 
-tab_rates, tab_inflation, tab_gdp, tab_une, tab_fx, tab_debt, tab_all, tab_table = st.tabs([
+tab_rates, tab_inflation, tab_gdp, tab_une, tab_fx, tab_debt, tab_yield_curve, tab_all, tab_table = st.tabs([
     "🏛️ Sazby (ČNB & PRIBOR)",
     "🏷️ Inflace (CPI)",
     "📈 HDP (Růst a objem)",
     "👥 Nezaměstnanost",
     "💱 Měnové kurzy (FX)",
     "🏛️ Veřejný dluh a Deficit SR",
+    "📉 Výnosová křivka (CZGB & IRS)",
     "📊 Všechny grafy",
     "📋 Data a export"
 ])
@@ -993,7 +1265,148 @@ with tab_debt:
     )
 
 # -----------------------------------------------------------------------------
-# TAB 7: VŠECHNY GRAFY POHROMADĚ
+# TAB 7: VÝNOSOVÁ KŘIVKA (CZGB & IRS)
+# -----------------------------------------------------------------------------
+with tab_yield_curve:
+    st.markdown('<div class="section-header">📉 Výnosová křivka: České státní dluhopisy (CZGB 1–15Y) a Úrokové swapy (IRS)</div>', unsafe_allow_html=True)
+    st.caption("Časová struktura výnosů státních dluhopisů České republiky (CZGB) a mezibankovních úrokových swapů (CZK IRS). Křivka zachycuje tržní ocenění ceny peněz pro různé splatnosti od 1 do 15 let.")
+
+    col_yc1, col_yc2, col_yc3, col_yc4 = st.columns(4)
+    y10_curr = last_row.get("czgb_10y")
+    y10_prev = prev_row.get("czgb_10y")
+    y10_delta = (y10_curr - y10_prev) if (y10_curr is not None and y10_prev is not None) else 0.0
+
+    y2_curr = last_row.get("czgb_2y")
+    spread_curr = last_row.get("czgb_spread_10y_2y")
+    spread_bps = (spread_curr * 100.0) if spread_curr is not None else 0.0
+
+    irs10_curr = last_row.get("irs_10y")
+    asw_10y_bps = ((irs10_curr - y10_curr) * 100.0) if (irs10_curr is not None and y10_curr is not None) else 0.0
+
+    col_yc1.metric(
+        "CZGB 10Y (Benchmark)",
+        f"{y10_curr:.2f} %" if y10_curr is not None else "N/A",
+        delta=f"{y10_delta * 100:+.0f} bps" if len(df) > 1 else "Aktuální",
+        help="Výnos 10letého referenčního státního dluhopisu ČR (Eurostat Maastricht criterion)"
+    )
+    col_yc2.metric(
+        "CZGB 2Y (Krátký konec)",
+        f"{y2_curr:.2f} %" if y2_curr is not None else "N/A",
+        help="Výnos 2letého bondu – silně navázaný na repo sazbu ČNB a měnověpolitická očekávání"
+    )
+
+    if spread_bps > 15:
+        curve_status = "Normální (rostoucí)"
+        curve_delta_color = "normal"
+    elif spread_bps < -15:
+        curve_status = "Inverzní křivka ⚠️"
+        curve_delta_color = "inverse"
+    else:
+        curve_status = "Plochá křivka"
+        curve_delta_color = "off"
+
+    col_yc3.metric(
+        "Sklon křivky (10Y − 2Y)",
+        f"{spread_bps:+.0f} bps",
+        delta=curve_status,
+        delta_color=curve_delta_color,
+        help="Záporný spread (inverze) historicky signalizuje budoucí pokles sazeb nebo ekonomické ochlazení"
+    )
+    col_yc4.metric(
+        "CZK IRS 10Y (Swapová sazba)",
+        f"{irs10_curr:.2f} %" if irs10_curr is not None else "N/A",
+        delta=f"ASW: +{asw_10y_bps:.0f} bps",
+        delta_color="off",
+        help="Sazba úrokového swapu a Asset Swap Spread (ASW = IRS − CZGB) vůči státnímu bondu"
+    )
+
+    st.markdown("---")
+
+    col_ctrl1, col_ctrl2 = st.columns([1, 1])
+    with col_ctrl1:
+        st.markdown("**Volba zobrazovaných křivek:**")
+        chk_col1, chk_col2 = st.columns(2)
+        chk_czgb = chk_col1.checkbox("Státní dluhopisy (CZGB 1–15Y)", value=True, key="chk_yc_czgb")
+        chk_irs = chk_col2.checkbox("Úrokové swapy (CZK IRS 1–15Y)", value=True, key="chk_yc_irs")
+
+    with col_ctrl2:
+        st.markdown("**Porovnání výnosové křivky v čase:**")
+        yc_compare_choice = st.selectbox(
+            "Zvolte srovnávací referenční křivku:",
+            options=["Bez srovnání", "Před 1 měsícem", "Před 6 měsíci", "Před 1 rokem", "Inverze / Vrchol sazeb (Polovina 2022)"],
+            index=3,
+            key="yc_compare_select"
+        )
+
+    compare_row = None
+    compare_label = yc_compare_choice
+    if yc_compare_choice == "Před 1 měsícem" and len(df) > 1:
+        compare_row = df.iloc[-2]
+    elif yc_compare_choice == "Před 6 měsíci" and len(df) > 6:
+        compare_row = df.iloc[-7]
+    elif yc_compare_choice == "Před 1 rokem" and len(df) > 12:
+        compare_row = df.iloc[-13]
+    elif yc_compare_choice == "Inverze / Vrchol sazeb (Polovina 2022)":
+        df_inv = df_raw[df_raw["date"].dt.year == 2022]
+        if not df_inv.empty:
+            compare_row = df_inv.iloc[-1]
+            compare_label = "Červenec 2022 (Inverze)"
+
+    st.subheader("1. Tvar výnosové křivky (Term Structure 1Y–15Y)")
+    fig_yc_snapshot = build_yield_curve_snapshot(
+        df_row=last_row,
+        compare_row=compare_row,
+        show_czgb=chk_czgb,
+        show_irs=chk_irs,
+        compare_label=compare_label
+    )
+    render_plotly_chart(fig_yc_snapshot, key="chart_yc_snapshot")
+
+    tenor_list = ["1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "15Y"]
+    tenor_raw_keys = ["1y", "2y", "3y", "5y", "7y", "10y", "15y"]
+    table_rows = []
+    for t_lbl, t_key in zip(tenor_list, tenor_raw_keys):
+        c_val = last_row.get(f"czgb_{t_key}")
+        i_val = last_row.get(f"irs_{t_key}")
+        c_prev = prev_row.get(f"czgb_{t_key}")
+        c_delta = ((c_val - c_prev) * 100.0) if (c_val is not None and c_prev is not None) else None
+        asw = ((i_val - c_val) * 100.0) if (i_val is not None and c_val is not None) else None
+        table_rows.append({
+            "Splatnost (Tenor)": t_lbl,
+            "CZGB Výnos (% p.a.)": f"{c_val:.2f} %" if c_val is not None else "N/A",
+            "CZK IRS Sazba (% p.a.)": f"{i_val:.2f} %" if i_val is not None else "N/A",
+            "Asset Swap Spread (bps)": f"+{asw:.0f} bps" if asw is not None else "N/A",
+            "Změna MoM (bps)": f"{c_delta:+.0f} bps" if c_delta is not None else "–"
+        })
+    df_term_sheet = pd.DataFrame(table_rows)
+
+    with st.expander("🔍 Zobrazit detailní tabulku splatností (Term Sheet: 1Y až 15Y)", expanded=False):
+        render_dataframe(df_term_sheet)
+
+    st.markdown("---")
+
+    col_g_hist1, col_g_hist2 = st.columns(2)
+    with col_g_hist1:
+        st.subheader("2. Vývoj benchmarkových výnosů v čase")
+        fig_hist = build_yield_history_chart(df, show_irs_history=chk_irs)
+        render_plotly_chart(fig_hist, key="chart_yc_history")
+
+    with col_g_hist2:
+        st.subheader("3. Sklon křivky (10Y − 2Y) & Inverze")
+        fig_spread = build_curve_spread_chart(df)
+        render_plotly_chart(fig_spread, key="chart_yc_spread")
+
+    st.info(
+        "💡 **Co je výnosová křivka a její inverze:**\n\n"
+        "- **Normální křivka:** Dlouhodobé výnosy (10Y, 15Y) jsou vyšší než krátkodobé z důvodu termínové a inflační prémie.\n"
+        "- **Inverzní křivka (Inverted Yield Curve):** Krátkodobé sazby převyšují dlouhodobé (např. 2022–2023, kdy repo sazba dosáhla 7 %, zatímco 10Y bond byl pod 5 %). "
+        "Inverze signalizuje, že trh očekává prudký pokles inflace a uvolňování měnové politiky centrální bankou.\n"
+        "- **Úrokové swapy (IRS):** Swapová křivka odráží cenu peněz na mezibankovním trhu. "
+        "5Y a 10Y CZK IRS jsou klíčovými benchmarky, které komerční banky v ČR používají k tvorbě cen pro fixace hypotečních úvěrů a firemních půjček."
+    )
+
+# -----------------------------------------------------------------------------
+# TAB 8: VŠECHNY GRAFY POHROMADĚ
 # -----------------------------------------------------------------------------
 with tab_all:
     st.markdown('<div class="section-header">📊 Souhrnný přehled (Všechny makroekonomické grafy)</div>', unsafe_allow_html=True)
@@ -1019,8 +1432,18 @@ with tab_all:
     st.subheader("5. Veřejný dluh k HDP (%)")
     render_plotly_chart(fig_debt, key="chart_all_debt")
 
+    st.markdown("---")
+    st.subheader("6. Výnosová křivka (CZGB 1–15Y vs. IRS)")
+    fig_all_yc = build_yield_curve_snapshot(df_row=last_row, compare_row=None, show_czgb=True, show_irs=True)
+    render_plotly_chart(fig_all_yc, key="chart_all_yc_snapshot")
+
+    st.markdown("---")
+    st.subheader("7. Sklon výnosové křivky (Spread 10Y − 2Y v bps)")
+    fig_all_spread = build_curve_spread_chart(df)
+    render_plotly_chart(fig_all_spread, key="chart_all_yc_spread")
+
 # -----------------------------------------------------------------------------
-# TAB 8: DATA A EXPORT (CSV)
+# TAB 9: DATA A EXPORT (CSV)
 # -----------------------------------------------------------------------------
 with tab_table:
     st.markdown('<div class="section-header">📋 Přehled surových dat a export do CSV</div>', unsafe_allow_html=True)

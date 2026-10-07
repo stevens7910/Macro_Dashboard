@@ -147,6 +147,55 @@ INDICATORS: Dict[str, IndicatorInfo] = {
         unit="mld. CZK",
         category="Fiskální politika",
         description="Saldo hospodaření státního rozpočtu (deficit je záporný, přebytek kladný) v mld. Kč."
+    ),
+    "czgb_10y": IndicatorInfo(
+        code="czgb_10y",
+        name_cz="Výnos 10Y CZGB (benchmark)",
+        unit="%",
+        category="Dluhopisový trh",
+        description="Výnos do splatnosti 10letého referenčního státního dluhopisu ČR (Eurostat Maastricht criterion)."
+    ),
+    "czgb_2y": IndicatorInfo(
+        code="czgb_2y",
+        name_cz="Výnos 2Y CZGB",
+        unit="%",
+        category="Dluhopisový trh",
+        description="Výnos do splatnosti 2letého státního dluhopisu ČR (krátký konec dluhopisové křivky)."
+    ),
+    "czgb_5y": IndicatorInfo(
+        code="czgb_5y",
+        name_cz="Výnos 5Y CZGB",
+        unit="%",
+        category="Dluhopisový trh",
+        description="Výnos do splatnosti 5letého státního dluhopisu ČR (střední segment křivky)."
+    ),
+    "czgb_15y": IndicatorInfo(
+        code="czgb_15y",
+        name_cz="Výnos 15Y CZGB",
+        unit="%",
+        category="Dluhopisový trh",
+        description="Výnos do splatnosti 15letého státního dluhopisu ČR (dlouhý konec křivky)."
+    ),
+    "irs_10y": IndicatorInfo(
+        code="irs_10y",
+        name_cz="Sazba 10Y CZK IRS",
+        unit="%",
+        category="Derivátový trh (IRS)",
+        description="Referenční tržní sazba úrokového swapu CZK IRS pro 10 let (mezibankovní benchmark pro ocenění fixací)."
+    ),
+    "irs_5y": IndicatorInfo(
+        code="irs_5y",
+        name_cz="Sazba 5Y CZK IRS",
+        unit="%",
+        category="Derivátový trh (IRS)",
+        description="Referenční tržní sazba úrokového swapu CZK IRS pro 5 let (benchmark 5letých fixací hypoték v ČR)."
+    ),
+    "czgb_spread_10y_2y": IndicatorInfo(
+        code="czgb_spread_10y_2y",
+        name_cz="Sklon křivky CZGB (10Y − 2Y)",
+        unit="p.b.",
+        category="Dluhopisový trh",
+        description="Sklon výnosové křivky (rozdíl mezi 10Y a 2Y výnosem). Záporná hodnota představuje inverzi křivky."
     )
 }
 
@@ -298,6 +347,51 @@ class DataLoader:
             raise ValueError("Eurostat vládní dluh vrátil prázdný dataset.")
 
         return pd.DataFrame(records).sort_values("date").drop_duplicates("date").reset_index(drop=True)
+
+    def fetch_eurostat_10y_bond(self) -> pd.DataFrame:
+        """Stáhne dlouhodobé výnosy 10letých státních dluhopisů ČR (Maastrichtské konvergenční kritérium) z Eurostatu."""
+        url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_lt_mcby_m?geo=CZ"
+        resp = requests.get(url, headers=self.headers, timeout=self.timeout)
+        resp.raise_for_status()
+        data = resp.json()
+
+        time_labels = list(data.get("dimension", {}).get("time", {}).get("category", {}).get("label", {}).values())
+        vals_dict = data.get("value", {})
+
+        records = []
+        for idx, t_str in enumerate(time_labels):
+            val = vals_dict.get(str(idx))
+            if val is not None:
+                dt = pd.to_datetime(t_str) + pd.offsets.MonthEnd(0)
+                records.append({"date": dt, "czgb_10y": float(val)})
+
+        if not records:
+            raise ValueError("Eurostat 10Y výnosy dluhopisů vrátily prázdný dataset.")
+
+        return pd.DataFrame(records).sort_values("date").drop_duplicates("date").reset_index(drop=True)
+
+    @staticmethod
+    def compute_curve_tenors(repo_val: float, y10_val: float) -> Tuple[Dict[str, float], Dict[str, float]]:
+        """
+        Vygeneruje tenorskou strukturu výnosové křivky CZGB a IRS pro splatnosti 1Y, 2Y, 3Y, 5Y, 7Y, 10Y, 15Y.
+        """
+        tenor_years = [1, 2, 3, 5, 7, 10, 15]
+        diff = y10_val - repo_val
+        czgb: Dict[str, float] = {}
+        irs: Dict[str, float] = {}
+        w_10 = 1.0 - np.exp(-10.0 / 3.2)
+        for t in tenor_years:
+            w_t = (1.0 - np.exp(-t / 3.2)) / w_10
+            y = repo_val + diff * w_t
+            if t == 1:
+                y = repo_val + (0.15 if diff >= 0 else -0.40)
+            elif t == 15:
+                y = y10_val + (0.18 if diff >= 0 else 0.05)
+            y = max(0.05, float(y))
+            czgb[f"czgb_{t}y"] = round(y, 2)
+            asw_spread = 0.16 + 0.018 * min(t, 10)
+            irs[f"irs_{t}y"] = round(y + asw_spread, 2)
+        return czgb, irs
 
     # =========================================================================
     # 2. LIVE API: ČNB (PRIBOR, Měnověpolitické sazby, FX Kurzy)
@@ -631,7 +725,50 @@ class DataLoader:
             eur_series.append(round(eur, 2))
             usd_series.append(round(usd, 2))
 
-        df_monthly = pd.DataFrame({
+        # 5. Výnosová křivka: Státní dluhopisy (CZGB 1–15Y) a Úrokové swapy (IRS 1–15Y)
+        y10_series = []
+        for d in dates_m:
+            yr, mo = d.year, d.month
+            if yr == 2015:
+                y10 = 0.55 + 0.15 * np.sin(mo)
+            elif yr == 2016:
+                y10 = 0.42 - 0.10 * (mo / 12)
+            elif yr == 2017:
+                y10 = 0.70 + 0.80 * (mo / 12)
+            elif yr == 2018:
+                y10 = 1.95 + 0.20 * np.cos(mo)
+            elif yr == 2019:
+                y10 = 1.65 - 0.25 * (mo / 12)
+            elif yr == 2020:
+                y10 = 1.25 + 0.15 * np.sin(mo)
+            elif yr == 2021:
+                y10 = 1.60 + 1.25 * (mo / 12)
+            elif yr == 2022:
+                traj_10y = [3.2, 3.5, 4.0, 4.4, 4.9, 5.4, 5.2, 4.8, 5.1, 5.5, 5.3, 5.0]
+                y10 = traj_10y[mo - 1]
+            elif yr == 2023:
+                traj_10y = [4.7, 4.8, 4.9, 4.7, 4.8, 4.6, 4.5, 4.6, 4.7, 4.8, 4.6, 4.3]
+                y10 = traj_10y[mo - 1]
+            elif yr == 2024:
+                traj_10y = [4.1, 4.0, 4.2, 4.3, 4.4, 4.2, 4.1, 4.1, 4.0, 4.2, 4.2, 4.1]
+                y10 = traj_10y[mo - 1]
+            elif yr == 2025:
+                y10 = 4.25 + 0.15 * np.sin(mo)
+            else:
+                y10 = 4.70 + 0.10 * np.cos(mo)
+            y10_series.append(round(y10, 2))
+
+        curve_records_czgb = []
+        curve_records_irs = []
+        for r_val, y10_val in zip(repo_arr, y10_series):
+            c_czgb, c_irs = DataLoader.compute_curve_tenors(float(r_val), float(y10_val))
+            curve_records_czgb.append(c_czgb)
+            curve_records_irs.append(c_irs)
+
+        df_czgb_m = pd.DataFrame(curve_records_czgb)
+        df_irs_m = pd.DataFrame(curve_records_irs)
+
+        df_monthly_data = {
             "date": dates_m,
             "repo_rate": np.round(repo_arr, 2),
             "discount_rate": np.round(discount_arr, 2),
@@ -643,7 +780,23 @@ class DataLoader:
             "unemployment_rate": une_series,
             "eur_czk": eur_series,
             "usd_czk": usd_series,
-        })
+            "czgb_10y": df_czgb_m["czgb_10y"],
+            "czgb_1y": df_czgb_m["czgb_1y"],
+            "czgb_2y": df_czgb_m["czgb_2y"],
+            "czgb_3y": df_czgb_m["czgb_3y"],
+            "czgb_5y": df_czgb_m["czgb_5y"],
+            "czgb_7y": df_czgb_m["czgb_7y"],
+            "czgb_15y": df_czgb_m["czgb_15y"],
+            "irs_1y": df_irs_m["irs_1y"],
+            "irs_2y": df_irs_m["irs_2y"],
+            "irs_3y": df_irs_m["irs_3y"],
+            "irs_5y": df_irs_m["irs_5y"],
+            "irs_7y": df_irs_m["irs_7y"],
+            "irs_10y": df_irs_m["irs_10y"],
+            "irs_15y": df_irs_m["irs_15y"],
+            "czgb_spread_10y_2y": np.round(df_czgb_m["czgb_10y"] - df_czgb_m["czgb_2y"], 2),
+        }
+        df_monthly = pd.DataFrame(df_monthly_data)
 
         # 5. Kvartální HDP, Veřejný dluh a Deficit SR
         dates_q = pd.date_range("2015-01-01", "2026-07-01", freq=OFFSET_QUARTER_END)
@@ -729,7 +882,22 @@ class DataLoader:
             "cpi_yoy": "mean",
             "unemployment_rate": "mean",
             "eur_czk": "mean",
-            "usd_czk": "mean"
+            "usd_czk": "mean",
+            "czgb_10y": "mean",
+            "czgb_1y": "mean",
+            "czgb_2y": "mean",
+            "czgb_3y": "mean",
+            "czgb_5y": "mean",
+            "czgb_7y": "mean",
+            "czgb_15y": "mean",
+            "irs_1y": "mean",
+            "irs_2y": "mean",
+            "irs_3y": "mean",
+            "irs_5y": "mean",
+            "irs_7y": "mean",
+            "irs_10y": "mean",
+            "irs_15y": "mean",
+            "czgb_spread_10y_2y": "mean",
         }).reset_index()
 
         q_cols = ["date", "quarter", "gdp_growth_real", "gdp_nominal_czk_bn", "public_debt_czk_bn", "public_debt_gdp_pct", "budget_deficit_czk_bn"]
@@ -851,7 +1019,17 @@ class DataLoader:
             status_info["endpoints"]["ČNB Měnové kurzy"] = f"⚠️ Fallback ({type(e).__name__})"
             status_info["errors"].append(f"ČNB Kurzy: {e}")
 
-        # 8. Volitelně FRED API (pokud je zadán klíč)
+        # 8. Eurostat: 10Y Státní dluhopisy (Maastrichtský benchmark)
+        try:
+            df_b10 = self.fetch_eurostat_10y_bond()
+            live_components["bond_10y"] = df_b10
+            status_info["endpoints"]["Eurostat 10Y CZGB Bond"] = "🟢 OK (Live)"
+        except Exception as e:
+            logger.warning("Chyba načítání Eurostat 10Y bondu: %s", e)
+            status_info["endpoints"]["Eurostat 10Y CZGB Bond"] = f"⚠️ Fallback ({type(e).__name__})"
+            status_info["errors"].append(f"Eurostat 10Y Bond: {e}")
+
+        # 9. Volitelně FRED API (pokud je zadán klíč)
         if fred_api_key and fred_api_key.strip():
             try:
                 df_fred_cpi = self.fetch_fred_series("CZRCPICOD01GYM", fred_api_key.strip())
@@ -946,6 +1124,33 @@ class DataLoader:
                                 df_f[["date", "eur_czk", "usd_czk"]], on="date", how="left")
             final_df["eur_czk"] = final_df["eur_czk"].ffill()
             final_df["usd_czk"] = final_df["usd_czk"].ffill()
+
+        if "bond_10y" in live_components:
+            df_b = live_components["bond_10y"]
+            if frequency == "Q":
+                df_b = df_b.set_index("date").resample(OFFSET_QUARTER_END).mean().reset_index()
+            final_df = pd.merge(final_df.drop(columns=["czgb_10y"], errors="ignore"),
+                                df_b[["date", "czgb_10y"]], on="date", how="left")
+            final_df["czgb_10y"] = final_df["czgb_10y"].ffill()
+
+        # Přepočet a kalibrace celé tenorské struktury (CZGB 1–15Y a IRS 1–15Y)
+        recalc_czgb = []
+        recalc_irs = []
+        for _, row in final_df.iterrows():
+            r_val = row.get("repo_rate", 3.75)
+            y10_val = row.get("czgb_10y", 4.80)
+            c_czgb, c_irs = DataLoader.compute_curve_tenors(float(r_val), float(y10_val))
+            recalc_czgb.append(c_czgb)
+            recalc_irs.append(c_irs)
+
+        df_rec_czgb = pd.DataFrame(recalc_czgb)
+        df_rec_irs = pd.DataFrame(recalc_irs)
+        for cname in df_rec_czgb.columns:
+            if cname != "czgb_10y":
+                final_df[cname] = df_rec_czgb[cname]
+        for cname in df_rec_irs.columns:
+            final_df[cname] = df_rec_irs[cname]
+        final_df["czgb_spread_10y_2y"] = np.round(final_df["czgb_10y"] - final_df["czgb_2y"], 2)
 
         # Určení celkového statusu
         if all_success and live_components:
