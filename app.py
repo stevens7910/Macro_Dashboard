@@ -845,7 +845,8 @@ def build_yield_curve_snapshot(
     compare_row: Optional[pd.Series] = None,
     show_czgb: bool = True,
     show_irs: bool = True,
-    compare_label: str = "Před 1 rokem"
+    compare_label: str = "Před 1 rokem",
+    show_values: bool = True
 ) -> go.Figure:
     """
     Vytvoří graf časové struktury výnosové křivky (Term Structure):
@@ -857,22 +858,63 @@ def build_yield_curve_snapshot(
 
     fig = go.Figure()
 
+    czgb_vals = [df_row.get(f"czgb_{k}") for k in tenor_keys]
+    irs_vals = [df_row.get(f"irs_{k}") for k in tenor_keys]
+    comp_czgb = [compare_row.get(f"czgb_{k}") for k in tenor_keys] if compare_row is not None else []
+
     # 1. České státní dluhopisy (CZGB)
     if show_czgb:
-        czgb_vals = [df_row.get(f"czgb_{k}") for k in tenor_keys]
+        czgb_mode = "lines+markers+text" if show_values else "lines+markers"
+        czgb_text = [
+            f"<b>{v:.2f} %</b>" if (v is not None and not pd.isna(v)) else ""
+            for v in czgb_vals
+        ] if show_values else None
+
+        # Dynamické určení pozice popisků CZGB:
+        # Pokud je zobrazen IRS a je vyšší než CZGB, popisek CZGB je dole pod bodem; jinak nahoře
+        czgb_pos = []
+        for k in tenor_keys:
+            c_val = df_row.get(f"czgb_{k}")
+            i_val = df_row.get(f"irs_{k}") if show_irs else None
+            if i_val is not None and c_val is not None and i_val >= c_val:
+                czgb_pos.append("bottom center")
+            elif i_val is not None and c_val is not None and i_val < c_val:
+                czgb_pos.append("top center")
+            else:
+                czgb_pos.append("bottom center" if show_irs else "top center")
+
         fig.add_trace(go.Scatter(
             x=tenor_labels,
             y=czgb_vals,
-            mode="lines+markers",
+            mode=czgb_mode,
             name="České státní dluhopisy (CZGB)",
             line=dict(color="#1D4ED8", width=3.5),
             marker=dict(size=9, color="#1D4ED8", symbol="circle"),
+            text=czgb_text,
+            textposition=czgb_pos if show_values else None,
+            textfont=dict(size=10, color="#1D4ED8"),
+            cliponaxis=False,
             hovertemplate="<b>CZGB %{x}</b>: %{y:.2f} % p.a.<extra></extra>"
         ))
 
     # 2. Úrokové swapy (IRS)
     if show_irs:
-        irs_vals = [df_row.get(f"irs_{k}") for k in tenor_keys]
+        irs_mode = "lines+markers+text" if show_values else "lines+markers"
+        irs_text = [
+            f"<b>{v:.2f} %</b>" if (v is not None and not pd.isna(v)) else ""
+            for v in irs_vals
+        ] if show_values else None
+
+        # Dynamická pozice popisků IRS: nahoře pokud je IRS >= CZGB, jinak dole
+        irs_pos = []
+        for k in tenor_keys:
+            c_val = df_row.get(f"czgb_{k}") if show_czgb else None
+            i_val = df_row.get(f"irs_{k}")
+            if c_val is not None and i_val is not None and i_val < c_val:
+                irs_pos.append("bottom center")
+            else:
+                irs_pos.append("top center")
+
         asw_texts = []
         for k in tenor_keys:
             y_val = df_row.get(f"czgb_{k}")
@@ -886,38 +928,81 @@ def build_yield_curve_snapshot(
         fig.add_trace(go.Scatter(
             x=tenor_labels,
             y=irs_vals,
-            mode="lines+markers",
+            mode=irs_mode,
             name="Úrokové swapy (CZK IRS)",
             line=dict(color="#0D9488", width=3.0, dash="dash"),
             marker=dict(size=8, color="#0D9488", symbol="square"),
+            text=irs_text,
+            textposition=irs_pos if show_values else None,
+            textfont=dict(size=10, color="#0F766E"),
+            cliponaxis=False,
             customdata=asw_texts,
             hovertemplate="<b>CZK IRS %{x}</b>: %{y:.2f} % p.a.<br>%{customdata}<extra></extra>"
         ))
 
     # 3. Srovnávací historická křivka (např. před 1 rokem)
     if compare_row is not None:
-        comp_czgb = [compare_row.get(f"czgb_{k}") for k in tenor_keys]
+        comp_mode = "lines+markers+text" if show_values else "lines+markers"
+        comp_text = [
+            f"<b>{v:.2f} %</b>" if (v is not None and not pd.isna(v)) else ""
+            for v in comp_czgb
+        ] if show_values else None
+
+        comp_pos = []
+        for k in tenor_keys:
+            c_val = df_row.get(f"czgb_{k}")
+            cmp_val = compare_row.get(f"czgb_{k}")
+            if c_val is not None and cmp_val is not None and cmp_val > c_val:
+                comp_pos.append("top center")
+            else:
+                comp_pos.append("bottom center")
+
         fig.add_trace(go.Scatter(
             x=tenor_labels,
             y=comp_czgb,
-            mode="lines+markers",
+            mode=comp_mode,
             name=f"CZGB ({compare_label})",
             line=dict(color="#94A3B8", width=2.0, dash="dot"),
             marker=dict(size=7, color="#94A3B8", symbol="diamond"),
+            text=comp_text,
+            textposition=comp_pos if show_values else None,
+            textfont=dict(size=9, color="#64748B"),
+            cliponaxis=False,
             hovertemplate=f"<b>CZGB %{{x}} ({compare_label})</b>: %{{y:.2f}} % p.a.<extra></extra>"
         ))
 
     dt_obj = df_row.get("date")
     dt_str = dt_obj.strftime("%d.%m.%Y") if hasattr(dt_obj, "strftime") else "Aktuální"
 
+    # Výpočet rozsahu osy Y s rezervou pro popisky hodnot
+    all_y = []
+    if show_czgb:
+        all_y.extend([v for v in czgb_vals if v is not None and not pd.isna(v)])
+    if show_irs:
+        all_y.extend([v for v in irs_vals if v is not None and not pd.isna(v)])
+    if compare_row is not None:
+        all_y.extend([v for v in comp_czgb if v is not None and not pd.isna(v)])
+
+    yaxis_dict = dict(
+        title="Výnos / Sazba swapu (% p.a.)",
+        ticksuffix=" %",
+        showgrid=True,
+        gridcolor="#F1F5F9"
+    )
+    if all_y and show_values:
+        y_min = min(all_y)
+        y_max = max(all_y)
+        y_pad = max(0.28, (y_max - y_min) * 0.12)
+        yaxis_dict["range"] = [y_min - y_pad, y_max + y_pad]
+
     fig.update_layout(
         title=dict(
             text=f"Výnosová křivka ČR k datu: {dt_str}",
             font=dict(size=14, color="#1E293B")
         ),
-        height=440,
+        height=450,
         hovermode="x unified",
-        margin=dict(l=20, r=20, t=50, b=20),
+        margin=dict(l=20, r=20, t=50, b=25),
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -931,12 +1016,7 @@ def build_yield_curve_snapshot(
             showgrid=True,
             gridcolor="#F1F5F9"
         ),
-        yaxis=dict(
-            title="Výnos / Sazba swapu (% p.a.)",
-            ticksuffix=" %",
-            showgrid=True,
-            gridcolor="#F1F5F9"
-        ),
+        yaxis=yaxis_dict,
         plot_bgcolor="#FFFFFF",
         paper_bgcolor="#FFFFFF"
     )
@@ -1324,10 +1404,11 @@ with tab_yield_curve:
 
     col_ctrl1, col_ctrl2 = st.columns([1, 1])
     with col_ctrl1:
-        st.markdown("**Volba zobrazovaných křivek:**")
+        st.markdown("**Volba zobrazovaných křivek a prvků:**")
         chk_col1, chk_col2 = st.columns(2)
         chk_czgb = chk_col1.checkbox("Státní dluhopisy (CZGB 1–15Y)", value=True, key="chk_yc_czgb")
         chk_irs = chk_col2.checkbox("Úrokové swapy (CZK IRS 1–15Y)", value=True, key="chk_yc_irs")
+        chk_show_vals = st.checkbox("🏷️ Zobrazit hodnoty u bodů v grafu", value=True, key="chk_yc_show_vals")
 
     with col_ctrl2:
         st.markdown("**Porovnání výnosové křivky v čase:**")
@@ -1358,7 +1439,8 @@ with tab_yield_curve:
         compare_row=compare_row,
         show_czgb=chk_czgb,
         show_irs=chk_irs,
-        compare_label=compare_label
+        compare_label=compare_label,
+        show_values=chk_show_vals
     )
     render_plotly_chart(fig_yc_snapshot, key="chart_yc_snapshot")
 
@@ -1371,13 +1453,17 @@ with tab_yield_curve:
         c_prev = prev_row.get(f"czgb_{t_key}")
         c_delta = ((c_val - c_prev) * 100.0) if (c_val is not None and c_prev is not None) else None
         asw = ((i_val - c_val) * 100.0) if (i_val is not None and c_val is not None) else None
-        table_rows.append({
+        row_dict = {
             "Splatnost (Tenor)": t_lbl,
             "CZGB Výnos (% p.a.)": f"{c_val:.2f} %" if c_val is not None else "N/A",
             "CZK IRS Sazba (% p.a.)": f"{i_val:.2f} %" if i_val is not None else "N/A",
             "Asset Swap Spread (bps)": f"+{asw:.0f} bps" if asw is not None else "N/A",
             "Změna MoM (bps)": f"{c_delta:+.0f} bps" if c_delta is not None else "–"
-        })
+        }
+        if compare_row is not None:
+            cmp_val = compare_row.get(f"czgb_{t_key}")
+            row_dict[f"CZGB ({compare_label})"] = f"{cmp_val:.2f} %" if cmp_val is not None else "N/A"
+        table_rows.append(row_dict)
     df_term_sheet = pd.DataFrame(table_rows)
 
     with st.expander("🔍 Zobrazit detailní tabulku splatností (Term Sheet: 1Y až 15Y)", expanded=False):
