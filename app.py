@@ -144,19 +144,222 @@ CUSTOM_CSS = """
         transform: translateY(-1px) !important;
     }
 
-    /* Aktivní (vybraná) záložka - sytý odlišený odstín královské modři a bílý text */
-    button[data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%) !important;
-        border: 1px solid #1e3a8a !important;
-        box-shadow: 0 4px 10px rgba(29, 78, 216, 0.35) !important;
-        transform: translateY(-1px) !important;
+    /* ========================================= */
+    /* Profesionální Sidebar a Ovládací prvky    */
+    /* (Styl finančních terminálů / Stock Analysis)*/
+    /* ========================================= */
+    
+    /* Kontejner postranního panelu */
+    section[data-testid="stSidebar"] {
+        background-color: #f8fafc !important;
+        border-right: 1px solid #e2e8f0 !important;
     }
 
-    button[data-baseweb="tab"][aria-selected="true"] p,
-    button[data-baseweb="tab"][aria-selected="true"] span,
-    button[data-baseweb="tab"][aria-selected="true"] div {
+    section[data-testid="stSidebar"] .block-container {
+        padding-top: 1.2rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    /* Karta záhlaví sidebaru (Brand Header) */
+    .sidebar-brand-card {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border-radius: 10px;
+        padding: 13px 15px;
+        color: #ffffff;
+        margin-bottom: 18px;
+        box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.25);
+        border: 1px solid #334155;
+    }
+    .sidebar-brand-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+    .sidebar-brand-badge {
+        background: #2563eb;
+        color: #ffffff;
+        font-size: 0.70rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        padding: 2px 7px;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+    .sidebar-brand-version {
+        font-size: 0.70rem;
+        color: #94a3b8;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+    }
+    .sidebar-brand-title {
+        font-size: 1.10rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+        letter-spacing: -0.01em;
+    }
+    .sidebar-brand-sub {
+        font-size: 0.76rem;
+        color: #94a3b8;
+        margin-top: 3px;
+    }
+
+    /* Nadpisy sekcí s odznaky (Section headers) */
+    .sidebar-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 14px;
+        margin-bottom: 8px;
+        padding-bottom: 2px;
+    }
+    .sidebar-section-title {
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: #1e293b;
+        letter-spacing: 0.02em;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .sidebar-section-badge {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #475569;
+        background: #e2e8f0;
+        border: 1px solid #cbd5e1;
+        padding: 1px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    /* Segmented Control (Stock Analysis styl tlačítkového přepínače) */
+    div[data-testid="stSegmentedControl"] {
+        background-color: #f1f5f9 !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 9px !important;
+        padding: 3px !important;
+        width: 100% !important;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    }
+    div[data-testid="stSegmentedControl"] > div {
+        display: flex !important;
+        gap: 3px !important;
+        width: 100% !important;
+    }
+    div[data-testid="stSegmentedControl"] button {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        border-radius: 6px !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        padding: 6px 4px !important;
+        border: none !important;
+        background: transparent !important;
+        color: #475569 !important;
+        transition: all 0.15s ease !important;
+        box-shadow: none !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+        justify-content: center !important;
+    }
+    div[data-testid="stSegmentedControl"] button:hover {
+        background-color: rgba(255, 255, 255, 0.7) !important;
+        color: #0f172a !important;
+    }
+    div[data-testid="stSegmentedControl"] button[aria-selected="true"],
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"],
+    div[data-testid="stSegmentedControl"] button[data-selected="true"] {
+        background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
         font-weight: 700 !important;
+        box-shadow: 0 2px 4px rgba(29, 78, 216, 0.35) !important;
+    }
+    div[data-testid="stSegmentedControl"] button[aria-selected="true"] p,
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] p,
+    div[data-testid="stSegmentedControl"] button[data-selected="true"] p {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
+
+    /* Fallback pro horizontální st.radio (převede radio na tlačítka a skryje kolečka) */
+    div[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        background: #f1f5f9 !important;
+        padding: 3px !important;
+        border-radius: 9px !important;
+        border: 1px solid #cbd5e1 !important;
+        width: 100% !important;
+    }
+    div[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 6px !important;
+        padding: 6px 4px !important;
+        margin: 0 !important;
+        cursor: pointer !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        color: #475569 !important;
+        transition: all 0.15s ease !important;
+        justify-content: center !important;
+        text-align: center !important;
+        display: flex !important;
+    }
+    div[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
+        background: rgba(255, 255, 255, 0.7) !important;
+        color: #0f172a !important;
+    }
+    div[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label > div:first-child {
+        display: none !important; /* Skryje nativní radio kolečko */
+    }
+    div[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) {
+        background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%) !important;
+        box-shadow: 0 2px 4px rgba(29, 78, 216, 0.35) !important;
+    }
+    div[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) p,
+    div[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) span {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
+
+    /* MultiSelect tagy (Sleek chip styl) */
+    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] {
+        background-color: #e0e7ff !important;
+        border: 1px solid #c7d2fe !important;
+        border-radius: 6px !important;
+        font-size: 0.80rem !important;
+        font-weight: 600 !important;
+        color: #1e3a8a !important;
+    }
+    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span {
+        color: #1e3a8a !important;
+    }
+
+    /* Akční tlačítka v sidebaru */
+    div[data-testid="stSidebar"] button[kind="secondary"] {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        color: #1e293b !important;
+        transition: all 0.15s ease !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    }
+    div[data-testid="stSidebar"] button[kind="secondary"]:hover {
+        background-color: #f1f5f9 !important;
+        border-color: #94a3b8 !important;
+        color: #0f172a !important;
+        transform: translateY(-1px) !important;
     }
 </style>
 """
@@ -204,16 +407,54 @@ def render_dataframe(df_to_render: pd.DataFrame) -> None:
 # 3. SIDEBAR: OVLÁDACÍ PRVKY A NASTAVENÍ
 # =============================================================================
 
-st.sidebar.title("🇨🇿 Nastavení a filtry")
-
-# Výběr časového horizontu
-st.sidebar.subheader("📅 Časový horizont")
-horizon_option = st.sidebar.radio(
-    "Zvolte období:",
-    options=["1 rok", "3 roky", "5 let", "Celá historie (od 2015)", "Vlastní rozsah"],
-    index=2,
-    help="Rychlé předvolby nebo vlastní nastavení kalendářního rozpětí dat."
+st.sidebar.markdown(
+    """
+    <div class="sidebar-brand-card">
+        <div class="sidebar-brand-top">
+            <span class="sidebar-brand-badge">ČR MACRO</span>
+            <span class="sidebar-brand-version">TERMINAL</span>
+        </div>
+        <div class="sidebar-brand-title">Nastavení a filtry</div>
+        <div class="sidebar-brand-sub">ČNB &bull; Eurostat &bull; Dluh &bull; Výnosová křivka</div>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
+
+# 1. Výběr časového horizontu (Stock Analysis styl - Segmented Control)
+st.sidebar.markdown(
+    """
+    <div class="sidebar-section-header">
+        <span class="sidebar-section-title">📅 Časový horizont</span>
+        <span class="sidebar-section-badge">Období</span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+horizon_options = ["1 rok", "3 roky", "5 let", "Od 2015", "Vlastní"]
+
+if hasattr(st.sidebar, "segmented_control"):
+    horizon_option = st.sidebar.segmented_control(
+        "Zvolte období:",
+        options=horizon_options,
+        default="5 let",
+        key="sb_horizon_seg",
+        help="Rychlé předvolby nebo vlastní nastavení kalendářního rozpětí dat.",
+        label_visibility="collapsed"
+    )
+    if not horizon_option:
+        horizon_option = "5 let"
+else:
+    horizon_option = st.sidebar.radio(
+        "Zvolte období:",
+        options=horizon_options,
+        index=2,
+        key="sb_horizon_rad",
+        horizontal=True,
+        help="Rychlé předvolby nebo vlastní nastavení kalendářního rozpětí dat.",
+        label_visibility="collapsed"
+    )
 
 # Příprava seznamu dostupných měsíců pro combo boxy
 all_month_dates = pd.date_range("2015-01-01", datetime.now(), freq="MS")
@@ -222,13 +463,19 @@ month_options = [d.strftime("%m/%Y") for d in all_month_dates]
 start_filter_date = pd.to_datetime("2021-01-01")
 end_filter_date = pd.to_datetime(datetime.now().strftime("%Y-%m-%d"))
 
-# Pokud uživatel vybere "Vlastní rozsah", umístíme combo boxy hned pod to do sidebaru
-if horizon_option == "Vlastní rozsah":
-    st.sidebar.markdown("**Výběr vlastního časového rozpětí:**")
+# Pokud uživatel vybere "Vlastní" (nebo "Vlastní rozsah"), zobrazíme elegantní výběr měsíců
+if horizon_option in ("Vlastní", "Vlastní rozsah"):
+    st.sidebar.markdown(
+        """
+        <div style="background: #f1f5f9; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px; margin-top: 6px; margin-bottom: 10px;">
+            <div style="font-size: 0.74rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 6px;">📅 Vlastní časové rozpětí:</div>
+        """,
+        unsafe_allow_html=True
+    )
     col_c1, col_c2 = st.sidebar.columns(2)
     default_start_idx = max(0, len(month_options) - 36)  # výchozí 3 roky zpět
-    selected_start_str = col_c1.selectbox("Od (měsíc-rok):", options=month_options, index=default_start_idx)
-    selected_end_str = col_c2.selectbox("Do (měsíc-rok):", options=month_options, index=len(month_options) - 1)
+    selected_start_str = col_c1.selectbox("Od (měsíc/rok):", options=month_options, index=default_start_idx, key="sb_custom_from")
+    selected_end_str = col_c2.selectbox("Do (měsíc/rok):", options=month_options, index=len(month_options) - 1, key="sb_custom_to")
     
     start_filter_date = pd.to_datetime(selected_start_str, format="%m/%Y")
     end_filter_date = pd.to_datetime(selected_end_str, format="%m/%Y") + pd.offsets.MonthEnd(0)
@@ -236,19 +483,57 @@ if horizon_option == "Vlastní rozsah":
     if start_filter_date > end_filter_date:
         start_filter_date, end_filter_date = end_filter_date, start_filter_date
         st.sidebar.warning("Datum 'Od' bylo po 'Do', rozsah byl automaticky upraven.")
+    st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
-# Přepínač frekvence
-st.sidebar.subheader("⏱️ Frekvence dat")
-freq_choice = st.sidebar.radio(
-    "Agregace časové řady:",
-    options=["Měsíční (Monthly)", "Kvartální (Quarterly)"],
-    index=0,
-    help="Měsíční data poskytují vyšší detail sazeb a inflace, kvartální data přesně odpovídají periodicitě HDP a dluhu."
+# 2. Přepínač frekvence (Stock Analysis styl - Segmented Control)
+st.sidebar.markdown(
+    """
+    <div class="sidebar-section-header">
+        <span class="sidebar-section-title">⏱️ Frekvence dat</span>
+        <span class="sidebar-section-badge">Agregace</span>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
+
+freq_options = ["Měsíční", "Kvartální"]
+
+if hasattr(st.sidebar, "segmented_control"):
+    freq_choice = st.sidebar.segmented_control(
+        "Agregace časové řady:",
+        options=freq_options,
+        default="Měsíční",
+        format_func=lambda x: "📅 Měsíční (M)" if x == "Měsíční" else "📊 Kvartální (Q)",
+        key="sb_freq_seg",
+        help="Měsíční data poskytují vyšší detail sazeb a inflace, kvartální data přesně odpovídají periodicitě HDP a dluhu.",
+        label_visibility="collapsed"
+    )
+    if not freq_choice:
+        freq_choice = "Měsíční"
+else:
+    freq_choice = st.sidebar.radio(
+        "Agregace časové řady:",
+        options=freq_options,
+        index=0,
+        format_func=lambda x: "📅 Měsíční (M)" if x == "Měsíční" else "📊 Kvartální (Q)",
+        key="sb_freq_rad",
+        horizontal=True,
+        help="Měsíční data poskytují vyšší detail sazeb a inflace, kvartální data přesně odpovídají periodicitě HDP a dluhu.",
+        label_visibility="collapsed"
+    )
+
 frequency_code = "M" if freq_choice.startswith("Měsíční") else "Q"
 
-# Volba indikátorů
-st.sidebar.subheader("📊 Zobrazené ukazatele")
+# 3. Volba indikátorů
+st.sidebar.markdown(
+    """
+    <div class="sidebar-section-header">
+        <span class="sidebar-section-title">📊 Zobrazené ukazatele</span>
+        <span class="sidebar-section-badge">Metriky</span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 all_indicator_keys = list(INDICATORS.keys())
 default_indicators = [
     "repo_rate", "discount_rate", "lombard_rate",
@@ -268,7 +553,15 @@ selected_indicators = st.sidebar.multiselect(
 
 # Nastavení zdroje a API klíčů
 st.sidebar.markdown("---")
-st.sidebar.subheader("⚙️ Datový zdroj & API")
+st.sidebar.markdown(
+    """
+    <div class="sidebar-section-header">
+        <span class="sidebar-section-title">⚙️ Zdroj dat & Server</span>
+        <span class="sidebar-section-badge">API</span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 force_fallback = st.sidebar.checkbox(
     "Vynutit Fallback data (Offline režim)",
@@ -337,10 +630,10 @@ elif horizon_option == "3 roky":
 elif horizon_option == "5 let":
     start_filter_date = max_date - pd.DateOffset(years=5)
     end_filter_date = max_date
-elif horizon_option == "Celá historie (od 2015)":
+elif horizon_option in ("Od 2015", "Celá historie (od 2015)", "Celá historie", "MAX"):
     start_filter_date = min_date
     end_filter_date = max_date
-# Pokud je "Vlastní rozsah", proměnné start_filter_date a end_filter_date jsou již nastaveny výše z combo boxů!
+# Pokud je "Vlastní" nebo "Vlastní rozsah", proměnné start_filter_date a end_filter_date jsou již nastaveny výše z combo boxů!
 
 df = df_raw[(df_raw["date"] >= start_filter_date) & (df_raw["date"] <= end_filter_date)].copy()
 df = df.sort_values("date").reset_index(drop=True)
