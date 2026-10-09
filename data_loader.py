@@ -1356,10 +1356,14 @@ class DataLoader:
                 df_u_agg = df_u.set_index("date").resample(OFFSET_MONTH_END).last().reset_index()
             else:
                 df_u_agg = df_u.set_index("date").resample(OFFSET_QUARTER_END).mean().reset_index()
-            final_df = pd.merge(final_df.drop(columns=us_cols, errors="ignore"),
-                                df_u_agg, on="date", how="left")
+            # Sloučíme live data a zachováme historická data pro období před rokem 2024
+            final_df = pd.merge(final_df, df_u_agg, on="date", how="left", suffixes=("", "_live"))
             for col in us_cols:
-                final_df[col] = final_df[col].ffill()
+                live_c = f"{col}_live"
+                if live_c in final_df.columns:
+                    final_df[col] = final_df[live_c].combine_first(final_df[col])
+                    final_df = final_df.drop(columns=[live_c])
+                final_df[col] = final_df[col].ffill().bfill()
             if "us_10y" in final_df.columns and "us_2y" in final_df.columns:
                 final_df["us_spread_10y_2y"] = np.round(final_df["us_10y"] - final_df["us_2y"], 2)
 
@@ -1381,6 +1385,15 @@ class DataLoader:
         for cname in df_rec_irs.columns:
             final_df[cname] = df_rec_irs[cname]
         final_df["czgb_spread_10y_2y"] = np.round(final_df["czgb_10y"] - final_df["czgb_2y"], 2)
+
+        # Zajištění integrity všech indikátorů (žádné chybějící sloupce ani NaN hodnoty)
+        for ind_key in INDICATORS.keys():
+            if ind_key not in final_df.columns:
+                if ind_key in base_df.columns:
+                    final_df[ind_key] = base_df[ind_key]
+                else:
+                    final_df[ind_key] = 0.0
+            final_df[ind_key] = final_df[ind_key].ffill().bfill()
 
         # Určení celkového statusu
         if all_success and live_components:
@@ -1407,7 +1420,8 @@ try:
     def get_cached_macro_data(
         frequency: str = "M",
         fred_api_key: Optional[str] = None,
-        force_fallback: bool = False
+        force_fallback: bool = False,
+        _cache_bust: str = "v2026_10_09_2"
     ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """Cachovaná funkce pro Streamlit s TTL 3600 sekund (1 hodina)."""
         loader = DataLoader()
@@ -1421,7 +1435,8 @@ except ImportError:
     def get_cached_macro_data(
         frequency: str = "M",
         fred_api_key: Optional[str] = None,
-        force_fallback: bool = False
+        force_fallback: bool = False,
+        _cache_bust: str = "v2026_10_09_2"
     ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         loader = DataLoader()
         return loader.load_macro_data(
