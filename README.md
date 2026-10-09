@@ -1,6 +1,6 @@
-# 🇨🇿 Český Makroekonomický Dashboard (Streamlit)
+# 🇨🇿🇺🇸 Český & US Makroekonomický Dashboard (Streamlit)
 
-Moderní, responzivní a modulární webová aplikace ve **Streamlit** pro komplexní vizualizaci a analýzu klíčových makroekonomických ukazatelů České republiky v čase (období 2015–současnost).
+Moderní, minimalistická a responzivní webová aplikace ve **Streamlit** inspirovaná designem finančních portálů (**Stock Analysis**). Slouží pro komplexní vizualizaci a analýzu klíčových makroekonomických ukazatelů České republiky a Spojených států v čase (období 2015–současnost).
 
 ---
 
@@ -15,6 +15,11 @@ Moderní, responzivní a modulární webová aplikace ve **Streamlit** pro kompl
    - **Lombardní sazba** (horní mez koridoru – zápůjční facilita)
 5. **PRIBOR sazby** – Referenční sazby mezibankovního trhu peněz (**1M**, **3M** a **6M PRIBOR**).
 6. **Míra nezaměstnanosti** – Sezónně očištěná obecná míra nezaměstnanosti dle ILO / Eurostat v %.
+7. **Měnové kurzy (FX)** – Fixace devizového trhu ČNB pro **EUR/CZK** a **USD/CZK**.
+8. **Fiskální politika** – Konsolidovaný dluh sektoru vládních institucí vůči HDP (% HDP) a saldo státního rozpočtu.
+9. **Výnosová křivka ČR (CZGB & IRS)** – Časová struktura výnosů státních dluhopisů ČR (1Y–15Y) a úrokových swapů (CZK IRS).
+10. **Výnosová křivka USA (U.S. Treasury: 1M–30Y)** – Oficiální Par Yield Curve amerického ministerstva financí (1M, 3M, 6M, 1Y, 2Y, 3Y, 5Y, 7Y, 10Y, 20Y, 30Y) včetně sledování sklonu křivky (10Y − 2Y) a indikátoru recese.
+11. **Mezinárodní srovnání ČR vs. USA** – Analýza úrokového diferenciálu a sovereign spreadu (10Y CZGB − 10Y US Treasury).
 
 ---
 

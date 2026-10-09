@@ -196,6 +196,48 @@ INDICATORS: Dict[str, IndicatorInfo] = {
         unit="p.b.",
         category="Dluhopisový trh",
         description="Sklon výnosové křivky (rozdíl mezi 10Y a 2Y výnosem). Záporná hodnota představuje inverzi křivky."
+    ),
+    "us_10y": IndicatorInfo(
+        code="us_10y",
+        name_cz="Výnos 10Y US Treasury (benchmark)",
+        unit="%",
+        category="US Dluhopisový trh",
+        description="Výnos do splatnosti 10letého referenčního státního dluhopisu USA (globální benchmark ocenění aktiv)."
+    ),
+    "us_2y": IndicatorInfo(
+        code="us_2y",
+        name_cz="Výnos 2Y US Treasury",
+        unit="%",
+        category="US Dluhopisový trh",
+        description="Výnos do splatnosti 2letého vládního dluhopisu USA (krátký konec citlivý na sazby Fedu)."
+    ),
+    "us_3m": IndicatorInfo(
+        code="us_3m",
+        name_cz="Výnos 3M US Treasury Bill",
+        unit="%",
+        category="US Dluhopisový trh",
+        description="Výnos 3měsíční pokladniční poukázky USA (referenční sazba peněžního trhu USD)."
+    ),
+    "us_5y": IndicatorInfo(
+        code="us_5y",
+        name_cz="Výnos 5Y US Treasury",
+        unit="%",
+        category="US Dluhopisový trh",
+        description="Výnos do splatnosti 5letého státního dluhopisu USA (střední segment americké křivky)."
+    ),
+    "us_30y": IndicatorInfo(
+        code="us_30y",
+        name_cz="Výnos 30Y US Treasury Bond",
+        unit="%",
+        category="US Dluhopisový trh",
+        description="Výnos do splatnosti 30letého dlouhodobého vládního dluhopisu USA (Long Bond)."
+    ),
+    "us_spread_10y_2y": IndicatorInfo(
+        code="us_spread_10y_2y",
+        name_cz="Sklon US křivky (10Y − 2Y)",
+        unit="p.b.",
+        category="US Dluhopisový trh",
+        description="Rozdíl mezi 10Y a 2Y americkým vládním výnosem (hlavní globální indikátor recese při inverzi)."
     )
 }
 
@@ -521,7 +563,72 @@ class DataLoader:
         return pivot.sort_values("date").reset_index(drop=True)
 
     # =========================================================================
-    # 3. VOLITELNÉ API: FRED (Federal Reserve Bank of St. Louis)
+    # 3. LIVE API: U.S. DEPARTMENT OF THE TREASURY (Výnosová křivka US)
+    # =========================================================================
+
+    def fetch_us_treasury_yields(self, start_year: int = 2024, end_year: int = 2026) -> pd.DataFrame:
+        """
+        Stáhne denní výnosy amerických státních dluhopisů (US Daily Treasury Par Yield Curve Rates)
+        přímo z oficiálního otevřeného XML API U.S. Department of the Treasury.
+        """
+        import xml.etree.ElementTree as ET
+
+        ns = {
+            "atom": "http://www.w3.org/2005/Atom",
+            "d": "http://schemas.microsoft.com/ado/2007/08/dataservices",
+            "m": "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata"
+        }
+        cols = {
+            "BC_1MONTH": "us_1m",
+            "BC_3MONTH": "us_3m",
+            "BC_6MONTH": "us_6m",
+            "BC_1YEAR": "us_1y",
+            "BC_2YEAR": "us_2y",
+            "BC_3YEAR": "us_3y",
+            "BC_5YEAR": "us_5y",
+            "BC_7YEAR": "us_7y",
+            "BC_10YEAR": "us_10y",
+            "BC_20YEAR": "us_20y",
+            "BC_30YEAR": "us_30y"
+        }
+
+        records = []
+        for yr in range(start_year, end_year + 1):
+            url = f"https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml?data=daily_treasury_yield_curve&field_tdr_date_value={yr}"
+            try:
+                resp = requests.get(url, headers=self.headers, timeout=self.timeout)
+                if resp.status_code == 200:
+                    root = ET.fromstring(resp.content)
+                    for entry in root.findall("atom:entry", ns):
+                        props = entry.find("atom:content/m:properties", ns)
+                        if props is None:
+                            continue
+                        d_elem = props.find("d:NEW_DATE", ns)
+                        if d_elem is None or not d_elem.text:
+                            continue
+                        dt = pd.to_datetime(d_elem.text.split("T")[0])
+                        row = {"date": dt}
+                        for xml_tag, col_name in cols.items():
+                            val_elem = props.find(f"d:{xml_tag}", ns)
+                            if val_elem is not None and val_elem.text:
+                                try:
+                                    row[col_name] = float(val_elem.text)
+                                except (ValueError, TypeError):
+                                    row[col_name] = None
+                            else:
+                                row[col_name] = None
+                        records.append(row)
+            except Exception as e:
+                logger.warning("Chyba při stahování US Treasury dat pro rok %d: %s", yr, e)
+
+        if not records:
+            raise ValueError("US Treasury API nevrátilo žádné záznamy.")
+
+        df_daily = pd.DataFrame(records).sort_values("date").drop_duplicates("date").reset_index(drop=True)
+        return df_daily
+
+    # =========================================================================
+    # 4. VOLITELNÉ API: FRED (Federal Reserve Bank of St. Louis)
     # =========================================================================
 
     def fetch_fred_series(self, series_id: str, api_key: str) -> pd.DataFrame:
@@ -768,6 +875,80 @@ class DataLoader:
         df_czgb_m = pd.DataFrame(curve_records_czgb)
         df_irs_m = pd.DataFrame(curve_records_irs)
 
+        # 6. US Treasury Výnosová křivka (1M, 3M, 6M, 1Y, 2Y, 3Y, 5Y, 7Y, 10Y, 20Y, 30Y)
+        us_10y_series = []
+        us_2y_series = []
+        us_3m_series = []
+        for d in dates_m:
+            yr, mo = d.year, d.month
+            if yr == 2015:
+                y10, y2, y3m = 2.15 + 0.15 * np.sin(mo), 0.65 + 0.1 * (mo / 12), 0.05
+            elif yr == 2016:
+                y10, y2, y3m = 1.85 - 0.20 * (mo / 12), 0.85 + 0.15 * (mo / 12), 0.30
+            elif yr == 2017:
+                y10, y2, y3m = 2.35 + 0.05 * np.cos(mo), 1.40 + 0.35 * (mo / 12), 0.95 + 0.3 * (mo / 12)
+            elif yr == 2018:
+                y10, y2, y3m = 2.90 + 0.15 * (mo / 12), 2.50 + 0.25 * (mo / 12), 2.00 + 0.4 * (mo / 12)
+            elif yr == 2019:
+                y10, y2, y3m = 2.15 - 0.40 * (mo / 12), 1.95 - 0.35 * (mo / 12), 2.10 - 0.4 * (mo / 12)
+            elif yr == 2020:
+                y10, y2, y3m = 0.90 - 0.25 * np.sin(mo), 0.25 - 0.10 * (mo / 12), 0.15
+            elif yr == 2021:
+                y10, y2, y3m = 1.45 + 0.20 * (mo / 12), 0.45 + 0.25 * (mo / 12), 0.05
+            elif yr == 2022:
+                traj_10 = [1.8, 2.0, 2.3, 2.8, 2.9, 3.1, 2.9, 3.0, 3.6, 4.0, 3.9, 3.8]
+                traj_2 = [1.0, 1.4, 2.3, 2.6, 2.6, 2.9, 2.9, 3.4, 4.1, 4.4, 4.4, 4.3]
+                traj_3m = [0.2, 0.4, 0.5, 0.8, 1.1, 1.6, 2.4, 2.9, 3.3, 4.1, 4.3, 4.4]
+                y10, y2, y3m = traj_10[mo - 1], traj_2[mo - 1], traj_3m[mo - 1]
+            elif yr == 2023:
+                traj_10 = [3.5, 3.8, 3.6, 3.5, 3.6, 3.8, 4.0, 4.2, 4.4, 4.8, 4.5, 4.0]
+                traj_2 = [4.2, 4.7, 4.1, 4.0, 4.3, 4.8, 4.8, 4.9, 5.0, 5.0, 4.7, 4.3]
+                traj_3m = [4.6, 4.8, 4.9, 5.1, 5.3, 5.4, 5.4, 5.4, 5.5, 5.5, 5.4, 5.3]
+                y10, y2, y3m = traj_10[mo - 1], traj_2[mo - 1], traj_3m[mo - 1]
+            elif yr == 2024:
+                traj_10 = [4.1, 4.2, 4.2, 4.6, 4.5, 4.3, 4.2, 3.9, 3.8, 4.2, 4.3, 4.5]
+                traj_2 = [4.3, 4.6, 4.6, 4.9, 4.8, 4.7, 4.4, 3.9, 3.6, 4.1, 4.2, 4.3]
+                traj_3m = [5.3, 5.4, 5.4, 5.4, 5.4, 5.3, 5.2, 5.1, 4.9, 4.6, 4.5, 4.4]
+                y10, y2, y3m = traj_10[mo - 1], traj_2[mo - 1], traj_3m[mo - 1]
+            elif yr == 2025:
+                y10 = 4.55 + 0.10 * np.sin(mo)
+                y2 = 4.35 + 0.10 * np.cos(mo)
+                y3m = 4.30 - 0.10 * (mo / 12)
+            else:
+                y10 = 5.22
+                y2 = 4.75
+                y3m = 4.23
+            us_10y_series.append(round(y10, 2))
+            us_2y_series.append(round(y2, 2))
+            us_3m_series.append(round(y3m, 2))
+
+        us_curve_records = []
+        for y10, y2, y3m in zip(us_10y_series, us_2y_series, us_3m_series):
+            diff = y10 - y2
+            y1m = max(0.02, y3m - 0.05)
+            y6m = max(0.05, y3m + 0.08)
+            y1y = max(0.08, y2 - 0.15 if diff >= 0 else y2 + 0.10)
+            y3y = y2 + 0.3 * diff
+            y5y = y2 + 0.6 * diff
+            y7y = y2 + 0.85 * diff
+            y20y = y10 + (0.35 if diff >= 0 else 0.15)
+            y30y = y10 + (0.28 if diff >= 0 else 0.10)
+            us_curve_records.append({
+                "us_1m": round(y1m, 2),
+                "us_3m": round(y3m, 2),
+                "us_6m": round(y6m, 2),
+                "us_1y": round(y1y, 2),
+                "us_2y": round(y2, 2),
+                "us_3y": round(y3y, 2),
+                "us_5y": round(y5y, 2),
+                "us_7y": round(y7y, 2),
+                "us_10y": round(y10, 2),
+                "us_20y": round(y20y, 2),
+                "us_30y": round(y30y, 2),
+                "us_spread_10y_2y": round(y10 - y2, 2),
+            })
+        df_us_m = pd.DataFrame(us_curve_records)
+
         df_monthly_data = {
             "date": dates_m,
             "repo_rate": np.round(repo_arr, 2),
@@ -795,6 +976,18 @@ class DataLoader:
             "irs_10y": df_irs_m["irs_10y"],
             "irs_15y": df_irs_m["irs_15y"],
             "czgb_spread_10y_2y": np.round(df_czgb_m["czgb_10y"] - df_czgb_m["czgb_2y"], 2),
+            "us_1m": df_us_m["us_1m"],
+            "us_3m": df_us_m["us_3m"],
+            "us_6m": df_us_m["us_6m"],
+            "us_1y": df_us_m["us_1y"],
+            "us_2y": df_us_m["us_2y"],
+            "us_3y": df_us_m["us_3y"],
+            "us_5y": df_us_m["us_5y"],
+            "us_7y": df_us_m["us_7y"],
+            "us_10y": df_us_m["us_10y"],
+            "us_20y": df_us_m["us_20y"],
+            "us_30y": df_us_m["us_30y"],
+            "us_spread_10y_2y": df_us_m["us_spread_10y_2y"],
         }
         df_monthly = pd.DataFrame(df_monthly_data)
 
@@ -898,6 +1091,18 @@ class DataLoader:
             "irs_10y": "mean",
             "irs_15y": "mean",
             "czgb_spread_10y_2y": "mean",
+            "us_1m": "mean",
+            "us_3m": "mean",
+            "us_6m": "mean",
+            "us_1y": "mean",
+            "us_2y": "mean",
+            "us_3y": "mean",
+            "us_5y": "mean",
+            "us_7y": "mean",
+            "us_10y": "mean",
+            "us_20y": "mean",
+            "us_30y": "mean",
+            "us_spread_10y_2y": "mean",
         }).reset_index()
 
         q_cols = ["date", "quarter", "gdp_growth_real", "gdp_nominal_czk_bn", "public_debt_czk_bn", "public_debt_gdp_pct", "budget_deficit_czk_bn"]
@@ -1029,7 +1234,18 @@ class DataLoader:
             status_info["endpoints"]["Eurostat 10Y CZGB Bond"] = f"⚠️ Fallback ({type(e).__name__})"
             status_info["errors"].append(f"Eurostat 10Y Bond: {e}")
 
-        # 9. Volitelně FRED API (pokud je zadán klíč)
+        # 9. U.S. Treasury: Výnosová křivka US (1M až 30Y)
+        try:
+            current_year = datetime.now().year
+            df_us_live = self.fetch_us_treasury_yields(start_year=2024, end_year=current_year)
+            live_components["us_treasury"] = df_us_live
+            status_info["endpoints"]["U.S. Treasury (home.treasury.gov)"] = "🟢 OK (Live)"
+        except Exception as e:
+            logger.warning("Chyba načítání US Treasury: %s", e)
+            status_info["endpoints"]["U.S. Treasury"] = f"⚠️ Fallback ({type(e).__name__})"
+            status_info["errors"].append(f"U.S. Treasury: {e}")
+
+        # 10. Volitelně FRED API (pokud je zadán klíč)
         if fred_api_key and fred_api_key.strip():
             try:
                 df_fred_cpi = self.fetch_fred_series("CZRCPICOD01GYM", fred_api_key.strip())
@@ -1132,6 +1348,20 @@ class DataLoader:
             final_df = pd.merge(final_df.drop(columns=["czgb_10y"], errors="ignore"),
                                 df_b[["date", "czgb_10y"]], on="date", how="left")
             final_df["czgb_10y"] = final_df["czgb_10y"].ffill()
+
+        if "us_treasury" in live_components:
+            df_u = live_components["us_treasury"]
+            us_cols = [c for c in df_u.columns if c != "date"]
+            if frequency == "M":
+                df_u_agg = df_u.set_index("date").resample(OFFSET_MONTH_END).last().reset_index()
+            else:
+                df_u_agg = df_u.set_index("date").resample(OFFSET_QUARTER_END).mean().reset_index()
+            final_df = pd.merge(final_df.drop(columns=us_cols, errors="ignore"),
+                                df_u_agg, on="date", how="left")
+            for col in us_cols:
+                final_df[col] = final_df[col].ffill()
+            if "us_10y" in final_df.columns and "us_2y" in final_df.columns:
+                final_df["us_spread_10y_2y"] = np.round(final_df["us_10y"] - final_df["us_2y"], 2)
 
         # Přepočet a kalibrace celé tenorské struktury (CZGB 1–15Y a IRS 1–15Y)
         recalc_czgb = []
