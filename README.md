@@ -67,15 +67,15 @@ Všechny ukazatele (celkem **101 metrik**) jsou **trvale aktivovány a zobrazeny
    - **Detailní pohledy na jednotlivé indexy**: Samostatné cenové grafy, 12měsíční klouzavý průměr, minima/maxima a statistiky zhodnocení.
    - **⚡ Index volatility VIX (Tržní sentiment a riziko)**: Cboe Volatility Index („Index strachu“) s barevnými zónami sentimentu (< 15 klid/sebeuspokojení, 15–20 normální rozmezí, 20–30 zvýšená nervozita, > 30 tržní panika/stres).
 
-4. **🌐 Veřejné finance & Svět**:
+4. **🌐 Fiskál & Svět**:
    - **Veřejný dluh & Saldo**: Konsolidovaný veřejný dluh k HDP (% HDP, maastrichtské pravidlo 60 %) a kvartální schodky/přebytky rozpočtu.
    - **Vnější rovnováha & Zahraniční obchod**: Měsíční saldo zahraničního obchodu ČSÚ (mld. Kč) v kombinaci s podílem běžného účtu platební bilance k HDP (Current Account % HDP).
    - **Mezinárodní srovnání**: Sovereign výnosové spready 10Y dluhopisů (ČR vs. Německo, ČR vs. USA, Německo vs. USA) a sazbové diferenciály v bazických bodech (bps).
 
-5. **📋 Data a export**:
+5. **📋 Export**:
    - Datový průzkumník s českými popisky, filtrováním a okamžitým stažením kompletního datového setu ve formátu CSV.
 
-6. **📖 Seznam ukazatelů & Zdroje (Katalog metadat)**:
+6. **📖 Metriky (Katalog ukazatelů & Zdroje)**:
    - Strukturovaný katalog všech **101 makroekonomických a tržních ukazatelů** s filtry podle země, kategorie a fulltextovým vyhledáváním.
    - U každého indikátoru je uveden kód, jednotka, periodicita, oficiální primární datový zdroj a metodická definice.
    - Možnost stažení kompletního katalogu metadat do CSV.

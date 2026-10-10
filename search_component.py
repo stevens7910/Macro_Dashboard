@@ -34,7 +34,7 @@ from data_loader import INDICATORS, IndicatorInfo
 #   0 = 💳 Finanční trhy & Měna
 #   1 = 🏛️ Reálná ekonomika & Práce
 #   2 = 📈 Trhy
-#   3 = 🌐 Veřejné finance & Svět
+#   3 = 🌐 Fiskál & Svět
 INDICATOR_NAVIGATION_REGISTRY: Dict[str, Dict[str, Any]] = {
     # -------------------------------------------------------------------------
     # 🇨🇿 ČESKÁ REPUBLIKA (CZ)
@@ -210,27 +210,27 @@ INDICATOR_NAVIGATION_REGISTRY: Dict[str, Dict[str, Any]] = {
         "aliases": ["px", "bcpp", "prazska burza", "ceske akcie", "cez", "erste", "komercni banka"]
     },
     "public_debt_czk_bn": {
-        "region": "CZ", "main_tab": "🌐 Veřejné finance & Svět", "sub_tab_id": "debt",
+        "region": "CZ", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_cz_debt_pct",
         "aliases": ["statni dluh", "verejny dluh", "dluh cr", "mf cr", "zadluzeni"]
     },
     "public_debt_gdp_pct": {
-        "region": "CZ", "main_tab": "🌐 Veřejné finance & Svět", "sub_tab_id": "debt",
+        "region": "CZ", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_cz_debt_pct",
         "aliases": ["dluh k hdp", "maastricht", "podil dluhu", "fiskalni pravidla"]
     },
     "budget_deficit_czk_bn": {
-        "region": "CZ", "main_tab": "🌐 Veřejné finance & Svět", "sub_tab_id": "debt",
+        "region": "CZ", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_cz_deficit",
         "aliases": ["schodek", "deficit", "statni rozpocet", "saldo rozpoctu", "pokladni plneni"]
     },
     "cz_current_account_gdp_pct": {
-        "region": "CZ", "main_tab": "🌐 Veřejné finance & Svět", "sub_tab_id": "external",
+        "region": "CZ", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "external",
         "sub_tab_label": "Vnější rovnováha & Zahraniční obchod (ČR)", "anchor": "chart_cz_external_balance",
         "aliases": ["bezny ucet", "platebni bilance", "vnejsi rovnovaha", "export import"]
     },
     "cz_trade_balance_czk_bn": {
-        "region": "CZ", "main_tab": "🌐 Veřejné finance & Svět", "sub_tab_id": "external",
+        "region": "CZ", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "external",
         "sub_tab_label": "Vnější rovnováha & Zahraniční obchod (ČR)", "anchor": "chart_cz_external_balance",
         "aliases": ["zahranicni obchod", "obchodni bilance", "export", "import", "csu"]
     },
@@ -359,17 +359,17 @@ INDICATOR_NAVIGATION_REGISTRY: Dict[str, Dict[str, Any]] = {
         "aliases": ["stoxx", "euro stoxx 50", "sx5e", "evropske akcie", "blue chips"]
     },
     "eu_public_debt_gdp_pct": {
-        "region": "EU", "main_tab": "🌐 Veřejné finance & Svět", "sub_tab_id": "debt",
+        "region": "EU", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_eu_debt_pct",
         "aliases": ["dluh eurozony", "verejny dluh k hdp eu", "maastrichtsky dluh"]
     },
     "eu_public_debt_eur_bn": {
-        "region": "EU", "main_tab": "🌐 Veřejné finance & Svět", "sub_tab_id": "debt",
+        "region": "EU", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_eu_debt_pct",
         "aliases": ["nominalni dluh eu", "dluh v miliardach eur", "vladni dluh eurostat"]
     },
     "eu_budget_deficit_eur_bn": {
-        "region": "EU", "main_tab": "🌐 Veřejné finance & Svět", "sub_tab_id": "debt",
+        "region": "EU", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_eu_deficit",
         "aliases": ["schodek eu", "deficit eurozony", "saldo vlady eurostat"]
     },
@@ -538,17 +538,17 @@ INDICATOR_NAVIGATION_REGISTRY: Dict[str, Dict[str, Any]] = {
         "aliases": ["vix", "index volatility", "index strachu", "cboe vix", "trzni sentiment", "riziko"]
     },
     "us_public_debt_usd_bn": {
-        "region": "US", "main_tab": "🌐 Veřejné finance & Svět", "sub_tab_id": "debt",
+        "region": "US", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_us_debt_pct",
         "aliases": ["federalni dluh", "dluh usa", "us national debt", "treasury dept", "dluhovy strop"]
     },
     "us_public_debt_gdp_pct": {
-        "region": "US", "main_tab": "🌐 Veřejné finance & Svět", "sub_tab_id": "debt",
+        "region": "US", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_us_debt_pct",
         "aliases": ["us dluh k hdp", "debt to gdp usa", "federalni zadluzeni"]
     },
     "us_budget_deficit_usd_bn": {
-        "region": "US", "main_tab": "🌐 Veřejné finance & Svět", "sub_tab_id": "debt",
+        "region": "US", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_us_deficit",
         "aliases": ["schodek usa", "deficit usa", "us federal deficit", "rozpocet bily dum"]
     }
@@ -675,7 +675,7 @@ def handle_indicator_search_navigation() -> None:
         st.session_state["sub_tab_real_selected"] = sub_tab_label
     elif "Trhy" in main_tab_str:
         st.session_state["sub_tab_stocks_selected"] = sub_tab_label
-    elif "Veřejné finance" in main_tab_str:
+    elif "Fiskál" in main_tab_str or "Veřejné finance" in main_tab_str:
         st.session_state["sub_tab_public_selected"] = sub_tab_label
 
     # 5. Uložení kotevního ID pro plynulé odrolování
