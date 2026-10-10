@@ -195,18 +195,28 @@ CUSTOM_CSS = """
         padding-left: 10px;
     }
 
-    /* ZÁLOŽKY (TABS): AGREGOVANÉ KATEGORIE S TMAVŠÍM PODBARVENÍM A TMAVOMODRÝM PÍSMEM */
+    /* =========================================================================
+       DVOUSTUPŇOVÁ NAVIGACE: 1. HLAVNÍ KATEGORIE (PILL TABS S OUTLINE SVG IKONAMI)
+       ========================================================================= */
+
+    /* Skrytí výchozího BaseWeb podtržení a dělicí linky */
+    div[data-baseweb="tab-highlight"],
+    div[data-baseweb="tab-border"] {
+        display: none !important;
+    }
+
+    /* Kontejner horní hlavní navigace (Tier 1) */
     div[data-baseweb="tab-list"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        gap: 6px 8px !important;
-        background-color: #e2e8f0 !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 10px !important;
-        padding: 6px 9px !important;
-        margin-bottom: 1.1rem !important;
+        gap: 6px !important;
+        background-color: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 4px 0 6px 0 !important;
+        margin-bottom: 0.6rem !important;
         overflow-x: auto !important;
         white-space: nowrap !important;
         scrollbar-width: thin !important;
@@ -214,60 +224,198 @@ CUSTOM_CSS = """
         width: 100% !important;
     }
 
-    div[data-baseweb="tab-highlight"],
-    div[data-baseweb="tab-border"] {
-        display: none !important;
-    }
-
+    /* Neaktivní položka v hlavní navigaci (Tier 1) */
     button[data-baseweb="tab"] {
-        background-color: #f1f5f9 !important;
-        color: #1e3a8a !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 7px !important;
-        padding: 7px 16px !important;
-        font-size: 0.88rem !important;
-        font-weight: 700 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background-color: transparent !important;
+        color: #475569 !important; /* text-slate-600 */
+        border: none !important;
+        border-bottom: none !important;
+        border-radius: 6px !important; /* rounded-md */
+        padding: 6px 12px !important; /* px-3 py-1.5 */
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
         letter-spacing: -0.01em !important;
-        transition: all 0.15s ease !important;
+        transition: all 0.15s ease-in-out !important;
         white-space: nowrap !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+        box-shadow: none !important;
         cursor: pointer !important;
         height: auto !important;
+        margin: 0 !important;
+        outline: none !important;
     }
 
     button[data-baseweb="tab"] p,
     button[data-baseweb="tab"] span {
-        color: #1e3a8a !important;
-        font-weight: 700 !important;
+        color: inherit !important;
+        font-weight: inherit !important;
+        font-size: 0.875rem !important;
+        line-height: 1.25rem !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
+    /* Hover na neaktivní položce hlavní navigace (Tier 1): hover:bg-slate-100 */
     button[data-baseweb="tab"]:hover {
-        background-color: #dbeafe !important;
-        color: #172554 !important;
-        border-color: #93c5fd !important;
+        background-color: #f1f5f9 !important; /* hover:bg-slate-100 */
+        color: #1e293b !important;
+        border: none !important;
+        border-bottom: none !important;
     }
 
-    button[data-baseweb="tab"]:hover p,
-    button[data-baseweb="tab"]:hover span {
-        color: #172554 !important;
-    }
-
+    /* Aktivní hlavní kategorie - styl jemné pilulky (bg-blue-50, text-blue-600, rounded-md, px-3 py-1.5) */
     button[data-baseweb="tab"][aria-selected="true"],
     button[data-baseweb="tab"][data-selected="true"] {
-        background-color: #1e3a8a !important;
-        color: #ffffff !important;
-        font-weight: 800 !important;
-        border-color: #1e3a8a !important;
-        border-radius: 7px !important;
-        box-shadow: 0 2px 6px rgba(30, 58, 138, 0.28) !important;
+        background-color: #eff6ff !important; /* bg-blue-50 */
+        color: #2563eb !important; /* text-blue-600 */
+        border: none !important;
+        border-bottom: none !important; /* Bez spodní čáry! */
+        border-radius: 6px !important; /* rounded-md */
+        padding: 6px 12px !important; /* px-3 py-1.5 */
+        font-weight: 600 !important;
+        box-shadow: none !important;
     }
 
-    button[data-baseweb="tab"][aria-selected="true"] p,
-    button[data-baseweb="tab"][aria-selected="true"] span,
-    button[data-baseweb="tab"][data-selected="true"] p,
-    button[data-baseweb="tab"][data-selected="true"] span {
-        color: #ffffff !important;
-        font-weight: 800 !important;
+    /* Monochromatické outline SVG ikony 16px (pouze na horních záložkách, barva přes currentColor) */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]::before,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]::before {
+        content: "" !important;
+        display: inline-block !important;
+        width: 16px !important;
+        height: 16px !important;
+        min-width: 16px !important;
+        margin-right: 7px !important;
+        background-color: currentColor !important;
+        -webkit-mask-size: contain !important;
+        mask-size: contain !important;
+        -webkit-mask-repeat: no-repeat !important;
+        mask-repeat: no-repeat !important;
+        -webkit-mask-position: center !important;
+        mask-position: center !important;
+        vertical-align: -2px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Ikona 1: Finanční trhy & Měna (Credit Card outline) */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(1)::before,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(1)::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='14' x='2' y='5' rx='2'/%3E%3Cline x1='2' x2='22' y1='10' y2='10'/%3E%3C/svg%3E") !important;
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='14' x='2' y='5' rx='2'/%3E%3Cline x1='2' x2='22' y1='10' y2='10'/%3E%3C/svg%3E") !important;
+    }
+
+    /* Ikona 2: Reálná ekonomika & Práce (Landmark / Bank outline) */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(2)::before,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(2)::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='3' x2='21' y1='22' y2='22'/%3E%3Cline x1='6' x2='6' y1='11' y2='18'/%3E%3Cline x1='10' x2='10' y1='11' y2='18'/%3E%3Cline x1='14' x2='14' y1='11' y2='18'/%3E%3Cline x1='18' x2='18' y1='11' y2='18'/%3E%3Cpolygon points='12 2 20 7 4 7'/%3E%3C/svg%3E") !important;
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='3' x2='21' y1='22' y2='22'/%3E%3Cline x1='6' x2='6' y1='11' y2='18'/%3E%3Cline x1='10' x2='10' y1='11' y2='18'/%3E%3Cline x1='14' x2='14' y1='11' y2='18'/%3E%3Cline x1='18' x2='18' y1='11' y2='18'/%3E%3Cpolygon points='12 2 20 7 4 7'/%3E%3C/svg%3E") !important;
+    }
+
+    /* Ikona 3: Trhy (Trending Up line chart outline) */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(3)::before,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(3)::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='22 7 13.5 15.5 8.5 10.5 2 17'/%3E%3Cpolyline points='16 7 22 7 22 13'/%3E%3C/svg%3E") !important;
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='22 7 13.5 15.5 8.5 10.5 2 17'/%3E%3Cpolyline points='16 7 22 7 22 13'/%3E%3C/svg%3E") !important;
+    }
+
+    /* Ikona 4: Fiskál & Svět (Globe outline) */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(4)::before,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(4)::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20'/%3E%3Cpath d='M2 12h20'/%3E%3C/svg%3E") !important;
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20'/%3E%3Cpath d='M2 12h20'/%3E%3C/svg%3E") !important;
+    }
+
+    /* Ikona 5: Export (Download / Export tray outline) */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(5)::before,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(5)::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='7 10 12 15 17 10'/%3E%3Cline x1='12' x2='12' y1='15' y2='3'/%3E%3C/svg%3E") !important;
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='7 10 12 15 17 10'/%3E%3Cline x1='12' x2='12' y1='15' y2='3'/%3E%3C/svg%3E") !important;
+    }
+
+    /* Ikona 6: Metriky (Book open outline) */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(6)::before,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(6)::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/%3E%3Cpath d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/%3E%3C/svg%3E") !important;
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/%3E%3Cpath d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/%3E%3C/svg%3E") !important;
+    }
+
+    /* =========================================================================
+       DVOUSTUPŇOVÁ NAVIGACE: 2. PODKATEGORIE (TEXTOVÝ STYL SE SPODNÍ MODROU LINKOU)
+       ========================================================================= */
+
+    /* Oddělení sekce podkategorií jemnou linkou border-t border-slate-100 a správným odsazením */
+    div[data-baseweb="tab-panel"] > div[data-testid="stTabs"],
+    div[data-baseweb="tab-panel"] > div.stTabs,
+    div[data-baseweb="tab-panel"] div[data-testid="stTabs"],
+    div[data-baseweb="tab-panel"] div.stTabs {
+        border-top: 1px solid #f1f5f9 !important; /* border-t border-slate-100 */
+        padding-top: 0.75rem !important;
+        margin-top: 0.25rem !important;
+    }
+
+    /* Kontejner lišty podkategorií */
+    div[data-baseweb="tab-panel"] div[data-baseweb="tab-list"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 1.25rem !important;
+        background-color: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0 0 2px 0 !important;
+        margin-bottom: 1.25rem !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        scrollbar-width: thin !important;
+        -webkit-overflow-scrolling: touch !important;
+        width: 100% !important;
+    }
+
+    /* Na podkategoriích zakázat pseudoikony */
+    div[data-baseweb="tab-panel"] button[data-baseweb="tab"]::before {
+        display: none !important;
+        content: none !important;
+    }
+
+    /* Neaktivní položky v podkategoriích - čistý textový styl */
+    div[data-baseweb="tab-panel"] button[data-baseweb="tab"] {
+        background-color: transparent !important;
+        color: #64748b !important; /* text-slate-500 */
+        border: none !important;
+        border-bottom: 2px solid transparent !important;
+        border-radius: 0 !important;
+        padding: 6px 2px 8px 2px !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        letter-spacing: -0.01em !important;
+        transition: all 0.15s ease-in-out !important;
+        white-space: nowrap !important;
+        box-shadow: none !important;
+        cursor: pointer !important;
+        height: auto !important;
+        margin: 0 !important;
+    }
+
+    /* Hover na podkategorii */
+    div[data-baseweb="tab-panel"] button[data-baseweb="tab"]:hover {
+        background-color: transparent !important;
+        color: #1e293b !important;
+        border-bottom: 2px solid #cbd5e1 !important;
+    }
+
+    /* Aktivní vybraná podpoložka - spodní modrá linka (border-b-2 border-blue-600), sytější písmo, modrý text */
+    div[data-baseweb="tab-panel"] button[data-baseweb="tab"][aria-selected="true"],
+    div[data-baseweb="tab-panel"] button[data-baseweb="tab"][data-selected="true"] {
+        background-color: transparent !important;
+        color: #2563eb !important; /* text-blue-600 */
+        border: none !important;
+        border-bottom: 2px solid #2563eb !important; /* border-b-2 border-blue-600 */
+        border-radius: 0 !important;
+        padding: 6px 2px 8px 2px !important;
+        font-weight: 700 !important; /* sytější písmo */
+        box-shadow: none !important;
     }
 
     /* KARTA AKTUÁLNÍHO FINANČNÍHO ZPRAVODAJSTVÍ A KONTEXTU */
@@ -860,7 +1008,7 @@ st.sidebar.markdown(
     """
     <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px; margin-top: 14px; margin-bottom: 6px;">
         <div style="font-size: 0.74rem; font-weight: 750; color: #1e293b; text-transform: uppercase; margin-bottom: 3px;">✅ Všechny ukazatele aktivní</div>
-        <div style="font-size: 0.73rem; color: #64748b; line-height: 1.35;">Všechny časové řady jsou trvale zapnuty. Podrobný metodický přehled a zdroje dat naleznete v záložce <strong>📖 Metriky</strong>.</div>
+        <div style="font-size: 0.73rem; color: #64748b; line-height: 1.35;">Všechny časové řady jsou trvale zapnuty. Podrobný metodický přehled a zdroje dat naleznete v záložce <strong>Metriky</strong>.</div>
     </div>
     """,
     unsafe_allow_html=True
@@ -3654,21 +3802,20 @@ def get_indicators_catalog_df() -> pd.DataFrame:
 # =============================================================================
 
 main_dashboard_tabs_list = [
-    "💳 Finanční trhy & Měna",
-    "🏛️ Reálná ekonomika & Práce",
-    "📈 Trhy",
-    "🌐 Fiskál & Svět",
-    "📋 Export",
-    "📖 Metriky"
+    "Finanční trhy & Měna",
+    "Reálná ekonomika & Práce",
+    "Trhy",
+    "Fiskál & Svět",
+    "Export",
+    "Metriky"
 ]
 main_tabs_default = st.session_state.get("main_dashboard_tabs_selected")
-if main_tabs_default in ("🌐 Veřejné finance & Svět", "🌐 Fiskál & Svět"):
-    main_tabs_default = "🌐 Fiskál & Svět"
-elif main_tabs_default in ("📋 Data a export", "📋 Export"):
-    main_tabs_default = "📋 Export"
-elif main_tabs_default in ("📖 Seznam ukazatelů & Zdroje", "📖 Metriky", "Metriky"):
-    main_tabs_default = "📖 Metriky"
-elif main_tabs_default not in main_dashboard_tabs_list:
+if main_tabs_default:
+    for clean_tab in main_dashboard_tabs_list:
+        if clean_tab in main_tabs_default:
+            main_tabs_default = clean_tab
+            break
+if main_tabs_default not in main_dashboard_tabs_list:
     main_tabs_default = None
 
 main_tab_markets, main_tab_real, main_tab_stocks, main_tab_public, main_tab_export, main_tab_catalog = st.tabs(

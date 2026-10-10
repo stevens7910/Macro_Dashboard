@@ -31,206 +31,206 @@ from data_loader import INDICATORS, IndicatorInfo
 
 # Struktura: code -> (region, main_tab_idx, sub_tab_id, anchor_id, extra_aliases)
 # main_tab_idx:
-#   0 = 💳 Finanční trhy & Měna
-#   1 = 🏛️ Reálná ekonomika & Práce
-#   2 = 📈 Trhy
-#   3 = 🌐 Fiskál & Svět
+#   0 = Finanční trhy & Měna
+#   1 = Reálná ekonomika & Práce
+#   2 = Trhy
+#   3 = Fiskál & Svět
 INDICATOR_NAVIGATION_REGISTRY: Dict[str, Dict[str, Any]] = {
     # -------------------------------------------------------------------------
     # 🇨🇿 ČESKÁ REPUBLIKA (CZ)
     # -------------------------------------------------------------------------
     "repo_rate": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (ČNB)", "anchor": "chart_cz_rates",
         "aliases": ["repo", "2t repo", "cnb", "čnb", "sazby", "urok", "menova politika", "zakladni sazba"]
     },
     "discount_rate": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (ČNB)", "anchor": "chart_cz_rates",
         "aliases": ["diskont", "diskontni", "vklady bank", "cnb", "sazba"]
     },
     "lombard_rate": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (ČNB)", "anchor": "chart_cz_rates",
         "aliases": ["lombard", "lombardni", "likvidita", "zapujcky", "cnb", "sazba"]
     },
     "pribor_1m": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (ČNB)", "anchor": "chart_cz_rates",
         "aliases": ["pribor", "pribor 1m", "mezibankovni sazba", "fixace", "peněžní trh"]
     },
     "pribor_3m": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (ČNB)", "anchor": "chart_cz_rates",
         "aliases": ["pribor", "pribor 3m", "3m pribor", "mezibankovni trh", "uvery", "hypoteky benchmark"]
     },
     "pribor_6m": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (ČNB)", "anchor": "chart_cz_rates",
         "aliases": ["pribor", "pribor 6m", "6m pribor", "mezibankovni trh", "fixace"]
     },
     "czgb_10y": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (CZ)", "anchor": "chart_cz_yield_curve",
         "aliases": ["czgb", "10y czgb", "státní dluhopis", "český dluhopis", "vynos", "benchmark", "křivka", "dluhopisy"]
     },
     "czgb_2y": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (CZ)", "anchor": "chart_cz_yield_curve",
         "aliases": ["czgb 2y", "2y czgb", "kratky dluhopis", "statni dluhopis", "vynos", "dluhopisy"]
     },
     "czgb_5y": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (CZ)", "anchor": "chart_cz_yield_curve",
         "aliases": ["czgb 5y", "5y czgb", "strednedoby dluhopis", "statni dluhopis", "vynos", "dluhopisy"]
     },
     "czgb_15y": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (CZ)", "anchor": "chart_cz_yield_curve",
         "aliases": ["czgb 15y", "15y czgb", "dlouhy dluhopis", "statni dluhopis", "vynos", "dluhopisy"]
     },
     "irs_10y": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (CZ)", "anchor": "chart_cz_yield_curve",
         "aliases": ["irs", "irs 10y", "interest rate swap", "urokovy swap", "derivaty", "zajisteni"]
     },
     "irs_5y": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (CZ)", "anchor": "chart_cz_yield_curve",
         "aliases": ["irs 5y", "5y irs", "interest rate swap", "urokovy swap", "derivaty"]
     },
     "czgb_spread_10y_2y": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (CZ)", "anchor": "chart_cz_yield_curve",
         "aliases": ["sklon krivky", "spread", "10y-2y", "inverze krivky", "recese", "spready"]
     },
     "czgb_bund_spread_10y": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (CZ)", "anchor": "chart_cz_credit_spreads",
         "aliases": ["bund", "spread", "spready", "kreditni spread", "czgb vs bund", "rizikova premie"]
     },
     "cz_asw_10y_spread": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (CZ)", "anchor": "chart_cz_credit_spreads",
         "aliases": ["asw", "asset swap", "asw spread", "spread", "spready", "swap spread"]
     },
     "eur_czk": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "fx",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "fx",
         "sub_tab_label": "Měnové kurzy (FX)", "anchor": "chart_dynamic_fx",
         "aliases": ["euro", "koruna", "eur czk", "fx", "devizovy kurz", "mena", "smenny kurz"]
     },
     "usd_czk": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "fx",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "fx",
         "sub_tab_label": "Měnové kurzy (FX)", "anchor": "chart_dynamic_fx",
         "aliases": ["dolar", "dolar koruna", "usd czk", "fx", "devizovy kurz", "mena"]
     },
     "pln_czk": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "fx",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "fx",
         "sub_tab_label": "Měnové kurzy (FX)", "anchor": "chart_dynamic_fx",
         "aliases": ["zloty", "polsky zloty", "pln czk", "fx", "kurz", "mena"]
     },
     "gbp_czk": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "fx",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "fx",
         "sub_tab_label": "Měnové kurzy (FX)", "anchor": "chart_dynamic_fx",
         "aliases": ["libra", "britska libra", "gbp czk", "fx", "kurz", "mena"]
     },
     "cz_mortgage_rate": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "banking",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "banking",
         "sub_tab_label": "Bankovní sektor & Úvěry (ČR)", "anchor": "chart_cz_banking_loans",
         "aliases": ["hypoteka", "hypoteky", "hypotecni sazba", "cba hypomonitor", "uvery na bydleni", "banky"]
     },
     "cz_corporate_loans_yoy": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "banking",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "banking",
         "sub_tab_label": "Bankovní sektor & Úvěry (ČR)", "anchor": "chart_cz_banking_loans",
         "aliases": ["korporatni uvery", "firemni uvery", "podnikatelske pujcky", "banky", "uverovani"]
     },
     "cz_m2_growth_yoy": {
-        "region": "CZ", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "banking",
+        "region": "CZ", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "banking",
         "sub_tab_label": "Bankovní sektor & Úvěry (ČR)", "anchor": "chart_cz_banking_loans",
         "aliases": ["m2", "peněžní zasoba", "menovy agregat", "likvidita", "inflacni tlaky"]
     },
     "cz_pmi_manufacturing": {
-        "region": "CZ", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "leading",
+        "region": "CZ", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "leading",
         "sub_tab_label": "Předstihové ukazatele & Sentiment", "anchor": "chart_cz_leading_indicators",
         "aliases": ["pmi", "prumysl pmi", "predstihove ukazatele", "s&p global", "vyroba", "nakupni manazeri"]
     },
     "cz_confidence_composite": {
-        "region": "CZ", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "leading",
+        "region": "CZ", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "leading",
         "sub_tab_label": "Předstihové ukazatele & Sentiment", "anchor": "chart_cz_leading_indicators",
         "aliases": ["duvera", "konjunkturni pruzkum", "sentiment csu", "spotrebitele", "podnikatele", "nalada"]
     },
     "gdp_growth_real": {
-        "region": "CZ", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "gdp",
+        "region": "CZ", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "gdp",
         "sub_tab_label": "HDP", "anchor": "chart_cz_gdp",
         "aliases": ["hdp", "gdp", "rust hdp", "ekonomicky rust", "realne hdp", "csu"]
     },
     "gdp_nominal_czk_bn": {
-        "region": "CZ", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "gdp",
+        "region": "CZ", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "gdp",
         "sub_tab_label": "HDP", "anchor": "chart_cz_gdp",
         "aliases": ["nominalni hdp", "velikost ekonomiky", "hdp v miliardach", "hdp cr"]
     },
     "cpi_yoy": {
-        "region": "CZ", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "inflation",
+        "region": "CZ", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "inflation",
         "sub_tab_label": "Inflace (CPI)", "anchor": "chart_cz_inflation",
         "aliases": ["cpi", "inflace", "zdrazovani", "cenova hladina", "spotrebitelske ceny", "csu"]
     },
     "cpi_core_yoy": {
-        "region": "CZ", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "inflation",
+        "region": "CZ", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "inflation",
         "sub_tab_label": "Inflace (CPI)", "anchor": "chart_cz_inflation",
         "aliases": ["jadrova inflace", "core cpi", "core inflace", "menove politicka inflace", "csu"]
     },
     "retail_sales_yoy": {
-        "region": "CZ", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "activity",
+        "region": "CZ", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "activity",
         "sub_tab_label": "Průmysl a spotřeba", "anchor": "chart_activity_panel",
         "aliases": ["maloobchod", "maloobchodni trzby", "spotreba", "domacnosti", "utraty"]
     },
     "industrial_prod_yoy": {
-        "region": "CZ", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "activity",
+        "region": "CZ", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "activity",
         "sub_tab_label": "Průmysl a spotřeba", "anchor": "chart_activity_panel",
         "aliases": ["prumysl", "prumyslova produkce", "tovarny", "vyroba", "automotive"]
     },
     "unemployment_rate": {
-        "region": "CZ", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "labor",
+        "region": "CZ", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "labor",
         "sub_tab_label": "Trh práce & Mzdy", "anchor": "chart_cz_unemployment",
         "aliases": ["nezamestnanost", "mira nezamestnanosti", "trh prace", "urad prace", "mpsv"]
     },
     "cz_nominal_wage_yoy": {
-        "region": "CZ", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "labor",
+        "region": "CZ", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "labor",
         "sub_tab_label": "Trh práce & Mzdy", "anchor": "chart_cz_wages",
         "aliases": ["mzda", "mzdy", "nominalni mzda", "prumerna hruba mzda", "platy", "prijmy"]
     },
     "cz_real_wage_yoy": {
-        "region": "CZ", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "labor",
+        "region": "CZ", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "labor",
         "sub_tab_label": "Trh práce & Mzdy", "anchor": "chart_cz_wages",
         "aliases": ["realna mzda", "kupni sila", "rust mezd po odecteni inflace", "platy"]
     },
     "px_index": {
-        "region": "CZ", "main_tab": "📈 Trhy", "sub_tab_id": "px",
+        "region": "CZ", "main_tab": "Trhy", "sub_tab_id": "px",
         "sub_tab_label": "🇨🇿 Index PX (Pražská burza)", "anchor": "chart_single_px",
         "aliases": ["px", "bcpp", "prazska burza", "ceske akcie", "cez", "erste", "komercni banka"]
     },
     "public_debt_czk_bn": {
-        "region": "CZ", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
+        "region": "CZ", "main_tab": "Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_cz_debt_pct",
         "aliases": ["statni dluh", "verejny dluh", "dluh cr", "mf cr", "zadluzeni"]
     },
     "public_debt_gdp_pct": {
-        "region": "CZ", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
+        "region": "CZ", "main_tab": "Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_cz_debt_pct",
         "aliases": ["dluh k hdp", "maastricht", "podil dluhu", "fiskalni pravidla"]
     },
     "budget_deficit_czk_bn": {
-        "region": "CZ", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
+        "region": "CZ", "main_tab": "Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_cz_deficit",
         "aliases": ["schodek", "deficit", "statni rozpocet", "saldo rozpoctu", "pokladni plneni"]
     },
     "cz_current_account_gdp_pct": {
-        "region": "CZ", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "external",
+        "region": "CZ", "main_tab": "Fiskál & Svět", "sub_tab_id": "external",
         "sub_tab_label": "Vnější rovnováha & Zahraniční obchod (ČR)", "anchor": "chart_cz_external_balance",
         "aliases": ["bezny ucet", "platebni bilance", "vnejsi rovnovaha", "export import"]
     },
     "cz_trade_balance_czk_bn": {
-        "region": "CZ", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "external",
+        "region": "CZ", "main_tab": "Fiskál & Svět", "sub_tab_id": "external",
         "sub_tab_label": "Vnější rovnováha & Zahraniční obchod (ČR)", "anchor": "chart_cz_external_balance",
         "aliases": ["zahranicni obchod", "obchodni bilance", "export", "import", "csu"]
     },
@@ -239,137 +239,137 @@ INDICATOR_NAVIGATION_REGISTRY: Dict[str, Dict[str, Any]] = {
     # 🇪🇺 EVROPSKÁ UNIE / EUROZÓNA (EU)
     # -------------------------------------------------------------------------
     "ecb_deposit_rate": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (ECB)", "anchor": "chart_eu_rates",
         "aliases": ["ecb", "depozitni sazba", "dfr", "deposit facility", "sazby eu", "frankfurt"]
     },
     "ecb_refi_rate": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (ECB)", "anchor": "chart_eu_rates",
         "aliases": ["refinancni sazba", "mro", "main refinancing", "ecb", "sazby eurozona"]
     },
     "ecb_lending_rate": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (ECB)", "anchor": "chart_eu_rates",
         "aliases": ["mezni zapujcni sazba", "mlf", "marginal lending", "ecb", "koridor"]
     },
     "euribor_3m": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (ECB)", "anchor": "chart_eu_rates",
         "aliases": ["euribor", "euribor 3m", "3m euribor", "mezibankovni euro", "benchmark"]
     },
     "estr_rate": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (ECB)", "anchor": "chart_eu_rates",
         "aliases": ["estr", "euro short term rate", "overnight sazba", "bezrizikova sazba eu"]
     },
     "bund_10y": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (Bund)", "anchor": "chart_eu_yield_curve",
         "aliases": ["bund", "10y bund", "nemecke dluhopisy", "nemecko benchmark", "vynos bundu", "dluhopisy eu"]
     },
     "bund_2y": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (Bund)", "anchor": "chart_eu_yield_curve",
         "aliases": ["bund 2y", "schatz", "2y bund", "nemecky statni dluhopis", "kratky bund"]
     },
     "bund_5y": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (Bund)", "anchor": "chart_eu_yield_curve",
         "aliases": ["bund 5y", "bobl", "5y bund", "strednedoby bund", "nemecko dluhopis"]
     },
     "bund_30y": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (Bund)", "anchor": "chart_eu_yield_curve",
         "aliases": ["bund 30y", "30y bund", "ultra dlouhy bund", "nemecko dluhopis"]
     },
     "bund_spread_10y_2y": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (Bund)", "anchor": "chart_eu_yield_curve",
         "aliases": ["sklon nemecke krivky", "bund spread", "spread", "spready", "10y-2y bund"]
     },
     "eu_btp_bund_spread": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (Bund)", "anchor": "chart_eu_credit_spreads",
         "aliases": ["btp", "btp bund", "italie spread", "rizikovy spread", "periferie", "spread", "spready"]
     },
     "eur_pln": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "fx",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "fx",
         "sub_tab_label": "Měnové kurzy (FX)", "anchor": "chart_dynamic_fx",
         "aliases": ["eur pln", "euro zloty", "fx", "kurz", "mena"]
     },
     "eur_gbp": {
-        "region": "EU", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "fx",
+        "region": "EU", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "fx",
         "sub_tab_label": "Měnové kurzy (FX)", "anchor": "chart_dynamic_fx",
         "aliases": ["eur gbp", "euro libra", "fx", "kurz", "mena"]
     },
     "eu_ifo_business_climate": {
-        "region": "EU", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "leading",
+        "region": "EU", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "leading",
         "sub_tab_label": "Předstihové ukazatele & Sentiment", "anchor": "chart_eu_leading_indicators",
         "aliases": ["ifo", "ifo index", "nemecky ifo", "podnikatelske klima", "sentiment", "mnichov"]
     },
     "eu_composite_pmi": {
-        "region": "EU", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "leading",
+        "region": "EU", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "leading",
         "sub_tab_label": "Předstihové ukazatele & Sentiment", "anchor": "chart_eu_leading_indicators",
         "aliases": ["composite pmi", "pmi eurozona", "hcoo pmi", "predstihove ukazatele eu", "vyroba sluzby"]
     },
     "eu_gdp_growth_real": {
-        "region": "EU", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "gdp",
+        "region": "EU", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "gdp",
         "sub_tab_label": "HDP", "anchor": "chart_eu_gdp",
         "aliases": ["hdp eurozona", "eu gdp", "rust eurozony", "eurostat", "ekonomika eu"]
     },
     "eu_gdp_nominal_eur_bn": {
-        "region": "EU", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "gdp",
+        "region": "EU", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "gdp",
         "sub_tab_label": "HDP", "anchor": "chart_eu_gdp",
         "aliases": ["nominalni hdp eu", "velikost eurozony", "miliardy eur hdp"]
     },
     "eu_cpi_yoy": {
-        "region": "EU", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "inflation",
+        "region": "EU", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "inflation",
         "sub_tab_label": "Inflace (HICP)", "anchor": "chart_eu_inflation",
         "aliases": ["hicp", "inflace eu", "cpi eu", "eurostat", "zdrazovani v eurozone"]
     },
     "eu_core_cpi_yoy": {
-        "region": "EU", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "inflation",
+        "region": "EU", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "inflation",
         "sub_tab_label": "Inflace (HICP)", "anchor": "chart_eu_inflation",
         "aliases": ["jadrova inflace eu", "core hicp", "core cpi eurozona", "bazicka inflace"]
     },
     "eu_retail_sales_yoy": {
-        "region": "EU", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "activity",
+        "region": "EU", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "activity",
         "sub_tab_label": "Průmysl a spotřeba", "anchor": "chart_activity_panel",
         "aliases": ["maloobchod eu", "spotreba eurozona", "retail sales eurostat"]
     },
     "eu_industrial_prod_yoy": {
-        "region": "EU", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "activity",
+        "region": "EU", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "activity",
         "sub_tab_label": "Průmysl a spotřeba", "anchor": "chart_activity_panel",
         "aliases": ["prumysl eu", "prumyslova produkce eurostat", "vyroba eurozona"]
     },
     "eu_unemployment_rate": {
-        "region": "EU", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "labor",
+        "region": "EU", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "labor",
         "sub_tab_label": "Trh práce & Mzdy", "anchor": "chart_eu_unemployment",
         "aliases": ["nezamestnanost eu", "mira nezamestnanosti eurozona", "eurostat", "trh prace"]
     },
     "eu_negotiated_wages_yoy": {
-        "region": "EU", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "labor",
+        "region": "EU", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "labor",
         "sub_tab_label": "Trh práce & Mzdy", "anchor": "chart_eu_wages",
         "aliases": ["sjednane mzdy", "wages ecb", "mzdova spirala", "rust mezd v eurozone"]
     },
     "stoxx50_index": {
-        "region": "EU", "main_tab": "📈 Trhy", "sub_tab_id": "stoxx",
+        "region": "EU", "main_tab": "Trhy", "sub_tab_id": "stoxx",
         "sub_tab_label": "🇪🇺 Euro Stoxx 50", "anchor": "chart_single_stoxx",
         "aliases": ["stoxx", "euro stoxx 50", "sx5e", "evropske akcie", "blue chips"]
     },
     "eu_public_debt_gdp_pct": {
-        "region": "EU", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
+        "region": "EU", "main_tab": "Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_eu_debt_pct",
         "aliases": ["dluh eurozony", "verejny dluh k hdp eu", "maastrichtsky dluh"]
     },
     "eu_public_debt_eur_bn": {
-        "region": "EU", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
+        "region": "EU", "main_tab": "Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_eu_debt_pct",
         "aliases": ["nominalni dluh eu", "dluh v miliardach eur", "vladni dluh eurostat"]
     },
     "eu_budget_deficit_eur_bn": {
-        "region": "EU", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
+        "region": "EU", "main_tab": "Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_eu_deficit",
         "aliases": ["schodek eu", "deficit eurozony", "saldo vlady eurostat"]
     },
@@ -378,177 +378,177 @@ INDICATOR_NAVIGATION_REGISTRY: Dict[str, Dict[str, Any]] = {
     # 🇺🇸 SPOJENÉ STÁTY AMERICKÉ (US)
     # -------------------------------------------------------------------------
     "fed_funds_upper": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (Fed)", "anchor": "chart_us_rates",
         "aliases": ["fed", "fed funds", "horni mez", "fomc", "americke sazby", "powell"]
     },
     "fed_funds_lower": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (Fed)", "anchor": "chart_us_rates",
         "aliases": ["fed funds dolni mez", "fed floor", "fomc koridor", "fed sazby"]
     },
     "fed_effective_rate": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (Fed)", "anchor": "chart_us_rates",
         "aliases": ["effr", "efektivni fed funds", "ny fed", "skutecna sazba"]
     },
     "sofr_rate": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (Fed)", "anchor": "chart_us_rates",
         "aliases": ["sofr", "secured overnight", "repo trh usa", "libor nahrada"]
     },
     "us_1m": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (Fed)", "anchor": "chart_us_rates",
         "aliases": ["t-bill 1m", "treasury bill 1m", "kratkodoby vynos usa"]
     },
     "us_3m": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "rates",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "rates",
         "sub_tab_label": "Sazby (Fed)", "anchor": "chart_us_rates",
         "aliases": ["t-bill 3m", "3m treasury bill", "peněžní trh usa"]
     },
     "us_10y": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (US)", "anchor": "chart_us_yield_curve",
         "aliases": ["10y treasury", "t-note 10y", "americky benchmark", "vynos 10y usa", "dluhopisy usa"]
     },
     "us_2y": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (US)", "anchor": "chart_us_yield_curve",
         "aliases": ["2y treasury", "t-note 2y", "kratky dluhopis usa", "ocekavani fedu"]
     },
     "us_5y": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (US)", "anchor": "chart_us_yield_curve",
         "aliases": ["5y treasury", "t-note 5y", "strednedoby dluhopis usa"]
     },
     "us_30y": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (US)", "anchor": "chart_us_yield_curve",
         "aliases": ["30y treasury", "t-bond 30y", "dlouhy dluhopis usa"]
     },
     "us_spread_10y_2y": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "curve",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "curve",
         "sub_tab_label": "Výnosová křivka & Spready (US)", "anchor": "chart_us_yield_curve",
         "aliases": ["sklon us krivky", "inverze us krivky", "10y-2y spread", "spread", "spready", "indikator recese"]
     },
     "dxy_index": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "fx",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "fx",
         "sub_tab_label": "Měnové kurzy (FX)", "anchor": "chart_dynamic_fx",
         "aliases": ["dxy", "dolarovy index", "us dollar index", "sila dolaru", "fx"]
     },
     "eur_usd": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "fx",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "fx",
         "sub_tab_label": "Měnové kurzy (FX)", "anchor": "chart_dynamic_fx",
         "aliases": ["eur usd", "euro dolar", "hlavni menovy par", "fx", "forex"]
     },
     "usd_jpy": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "fx",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "fx",
         "sub_tab_label": "Měnové kurzy (FX)", "anchor": "chart_dynamic_fx",
         "aliases": ["usd jpy", "dolar jen", "japonsky jen", "fx", "forex"]
     },
     "gbp_usd": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "fx",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "fx",
         "sub_tab_label": "Měnové kurzy (FX)", "anchor": "chart_dynamic_fx",
         "aliases": ["gbp usd", "cable", "libra dolar", "fx", "forex"]
     },
     "usd_pln": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "fx",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "fx",
         "sub_tab_label": "Měnové kurzy (FX)", "anchor": "chart_dynamic_fx",
         "aliases": ["usd pln", "dolar zloty", "fx", "forex"]
     },
     "usd_chf": {
-        "region": "US", "main_tab": "💳 Finanční trhy & Měna", "sub_tab_id": "fx",
+        "region": "US", "main_tab": "Finanční trhy & Měna", "sub_tab_id": "fx",
         "sub_tab_label": "Měnové kurzy (FX)", "anchor": "chart_dynamic_fx",
         "aliases": ["usd chf", "dolar svycarsky frank", "fx", "forex"]
     },
     "us_ism_manufacturing": {
-        "region": "US", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "leading",
+        "region": "US", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "leading",
         "sub_tab_label": "Předstihové ukazatele & Sentiment", "anchor": "chart_us_leading_indicators",
         "aliases": ["ism", "ism manufacturing", "ism prumysl", "vyrobni pmi usa", "predstihove ukazatele"]
     },
     "us_ism_services": {
-        "region": "US", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "leading",
+        "region": "US", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "leading",
         "sub_tab_label": "Předstihové ukazatele & Sentiment", "anchor": "chart_us_leading_indicators",
         "aliases": ["ism services", "ism sluzby", "sluzby usa", "nevrobni ism"]
     },
     "us_michigan_sentiment": {
-        "region": "US", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "leading",
+        "region": "US", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "leading",
         "sub_tab_label": "Předstihové ukazatele & Sentiment", "anchor": "chart_us_leading_indicators",
         "aliases": ["michigan", "michigan sentiment", "spotrebitelsky sentiment", "nalada spotrebitelu usa"]
     },
     "us_gdp_growth_real": {
-        "region": "US", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "gdp",
+        "region": "US", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "gdp",
         "sub_tab_label": "HDP", "anchor": "chart_us_gdp",
         "aliases": ["us gdp", "hdp usa", "rust hdp usa", "bea", "ekonomika spojenych statu"]
     },
     "us_gdp_nominal_usd_bn": {
-        "region": "US", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "gdp",
+        "region": "US", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "gdp",
         "sub_tab_label": "HDP", "anchor": "chart_us_gdp",
         "aliases": ["nominalni hdp usa", "velikost americke ekonomiky", "miliardy dolaru hdp"]
     },
     "us_cpi_yoy": {
-        "region": "US", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "inflation",
+        "region": "US", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "inflation",
         "sub_tab_label": "Inflace (CPI)", "anchor": "chart_us_inflation",
         "aliases": ["cpi usa", "inflace usa", "bls", "spotrebitelske ceny usa", "zdrazovani usa"]
     },
     "us_core_cpi_yoy": {
-        "region": "US", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "inflation",
+        "region": "US", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "inflation",
         "sub_tab_label": "Inflace (CPI)", "anchor": "chart_us_inflation",
         "aliases": ["jadrova inflace usa", "core cpi us", "bls", "jadrovy index cen"]
     },
     "us_retail_sales_yoy": {
-        "region": "US", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "activity",
+        "region": "US", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "activity",
         "sub_tab_label": "Průmysl a spotřeba", "anchor": "chart_activity_panel",
         "aliases": ["maloobchod usa", "retail sales census", "spotreba americane"]
     },
     "us_industrial_prod_yoy": {
-        "region": "US", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "activity",
+        "region": "US", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "activity",
         "sub_tab_label": "Průmysl a spotřeba", "anchor": "chart_activity_panel",
         "aliases": ["prumysl usa", "industrial production fed", "g.17", "tovarni vyroba"]
     },
     "us_unemployment_rate": {
-        "region": "US", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "labor",
+        "region": "US", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "labor",
         "sub_tab_label": "Trh práce & Mzdy", "anchor": "chart_us_unemployment",
         "aliases": ["nezamestnanost usa", "u-3", "bls", "mira nezamestnanosti usa", "trh prace"]
     },
     "us_nonfarm_payrolls_k": {
-        "region": "US", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "labor",
+        "region": "US", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "labor",
         "sub_tab_label": "Trh práce & Mzdy", "anchor": "chart_us_unemployment",
         "aliases": ["nfp", "nonfarm payrolls", "pracovni mista usa", "tvorba mist", "bls job report"]
     },
     "us_hourly_earnings_yoy": {
-        "region": "US", "main_tab": "🏛️ Reálná ekonomika & Práce", "sub_tab_id": "labor",
+        "region": "US", "main_tab": "Reálná ekonomika & Práce", "sub_tab_id": "labor",
         "sub_tab_label": "Trh práce & Mzdy", "anchor": "chart_us_wages",
         "aliases": ["hodinova mzda", "hourly earnings", "rust mezd usa", "bls", "wages"]
     },
     "sp500_index": {
-        "region": "US", "main_tab": "📈 Trhy", "sub_tab_id": "sp500",
+        "region": "US", "main_tab": "Trhy", "sub_tab_id": "sp500",
         "sub_tab_label": "🇺🇸 S&P 500", "anchor": "chart_single_sp",
         "aliases": ["sp500", "s&p 500", "s&p", "spy", "americke akcie", "wall street"]
     },
     "nasdaq_index": {
-        "region": "US", "main_tab": "📈 Trhy", "sub_tab_id": "nasdaq",
+        "region": "US", "main_tab": "Trhy", "sub_tab_id": "nasdaq",
         "sub_tab_label": "🇺🇸 NASDAQ Composite", "anchor": "chart_single_nasdaq",
         "aliases": ["nasdaq", "nasdaq composite", "qqq", "technologicke akcie", "tech index"]
     },
     "vix_index": {
-        "region": "US", "main_tab": "📈 Trhy", "sub_tab_id": "vix",
+        "region": "US", "main_tab": "Trhy", "sub_tab_id": "vix",
         "sub_tab_label": "⚡ Index volatility VIX (Tržní riziko)", "anchor": "chart_vix_sentiment",
         "aliases": ["vix", "index volatility", "index strachu", "cboe vix", "trzni sentiment", "riziko"]
     },
     "us_public_debt_usd_bn": {
-        "region": "US", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
+        "region": "US", "main_tab": "Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_us_debt_pct",
         "aliases": ["federalni dluh", "dluh usa", "us national debt", "treasury dept", "dluhovy strop"]
     },
     "us_public_debt_gdp_pct": {
-        "region": "US", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
+        "region": "US", "main_tab": "Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_us_debt_pct",
         "aliases": ["us dluh k hdp", "debt to gdp usa", "federalni zadluzeni"]
     },
     "us_budget_deficit_usd_bn": {
-        "region": "US", "main_tab": "🌐 Fiskál & Svět", "sub_tab_id": "debt",
+        "region": "US", "main_tab": "Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_us_deficit",
         "aliases": ["schodek usa", "deficit usa", "us federal deficit", "rozpocet bily dum"]
     }
@@ -615,7 +615,7 @@ def build_indicator_search_catalog() -> list[dict[str, Any]]:
             "badgeColor": badge_info["color"],
             "badgeBorder": badge_info["border"],
             "countrySwitch": country_switches.get(reg, "🇨🇿 Česká republika"),
-            "mainTab": nav_info.get("main_tab", "💳 Finanční trhy & Měna"),
+            "mainTab": nav_info.get("main_tab", "Finanční trhy & Měna"),
             "subTabId": nav_info.get("sub_tab_id", "rates"),
             "subTabLabel": nav_info.get("sub_tab_label", "Sazby"),
             "anchor": nav_info.get("anchor", "chart_cz_rates"),
@@ -663,7 +663,7 @@ def handle_indicator_search_navigation() -> None:
     st.session_state["macro_region_top_switch"] = country_map.get(reg, "🇨🇿 Česká republika")
 
     # 3. Přepnutí hlavní záložky
-    st.session_state["main_dashboard_tabs_selected"] = nav_info.get("main_tab", "💳 Finanční trhy & Měna")
+    st.session_state["main_dashboard_tabs_selected"] = nav_info.get("main_tab", "Finanční trhy & Měna")
 
     # 4. Přepnutí konkrétní podzáložky podle hlavní kategorie
     main_tab_str = nav_info.get("main_tab", "")
