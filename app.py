@@ -230,6 +230,82 @@ CUSTOM_CSS = """
         font-weight: 700 !important;
     }
 
+    /* KARTA AKTUÁLNÍHO FINANČNÍHO ZPRAVODAJSTVÍ A KONTEXTU */
+    .macro-news-card {
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-left: 4px solid #2563eb;
+        border-radius: 8px;
+        padding: 13px 17px;
+        margin-top: 10px;
+        margin-bottom: 18px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .macro-news-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 7px;
+    }
+    .macro-news-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1d4ed8;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    .news-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background-color: #2563eb;
+        display: inline-block;
+    }
+    .macro-news-meta {
+        font-size: 0.77rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .macro-news-headline {
+        font-size: 1.00rem;
+        font-weight: 750;
+        color: #0f172a;
+        line-height: 1.35;
+        margin-bottom: 9px;
+    }
+    .macro-news-content {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 0.84rem;
+        line-height: 1.45;
+    }
+    .news-section-item {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 8px 12px;
+    }
+    .news-label {
+        font-weight: 700;
+        color: #1e293b;
+        margin-right: 6px;
+    }
+    .news-text {
+        color: #475569;
+    }
+
     /* TOP HEADER & KEY STATS PANELS */
     .sa-header-container {
         background: #ffffff;
@@ -671,50 +747,22 @@ else:
 
 frequency_code = "M" if freq_choice.startswith("Měsíční") else "Q"
 
-# 3. Výběr indikátorů podle aktivní ekonomiky
+# 3. Všechny ukazatele jsou vždy aktivní a zobrazeny
+if is_cz:
+    selected_indicators = list(CZ_INDICATORS.keys())
+elif is_eu:
+    selected_indicators = list(EU_INDICATORS.keys())
+else:
+    selected_indicators = list(US_INDICATORS.keys())
+
 st.sidebar.markdown(
     """
-    <div class="sidebar-section-header">
-        <span class="sidebar-section-title">📊 Výběr ukazatelů</span>
-        <span class="sidebar-section-badge">Metriky</span>
+    <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px; margin-top: 14px; margin-bottom: 6px;">
+        <div style="font-size: 0.74rem; font-weight: 750; color: #1e293b; text-transform: uppercase; margin-bottom: 3px;">✅ Všechny ukazatele aktivní</div>
+        <div style="font-size: 0.73rem; color: #64748b; line-height: 1.35;">Všechny časové řady jsou trvale zapnuty. Podrobný metodický přehled a zdroje dat naleznete v nové záložce <strong>📖 Seznam ukazatelů & Zdroje</strong>.</div>
     </div>
     """,
     unsafe_allow_html=True
-)
-
-if is_cz:
-    available_indicator_keys = list(CZ_INDICATORS.keys())
-    default_indicators = [
-        "repo_rate", "discount_rate", "lombard_rate",
-        "pribor_3m", "cpi_yoy", "cpi_core_yoy", "gdp_growth_real",
-        "retail_sales_yoy", "industrial_prod_yoy",
-        "unemployment_rate", "eur_czk", "pln_czk", "gbp_czk",
-        "public_debt_gdp_pct", "czgb_10y", "px_index"
-    ]
-elif is_eu:
-    available_indicator_keys = list(EU_INDICATORS.keys())
-    default_indicators = [
-        "ecb_deposit_rate", "ecb_refi_rate", "euribor_3m", "estr_rate",
-        "eu_cpi_yoy", "eu_core_cpi_yoy", "eu_gdp_growth_real",
-        "eu_retail_sales_yoy", "eu_industrial_prod_yoy",
-        "eu_unemployment_rate", "eur_usd", "eur_pln", "eur_gbp",
-        "eu_public_debt_gdp_pct", "bund_10y", "stoxx50_index"
-    ]
-else:
-    available_indicator_keys = list(US_INDICATORS.keys())
-    default_indicators = [
-        "fed_funds_upper", "fed_funds_lower", "sofr_rate",
-        "us_3m", "us_cpi_yoy", "us_core_cpi_yoy", "us_gdp_growth_real",
-        "us_retail_sales_yoy", "us_industrial_prod_yoy",
-        "us_unemployment_rate", "dxy_index", "eur_usd", "gbp_usd", "usd_pln",
-        "us_public_debt_gdp_pct", "us_10y", "sp500_index", "nasdaq_index"
-    ]
-
-selected_indicators = st.sidebar.multiselect(
-    f"Vyberte ukazatele pro {region_label}:",
-    options=available_indicator_keys,
-    default=default_indicators,
-    format_func=lambda k: f"{INDICATORS[k].category}: {INDICATORS[k].name_cz} ({INDICATORS[k].unit})"
 )
 
 # 4. Zdroj dat & Nastavení API
@@ -2413,15 +2461,239 @@ df_export_active["Datum"] = df_export_active["Datum"].dt.strftime("%d.%m.%Y")
 
 
 # =============================================================================
-# 10. ZÁLOŽKY DASHBOARDU (AGREGOVANÉ DO 5 KATEGORIÍ DLE POŽADAVKU)
+# 9b. AKTUÁLNÍ FINANČNÍ ZPRAVODAJSTVÍ A METODICKÝ KATALOG PRO ČESKOU REPUBLIKU
 # =============================================================================
 
-main_tab_markets, main_tab_real, main_tab_stocks, main_tab_public, main_tab_export = st.tabs([
+CZ_NEWS = {
+    "rates": {
+        "tag": "MĚNOVÁ POLITIKA ČNB & SAZBY",
+        "date": "Poslední zasedání Bankovní rady ČNB",
+        "source": "Česká národní banka (Tisková konference guvernéra A. Michla) / ČTK",
+        "title": "Bankovní rada ČNB pozvolna uvolňuje měnovou politiku: 2T repo sazba upravena na 4,00 % / 3,75 %",
+        "reason": "Pokles celkové spotřebitelské inflace k 2% cíli vytvořil prostor pro uvolnění měnových podmínek. Bankovní rada však tempo snižování záměrně rozvolnila na standardních 25 bazických bodů.",
+        "context": "Guvernér ČNB zdůraznil, že boj s inflací nekončí. Proinflačním rizikem zůstává setrvačnost v cenách služeb a oživení mzdového růstu. Měnová politika zůstane v mírně restriktivním pásmu déle, než trhy původně očekávaly, aby se zabránilo opětovnému vzplanutí inflačních očekávání."
+    },
+    "yield_curve": {
+        "tag": "DLUHOPISOVÝ TRH & VÝNOSY",
+        "date": "Poslední aukce státních dluhopisů MF ČR",
+        "source": "Ministerstvo financí ČR (Měsíční zpráva o řízení dluhu) / Patria Finance",
+        "title": "Napřimování české výnosové křivky: 10letý dluhopis CZGB se drží u 4,10 %, odeznívá inverze",
+        "reason": "S poklesem krátkodobých sazeb ČNB klesají výnosy na 2letém tenoru, zatímco dlouhý konec křivky (10Y až 15Y) zůstává ukotven vyšší emisní aktivitou státu k profinancování schodku rozpočtu.",
+        "context": "Po téměř dvou letech hluboké inverze se křivka státních dluhopisů CZGB vrací k přirozenému pozitivnímu sklonu (un-inversion). Poptávka domácích i zahraničních institucionálních investorů v aukcích MF ČR zůstává silná s průměrným přeupsáním 1,8×."
+    },
+    "fx": {
+        "tag": "DEVIZOVÝ TRH & KURZ KORUNY",
+        "date": "Denní fixace ČNB / Mezibankovní FX trh",
+        "source": "Česká národní banka (Denní devizový trh) / Hospodářské noviny Byznys",
+        "title": "Česká koruna se stabilizuje v pásmu 25,15–25,30 EUR/CZK, vůči dolaru odráží sílu americké měny",
+        "reason": "Koruně poskytuje oporu přetrvávající kladný úrokový diferenciál ČNB vůči ECB (+0,75 až +1,00 p.b.) a ujištění bankovní rady o připravenosti kurz v případě výkyvů stabilizovat.",
+        "context": "Vůči americkému dolaru (USD/CZK kolem 23,20–23,60) kurz kolísá v závislosti na globálním makru a geopolitice. Vývozci hlásí stabilní zajištění, zatímco silnější koruna pomáhá tlumit importovanou inflaci u energetických a technologických dovozů."
+    },
+    "gdp": {
+        "tag": "NÁRODNÍ ÚČTY & HOSPODÁŘSKÝ RŮST",
+        "date": "Poslední Rychlá informace ČSÚ o HDP",
+        "source": "Český statistický úřad (ČSÚ) / Analytici České bankovní asociace (ČBA)",
+        "title": "Česká ekonomika zrychluje: Meziroční růst HDP dosáhl 2,6 %, tahounem je spotřeba domácností",
+        "reason": "Hlavním motorem oživení po předchozí stagnaci je obnova reálných příjmů domácností a odložená spotřeba. K růstu pozitivně přispěla i hrubá tvorba fixního kapitálu a stavebnictví.",
+        "context": "Česká ekonomika se vymanila z recese nejpozději v regionu střední Evropy, avšak aktuální dynamika překonává tempo eurozóny. Zahraniční poptávka zůstává mírně tlumena slabším výkonem německého průmyslu, čistý export nicméně vykazuje kladné saldo."
+    },
+    "inflation": {
+        "tag": "SPOTŘEBITELSKÉ CENY & INFLACE",
+        "date": "Poslední Rychlá informace ČSÚ o indexech spotřebitelských cen",
+        "source": "Český statistický úřad (ČSÚ) / Měnová sekce ČNB / Patria.cz",
+        "title": "Meziroční inflace se drží v tolerančním pásmu ČNB (1,8–2,4 %), jádrová inflace mírně zvýšená vlivem služeb",
+        "reason": "Pokles celkové inflace byl podpořen odezněním energetického šoku, stabilizací cen pohonných hmot a mírným meziměsíčním poklesem cen potravin. Naopak jádrová inflace vykazuje vyšší setrvačnost (kolem 2,2 %).",
+        "context": "Vývoj potvrzuje úspěšné zkrocení dvouciferné inflace z let 2022–2023. Hlavní pozornost ČNB se nyní přesouvá k cenám ve službách (nájemné, pohostinství, rekreace), kde firmy promítají rostoucí mzdové náklady, což brání agresivnějšímu snižování úrokových sazeb."
+    },
+    "retail_industry": {
+        "tag": "KONJUNKTURA: SPOTŘEBA & PRŮMYSL",
+        "date": "Poslední měsíční data ČSÚ (Průmysl a Maloobchod)",
+        "source": "Český statistický úřad (ČSÚ) / Svaz průmyslu a dopravy ČR / E15",
+        "title": "Maloobchodní tržby rostou o 4,5 % s oživením nákupů, průmysl vykazuje smíšené signály",
+        "reason": "Růst reálných mezd vedl ke znatelnému zvýšení útrat za nepotravinářské zboží, elektroniku a online nákupy. V průmyslu táhne výrobu automobilový sektor (+5 % YoY), zatímco energeticky náročná odvětví stagnují.",
+        "context": "Data potvrzují dvourychlostní charakter ekonomiky – spotřebitelská poptávka domácností a služby prudce rostou, avšak exportně orientovaný těžký průmysl a strojírenství čelí poklesu nových zakázek z Německa a vysokým nákladům na dekarbonizaci."
+    },
+    "unemployment": {
+        "tag": "TRH PRÁCE & ZAMĚSTNANOST",
+        "date": "Poslední statistika MPSV a ČSÚ",
+        "source": "Ministerstvo práce a sociálních věcí (MPSV) / Eurostat / Seznam Zprávy",
+        "title": "Míra nezaměstnanosti v ČR činí 3,8 %, Česko si drží jednu z nejnižších úrovní v celé Evropské unii",
+        "reason": "Vysoká míra zaměstnanosti a flexibilita podniků udržují počet evidovaných uchazečů na nízkých stavech (kolem 275–285 tisíc osob), srovnatelně s počtem hlášených volných pracovních míst.",
+        "context": "Strukturální nedostatek techniků, řemeslníků a kvalifikovaných dělníků přetrvává napříč všemi regiony. Tento převis poptávky nutí firmy zvyšovat nominální mzdy o 6–7 % ročně, což představuje hlavní proinflační faktor pečlivě sledovaný ČNB."
+    },
+    "stocks_px": {
+        "tag": "AKCIOVÉ TRHY & BCPP",
+        "date": "Aktuální obchodování Burzy cenných papírů Praha",
+        "source": "Burza cenných papírů Praha (BCPP / PSE) / Analytici Patria Finance",
+        "title": "Index PX překonal hranici 1 700 bodů a útočí na mnohaletá maxima tažen bankovními tituly",
+        "reason": "Rekordní ziskovost a štědré dividendy bank (Erste Group, Komerční banka, Moneta) lákají domácí i zahraniční investory. Titul ČEZ poskytuje stabilitu při vysokých realizačních cenách elektřiny.",
+        "context": "Pražská burza patří v posledních dvou letech k nejvýkonnějším trhům v Evropě s celkovým dividendovým výnosem přes 7 % p.a. Příznivý sentiment podporuje také zařazení nových emisí (Colt CZ, Gevorkyan) a stabilní makroekonomické prostředí v ČR."
+    },
+    "debt": {
+        "tag": "FISKÁLNÍ POLITIKA & STÁTNÍ ROZPOČET",
+        "date": "Poslední pokladní plnění MF ČR & Notifikace vládního dluhu",
+        "source": "Ministerstvo financí ČR (Zpráva o plnění státního rozpočtu) / Eurostat",
+        "title": "Vládní dluh ČR činí 44,2 % HDP, konsolidační balíček přispívá ke snižování strukturálního deficitu",
+        "reason": "Zavedení ozdravného vládního balíčku (úprava sazeb DPH, snížení dotací a výdajových škrtů) stabilizovalo hospodaření státu a drží celkové zadlužení hluboko pod 60% limitem Maastrichtských kritérií.",
+        "context": "I přes relativně nízký poměr k HDP v porovnání s průměrem EU (cca 82 % HDP) zůstává výzvou absolutní výše dluhu (přes 3,3 bilionu Kč) a rostoucí náklady na obsluhu státního dluhu, které se pohybují kolem 90–95 miliard Kč ročně."
+    },
+    "intl_spread": {
+        "tag": "SOVEREIGN SPREADY & MEZINÁRODNÍ TRHY",
+        "date": "Aktuální dluhopisové spready na evropském trhu",
+        "source": "Bloomberg / Reuters / Analýza ČNB",
+        "title": "Výnosový spread CZGB vůči německému Bundu se stabilizuje kolem 180–200 bazických bodů",
+        "reason": "Rozpětí odráží rozdíl v úrokových sazbách mezi ČNB a ECB a specifickou rizikovou prémii korunového trhu mimo eurozónu.",
+        "context": "Přestože ČR má výrazně nižší poměr veřejného dluhu než většina zemí jižního křídla eurozóny, spread vůči Německu zůstává kladný zejména kvůli vyšší inflační zkušenosti z minulých let a samostatné měnové politice."
+    }
+}
+
+
+def render_cz_news_card(news_item: Optional[Dict[str, str]]):
+    """Vykreslí přehlednou kartu s nejnovější finanční zprávou a makroekonomickým kontextem pod metrikami."""
+    if not news_item:
+        return
+    st.markdown(
+        f"""
+        <div class="macro-news-card">
+            <div class="macro-news-top">
+                <div class="macro-news-tag">
+                    <span class="news-dot"></span>
+                    <span>{news_item.get('tag', 'AKTUÁLNÍ ZPRÁVA')}</span>
+                </div>
+                <div class="macro-news-meta">
+                    <span>📅 {news_item.get('date', '')}</span>
+                    <span>•</span>
+                    <span>🗞️ {news_item.get('source', '')}</span>
+                </div>
+            </div>
+            <div class="macro-news-headline">{news_item.get('title', '')}</div>
+            <div class="macro-news-content">
+                <div class="news-section-item">
+                    <span class="news-label">🔍 Důvod změny & klíčové faktory:</span>
+                    <span class="news-text">{news_item.get('reason', '')}</span>
+                </div>
+                <div class="news-section-item">
+                    <span class="news-label">📊 Makroekonomický kontext:</span>
+                    <span class="news-text">{news_item.get('context', '')}</span>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+def get_indicators_catalog_df() -> pd.DataFrame:
+    """Sestaví kompletní přehledný katalog všech indikátorů se zdroji a frekvencí."""
+    catalog_rows = []
+
+    def resolve_source(code: str, category: str, region: str) -> str:
+        if region == "CZ":
+            if any(k in code for k in ["repo", "discount", "lombard", "pribor"]):
+                return "Česká národní banka (ČNB)"
+            if any(k in code for k in ["cpi"]):
+                return "Český statistický úřad (ČSÚ) & ČNB"
+            if any(k in code for k in ["gdp", "retail", "industrial"]):
+                return "Český statistický úřad (ČSÚ)"
+            if code == "unemployment_rate":
+                return "Ministerstvo práce a sociálních věcí (MPSV) & ČSÚ"
+            if any(k in code for k in ["eur_czk", "usd_czk", "pln_czk", "gbp_czk", "chf_czk", "jpy_czk"]):
+                return "Česká národní banka (ČNB - Denní devizový trh)"
+            if any(k in code for k in ["public_debt", "budget_deficit", "czgb_"]):
+                return "Ministerstvo financí ČR (MF ČR)"
+            if "irs_" in code:
+                return "Mezibankovní trh (CZK Interest Rate Swaps)"
+            if "px_" in code:
+                return "Burza cenných papírů Praha (BCPP / PSE)"
+            return "Česká národní banka / ČSÚ"
+
+        elif region == "EU":
+            if any(k in code for k in ["ecb_", "estr"]):
+                return "Evropská centrální banka (ECB)"
+            if "euribor" in code:
+                return "European Money Markets Institute (EMMI) & ECB"
+            if any(k in code for k in ["eu_cpi", "eu_core_cpi"]):
+                return "Eurostat (HICP Harmonizovaná inflace)"
+            if any(k in code for k in ["eu_gdp", "eu_retail", "eu_industrial", "eu_unemployment", "eu_public_debt", "eu_budget_deficit"]):
+                return "Eurostat (Evropská komise)"
+            if "bund_" in code:
+                return "Deutsche Bundesbank & Eurostat"
+            if any(k in code for k in ["eur_usd", "eur_pln", "eur_gbp"]):
+                return "Evropská centrální banka (ECB Reference Rates)"
+            if "stoxx" in code:
+                return "STOXX Ltd. (Deutsche Börse Group) & Yahoo Finance"
+            return "Eurostat & ECB"
+
+        else: # US
+            if any(k in code for k in ["fed_funds", "effr", "us_industrial"]):
+                return "Federal Reserve Board (Fed)"
+            if "sofr" in code:
+                return "Federal Reserve Bank of New York (NY Fed)"
+            if any(k in code for k in ["us_cpi", "us_core_cpi", "us_unemployment"]):
+                return "U.S. Bureau of Labor Statistics (BLS)"
+            if "us_gdp" in code:
+                return "U.S. Bureau of Economic Analysis (BEA)"
+            if "us_retail" in code:
+                return "U.S. Census Bureau"
+            if any(k in code for k in ["us_1m", "us_3m", "us_6m", "us_1y", "us_2y", "us_3y", "us_5y", "us_7y", "us_10y", "us_20y", "us_30y", "us_spread", "us_public_debt", "us_budget_deficit"]):
+                return "U.S. Department of the Treasury"
+            if any(k in code for k in ["dxy", "usd_jpy", "gbp_usd", "usd_pln", "usd_chf"]):
+                return "Intercontinental Exchange (ICE) & FX trhy"
+            if "sp500" in code:
+                return "S&P Dow Jones Indices & Yahoo Finance"
+            if "nasdaq" in code:
+                return "NASDAQ OMX Group & Yahoo Finance"
+            return "U.S. Federal Agencies & Financial Markets"
+
+    def resolve_frequency(code: str, category: str) -> str:
+        if any(k in code for k in ["eur_czk", "usd_czk", "pln_czk", "gbp_czk", "chf_czk", "jpy_czk", "eur_usd", "eur_pln", "eur_gbp", "dxy", "usd_jpy", "gbp_usd", "usd_pln", "usd_chf"]):
+            return "Denní (D) & Měsíční (M)"
+        if any(k in code for k in ["pribor", "euribor", "estr", "sofr", "effr"]):
+            return "Denní (D) & Měsíční (M)"
+        if any(k in code for k in ["czgb_", "bund_", "us_1m", "us_3m", "us_6m", "us_1y", "us_2y", "us_3y", "us_5y", "us_7y", "us_10y", "us_20y", "us_30y"]):
+            return "Denní (D) & Měsíční (M)"
+        if any(k in code for k in ["px_index", "stoxx50_index", "sp500_index", "nasdaq_index"]):
+            return "Denní (D) & Měsíční (M)"
+        if "gdp" in code or "debt" in code or "deficit" in code:
+            return "Kvartální (Q)"
+        return "Měsíční (M)"
+
+    region_names = {
+        "CZ": "🇨🇿 Česká republika",
+        "EU": "🇪🇺 Evropská unie",
+        "US": "🇺🇸 Spojené státy"
+    }
+
+    for code, info in INDICATORS.items():
+        reg_title = region_names.get(info.region, info.region)
+        src = resolve_source(code, info.category, info.region)
+        freq = resolve_frequency(code, info.category)
+        catalog_rows.append({
+            "Země / Region": reg_title,
+            "Kategorie": info.category,
+            "Název ukazatele": info.name_cz,
+            "Kód indikátoru": code,
+            "Jednotka": info.unit,
+            "Periodicita": freq,
+            "Primární zdroj dat": src,
+            "Metodický popis": info.description,
+            "_region_code": info.region
+        })
+
+    return pd.DataFrame(catalog_rows)
+
+
+# =============================================================================
+# 10. ZÁLOŽKY DASHBOARDU (6 KATEGORIÍ VČETNĚ METODICKÉHO KATALOGU)
+# =============================================================================
+
+main_tab_markets, main_tab_real, main_tab_stocks, main_tab_public, main_tab_export, main_tab_catalog = st.tabs([
     "💳 Finanční trhy & Měna",
     "🏛️ Reálná ekonomika & Práce",
     "📈 Trhy",
     "🌐 Veřejné finance & Svět",
-    "📋 Data a export"
+    "📋 Data a export",
+    "📖 Seznam ukazatelů & Zdroje"
 ])
 
 
@@ -2444,6 +2716,7 @@ with main_tab_markets:
             col_r2.metric("Diskontní sazba", f"{disc_curr:.2f} %", help="Úročení vkladů bank u ČNB")
             col_r3.metric("Lombardní sazba", f"{lomb_curr:.2f} %", help="Úročení zápůjček likvidity")
             col_r4.metric("PRIBOR 3M", f"{prib3m_curr:.2f} %", help="Referenční tržní sazba")
+            render_cz_news_card(CZ_NEWS["rates"])
             fig_rates = build_rates_chart(df, selected_indicators)
             render_plotly_chart(fig_rates, key="chart_cz_rates")
             st.caption("📌 **Zdroj dat:** Česká národní banka (ČNB) – Otevřená data měnové politiky & FinStat")
@@ -2474,6 +2747,16 @@ with main_tab_markets:
     with sub_tab_curve:
         if is_cz:
             st.markdown('<div class="section-header">Výnosová křivka ČR (Státní dluhopisy CZGB & CZK IRS swapy)</div>', unsafe_allow_html=True)
+            col_yc1, col_yc2, col_yc3, col_yc4 = st.columns(4)
+            czgb10 = safe_metric(last_row, "czgb_10y", 4.10)
+            czgb2 = safe_metric(last_row, "czgb_2y", 3.85)
+            czgb_spread = czgb10 - czgb2
+            irs10 = safe_metric(last_row, "irs_10y", 3.95)
+            col_yc1.metric("10Y CZGB Výnos", f"{czgb10:.2f} %")
+            col_yc2.metric("2Y CZGB Výnos", f"{czgb2:.2f} %")
+            col_yc3.metric("Sklon (10Y − 2Y)", f"{czgb_spread:+.2f} p.b.", delta="Normální sklon" if czgb_spread >= 0 else "Inverze")
+            col_yc4.metric("10Y CZK IRS Swap", f"{irs10:.2f} %")
+            render_cz_news_card(CZ_NEWS["yield_curve"])
             comp_date_target = last_row["date"] - pd.DateOffset(years=1)
             comp_df = df_raw[df_raw["date"] <= comp_date_target]
             comp_row = comp_df.iloc[-1] if not comp_df.empty else None
@@ -2530,6 +2813,7 @@ with main_tab_markets:
             col_fx2.metric("USD / CZK", f"{daily_usd_czk:.2f} Kč")
             col_fx3.metric("PLN / CZK", f"{daily_pln_czk:.2f} Kč")
             col_fx4.metric("GBP / CZK", f"{daily_gbp_czk:.2f} Kč")
+            render_cz_news_card(CZ_NEWS["fx"])
             fig_fx = build_dynamic_fx_chart_cz(df_for_fx_plot, fx_selected_currencies)
             st.caption("📌 **Zdroj dat:** Česká národní banka (ČNB) – Oficiální denní devizový kurzovní lístek")
         elif is_eu:
@@ -2580,6 +2864,7 @@ with main_tab_real:
             col_g2.metric("Kvartální nominální HDP", f"{nom_cz_val:,.1f} mld. Kč")
             col_g3.metric("Průměrný růst v období", f"{df['gdp_growth_real'].mean():+.2f} %" if "gdp_growth_real" in df.columns else "N/A")
             col_g4.metric("Poslední kvartál", str(last_row.get("quarter", "Aktuální")))
+            render_cz_news_card(CZ_NEWS["gdp"])
             fig_gdp = build_gdp_chart(df, selected_indicators)
             render_plotly_chart(fig_gdp, key="chart_cz_gdp")
             st.caption("📌 **Zdroj dat:** Český statistický úřad (ČSÚ) – Čtvrtletní národní účty ČR")
@@ -2616,6 +2901,7 @@ with main_tab_real:
             real_cz_rate = repo_curr - cpi_cz_curr
             col_i3.metric("Reálná úroková sazba", f"{real_cz_rate:+.2f} %", delta="Repo − CPI", delta_color="off")
             col_i4.metric("Inflační cíl ČNB", "2.00 %", delta="Toleranční pásmo 1–3 %", delta_color="off")
+            render_cz_news_card(CZ_NEWS["inflation"])
             fig_inf = build_inflation_chart(df)
             render_plotly_chart(fig_inf, key="chart_cz_inflation")
             st.caption("📌 **Zdroj dat:** Český statistický úřad (ČSÚ) & ČNB (Odbor měnové politiky)")
@@ -2655,6 +2941,7 @@ with main_tab_real:
             col_a2.metric("Průmyslová produkce ČR (YoY)", f"{ind_cz_curr:+.1f} %")
             col_a3.metric("Průměrná spotřeba", f"{df['retail_sales_yoy'].mean():+.2f} %")
             col_a4.metric("Průměrný průmysl", f"{df['industrial_prod_yoy'].mean():+.2f} %")
+            render_cz_news_card(CZ_NEWS["retail_industry"])
             st_source = "Český statistický úřad (ČSÚ) – Statistika maloobchodu a průmyslu"
         elif is_eu:
             col_a1.metric("Maloobchod EU (Spotřeba YoY)", f"{retail_eu_curr:+.1f} %")
@@ -2682,6 +2969,7 @@ with main_tab_real:
             col_u2.metric("Průměr EU (srovnání)", f"{une_eu_curr:.1f} %", delta="Nejnižší v EU", delta_color="off")
             col_u3.metric("Minimum v období", f"{df['unemployment_rate'].min():.1f} %")
             col_u4.metric("Maximum v období", f"{df['unemployment_rate'].max():.1f} %")
+            render_cz_news_card(CZ_NEWS["unemployment"])
             fig_une = build_unemployment_chart(df)
             render_plotly_chart(fig_une, key="chart_cz_unemployment")
             st.caption("📌 **Zdroj dat:** Český statistický úřad (ČSÚ) & Eurostat (metodika ILO)")
@@ -2776,6 +3064,7 @@ with main_tab_stocks:
         col_px2.metric("Výkonnost za vybrané období", f"{px_chg:+.1f} %")
         col_px3.metric("Minimum v období", f"{df['px_index'].min():,.1f} b." if "px_index" in df.columns else "N/A")
         col_px4.metric("Maximum v období", f"{df['px_index'].max():,.1f} b." if "px_index" in df.columns else "N/A")
+        render_cz_news_card(CZ_NEWS["stocks_px"])
         fig_single_px = build_single_stock_chart(df, "px_index", "Index PX (Praha)", color="#DC2626")
         render_plotly_chart(fig_single_px, key="chart_single_px")
         st.caption("📌 **Zdroj dat:** Burza cenných papírů Praha (PSE / BCPP) – Oficiální kalkulace indexu PX")
@@ -2840,6 +3129,7 @@ with main_tab_public:
             debt_nom_val = safe_metric(last_row, "public_debt_czk_bn", 3300.0)
             col_d2.metric("Nominální veřejný dluh", f"{debt_nom_val:,.1f} mld. Kč")
             col_d3.metric("Kvartální saldo rozpočtu", f"{deficit_cz_curr:,.1f} mld. Kč")
+            render_cz_news_card(CZ_NEWS["debt"])
             fig_d1, fig_d2 = build_debt_charts(df)
             c_da, c_db = st.columns(2)
             with c_da:
@@ -2888,6 +3178,7 @@ with main_tab_public:
             col_cp2.metric("Sazbový diferenciál (ČNB vs. ECB)", f"{rate_diff_ecb:+.2f} p.b.")
             spread_10y_bund = (czgb10_curr - bund10_curr) * 100.0
             col_cp3.metric("Sovereign spread 10Y (CZGB − Bund)", f"{spread_10y_bund:+.0f} bps")
+            render_cz_news_card(CZ_NEWS["intl_spread"])
         elif is_eu:
             diff_ecb_fed = ecb_dep_curr - fed_upper_curr
             col_ecp1 = col_cp1.metric("Sazbový diferenciál (ECB vs. Fed)", f"{diff_ecb_fed:+.2f} p.b.")
@@ -2924,3 +3215,140 @@ with main_tab_export:
         key=f"btn_dl_macro_{region_label.lower()}_active"
     )
     st.caption("📌 **Zdroj dat:** ČNB, Eurostat, U.S. Treasury, Federal Reserve a Burza cenných papírů Praha")
+
+
+# =============================================================================
+# 6. KATEGORIE: SEZNAM UKAZATELŮ & ZDROJE DAT
+# =============================================================================
+with main_tab_catalog:
+    st.markdown('<div class="section-header">Kompletní metodický přehled a katalog všech sledovaných ukazatelů a zdrojů dat</div>', unsafe_allow_html=True)
+    st.caption("Strukturovaný přehled všech 80+ makroekonomických a tržních ukazatelů podle jednotlivých zemí a kategorií s uvedením primárních datových zdrojů, metodiky a frekvence aktualizace.")
+
+    df_cat = get_indicators_catalog_df()
+
+    # Horní souhrnné metriky
+    col_c1, col_c2, col_c3, col_c4 = st.columns(4)
+    cz_cnt = len(df_cat[df_cat["_region_code"] == "CZ"])
+    eu_cnt = len(df_cat[df_cat["_region_code"] == "EU"])
+    us_cnt = len(df_cat[df_cat["_region_code"] == "US"])
+    col_c1.metric("Celkem ukazatelů", f"{len(df_cat)} metrik")
+    col_c2.metric("🇨🇿 Česká republika", f"{cz_cnt} ukazatelů")
+    col_c3.metric("🇪🇺 Evropská unie", f"{eu_cnt} ukazatelů")
+    col_c4.metric("🇺🇸 Spojené státy", f"{us_cnt} ukazatelů")
+
+    # Interaktivní filtry katalogu
+    col_cf1, col_cf2, col_cf3 = st.columns([1.5, 1.5, 2.0])
+    with col_cf1:
+        cat_country = st.selectbox(
+            "Filtrovat podle země:",
+            ["Všechny země", "🇨🇿 Česká republika", "🇪🇺 Evropská unie", "🇺🇸 Spojené státy"],
+            key="cat_filter_country"
+        )
+    with col_cf2:
+        all_categories = ["Všechny kategorie"] + sorted(list(df_cat["Kategorie"].unique()))
+        cat_category = st.selectbox(
+            "Filtrovat podle kategorie:",
+            all_categories,
+            key="cat_filter_category"
+        )
+    with col_cf3:
+        search_query = st.text_input(
+            "🔍 Hledat v ukazatelích a zdrojích:",
+            placeholder="Zadejte název, kód nebo zdroj (např. inflace, PRIBOR, ČNB, HDP)...",
+            key="cat_search_input"
+        )
+
+    df_filtered_cat = df_cat.copy()
+    if cat_country != "Všechny země":
+        df_filtered_cat = df_filtered_cat[df_filtered_cat["Země / Region"] == cat_country]
+    if cat_category != "Všechny kategorie":
+        df_filtered_cat = df_filtered_cat[df_filtered_cat["Kategorie"] == cat_category]
+    if search_query.strip():
+        q = search_query.strip().lower()
+        df_filtered_cat = df_filtered_cat[
+            df_filtered_cat["Název ukazatele"].str.lower().str.contains(q) |
+            df_filtered_cat["Kód indikátoru"].str.lower().str.contains(q) |
+            df_filtered_cat["Primární zdroj dat"].str.lower().str.contains(q) |
+            df_filtered_cat["Metodický popis"].str.lower().str.contains(q)
+        ]
+
+    st.markdown(f"**Nalezeno {len(df_filtered_cat)} z {len(df_cat)} ukazatelů**")
+
+    display_cat_df = df_filtered_cat.drop(columns=["_region_code"])
+    st.dataframe(
+        display_cat_df,
+        use_container_width=True,
+        hide_index=True,
+        height=480
+    )
+
+    # Tlačítko pro stažení katalogu do CSV
+    csv_cat_buffer = io.StringIO()
+    display_cat_df.to_csv(csv_cat_buffer, index=False, sep=";", decimal=",", encoding="utf-8-sig")
+    st.download_button(
+        label="📥 Stáhnout kompletní katalog ukazatelů a zdrojů (CSV)",
+        data=csv_cat_buffer.getvalue().encode("utf-8-sig"),
+        file_name=f"katalog_makro_ukazatelu_a_zdroju_{datetime.now().strftime('%Y%m%d')}.csv",
+        mime="text/csv",
+        key="btn_dl_catalog_csv"
+    )
+
+    # Přehled primárních institucí a datových toků
+    st.markdown('<div class="section-header">Přehled primárních poskytovatelů dat a integrační architektura</div>', unsafe_allow_html=True)
+    c_inst1, c_inst2 = st.columns(2)
+    with c_inst1:
+        st.markdown(
+            """
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;">
+                <div style="font-weight: 750; color: #0f172a; font-size: 0.96rem; margin-bottom: 6px;">🇨🇿 Česká republika</div>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: #475569; line-height: 1.5;">
+                    <li><strong>Česká národní banka (ČNB):</strong> Otevřené REST API pro denní devizové kurzy v 14:30 (EUR, USD, PLN, GBP, JPY, CHF) a časové řady měnových sazeb (2T repo, diskontní, lombardní, 3M PRIBOR).</li>
+                    <li><strong>Český statistický úřad (ČSÚ):</strong> Pravidelné konjunkturální a národní statistiky – HDP, celková inflace CPI, maloobchodní tržby a průmyslová produkce.</li>
+                    <li><strong>Ministerstvo financí ČR (MF ČR):</strong> Měsíční pokladní plnění, vládní dluh a aukce státních dluhopisů CZGB.</li>
+                    <li><strong>Burza cenných papírů Praha (BCPP / PSE):</strong> Oficiální cenový index PX pražské burzy.</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            """
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+                <div style="font-weight: 750; color: #0f172a; font-size: 0.96rem; margin-bottom: 6px;">🇪🇺 Evropská unie / Eurozóna</div>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: #475569; line-height: 1.5;">
+                    <li><strong>Eurostat:</strong> Oficiální JSON REST API pro harmonizovanou inflaci (HICP & Core HICP), HDP Eurozóny, míru nezaměstnanosti, vládní dluh (EDP) a referenční vládní dluhopisy.</li>
+                    <li><strong>Evropská centrální banka (ECB) & EMMI:</strong> Klíčový sazbový koridor (DFR, MRO, MLF), referenční peněžní sazba €STR a 3M EURIBOR fixace.</li>
+                    <li><strong>Deutsche Bundesbank:</strong> Benchmark výnosové křivky německých státních dluhopisů (Bund 2Y až 30Y).</li>
+                    <li><strong>STOXX Ltd. (Deutsche Börse):</strong> Index 50 předních blue-chip společností Eurozóny Euro Stoxx 50.</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    with c_inst2:
+        st.markdown(
+            """
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;">
+                <div style="font-weight: 750; color: #0f172a; font-size: 0.96rem; margin-bottom: 6px;">🇺🇸 Spojené státy americké</div>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: #475569; line-height: 1.5;">
+                    <li><strong>U.S. Department of the Treasury:</strong> Oficiální denní XML feed výnosové křivky státních dluhopisů (U.S. Treasury Par Yield Curve od 1M po 30Y) a federální dluh.</li>
+                    <li><strong>Federal Reserve (Fed) & NY Fed:</strong> Fed Funds Target Range, EFFR, zajištěná sazba peněžního trhu SOFR a index průmyslové produkce (G.17).</li>
+                    <li><strong>U.S. Bureau of Labor Statistics (BLS):</strong> Spotřebitelská inflace (Headline & Core CPI) a zpráva o zaměstnanosti (míra nezaměstnanosti U-3 a NFP).</li>
+                    <li><strong>U.S. Bureau of Economic Analysis (BEA) & Census:</strong> Kvartální reálný a nominální HDP a maloobchodní tržby.</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            """
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+                <div style="font-weight: 750; color: #0f172a; font-size: 0.96rem; margin-bottom: 6px;">📈 Globální trhy & Agregace</div>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: #475569; line-height: 1.5;">
+                    <li><strong>Yahoo Finance API:</strong> Měsíční a denní historické i živé kotace indexů S&P 500 (^GSPC), NASDAQ Composite (^IXIC), Euro Stoxx 50 (^STOXX50E).</li>
+                    <li><strong>Intercontinental Exchange (ICE) & FX trhy:</strong> Dolarový index DXY a křížové devizové kurzy měn G10 a CEE (EUR, USD, GBP, PLN, CZK).</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )

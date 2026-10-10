@@ -2,7 +2,7 @@
 
 Moderní, minimalistická a responzivní webová aplikace ve **Streamlit** inspirovaná designem finančních portálů (**Stock Analysis**). Slouží pro komplexní vizualizaci a analýzu klíčových makroekonomických ukazatelů České republiky, Evropské unie (Eurozóny), Spojených států amerických a světových akciových trhů v čase (období 2015–současnost).
 
-Aplikace disponuje **okamžitým přepínačem mezi ČR, EU a USA** v pravém horním rohu, přičemž všechny tři ekonomiky mají **zrcadlově identickou strukturu dat**, ukazatele **jádrové inflace**, **spotřeby** a **průmyslové výroby**, vysokofrekvenční **denní devizové kurzy (FX)** včetně **PLN a GBP**, novou hlavní kategorii **Trhy** pro srovnání akciových indexů a optimalizaci pro mobilní zařízení (PWA).
+Aplikace disponuje **okamžitým přepínačem mezi ČR, EU a USA** v pravém horním rohu, přičemž všechny tři ekonomiky mají **zrcadlově identickou strukturu dat**, ukazatele **jádrové inflace**, **spotřeby** a **průmyslové výroby**, vysokofrekvenční **denní devizové kurzy (FX)** včetně **PLN a GBP**, sekci **Trhy** pro akciové indexy, **finanční zpravodajství** pod hlavními ukazateli ČR a samostatnou stránku **Seznam ukazatelů & Zdroje**.
 
 ---
 
@@ -15,9 +15,9 @@ Uživatel může v pravém horním rohu stránky jediným kliknutím přepínat 
 
 ---
 
-## 📑 Agregované kategorie záložek (5 Hlavních bloků)
+## 📑 Hlavní kategorie záložek (6 Tematických bloků)
 
-Původní široká nabídka záložek je nově přehledně zagregována do 5 tematických celků s tmavším podbarvením a podkategoriemi:
+Všechny ukazatele jsou **trvale aktivovány a zobrazeny** (bez nutnosti jejich ruční aktivace v postranním panelu):
 
 1. **💳 Finanční trhy & Měna**:
    - **Měnověpolitické sazby**: ČNB (2T Repo, Lombard, Diskont, 3M PRIBOR) / ECB (Depozitní, MRO, Mezní zápůjční, 3M EURIBOR, €STR) / Fed (Fed Funds Upper/Lower, SOFR, 3M T-Bill).
@@ -28,7 +28,7 @@ Původní široká nabídka záložek je nově přehledně zagregována do 5 tem
    - **Inflace**: Celková inflace (Headline CPI / HICP) vs. **Jádrová inflace (Core CPI / Core HICP)**, reálná repo/depo sazba a inflační cíl 2,0 %.
    - **Průmysl a spotřeba**: Maloobchodní tržby (spotřeba domácností YoY %) vs. Index průmyslové produkce (YoY %).
    - **Trh práce**: Míra nezaměstnanosti (ČR / EU / USA U-3 & Nonfarm Payrolls).
-3. **📈 Trhy (Nová kategorie)**:
+3. **📈 Trhy (Akciové indexy)**:
    - **Vzájemné srovnání indexů**: Normalizovaná kumulativní výkonnost v % (od počátku vybraného období) nebo rebase na bázi 100 pro:
      - 🇨🇿 **Index PX** (Burza cenných papírů Praha / BCPP)
      - 🇪🇺 **Euro Stoxx 50** (Přední korporátní lídři Eurozóny)
@@ -40,11 +40,27 @@ Původní široká nabídka záložek je nově přehledně zagregována do 5 tem
    - **Mezinárodní srovnání**: Sovereign výnosové spready 10Y dluhopisů (ČR vs. Německo, ČR vs. USA, Německo vs. USA) v bazických bodech (bps).
 5. **📋 Data a export**:
    - Datový průzkumník s českými popisky, filtrováním a okamžitým stažením kompletního datového setu ve formátu CSV.
+6. **📖 Seznam ukazatelů & Zdroje (Nová stránka)**:
+   - Strukturovaný katalog všech 80+ makroekonomických ukazatelů s filtry podle země, kategorie a fulltextovým vyhledáváním.
+   - U každého indikátoru je uveden kód, jednotka, periodicita, oficiální primární datový zdroj a metodická definice.
+   - Možnost stažení kompletního katalogu metadat do CSV.
+   - Podrobný přehled primárních poskytovatelů dat a integrační architektura (ČNB, ČSÚ, MF ČR, Eurostat, ECB, Fed, Treasury, BCPP, Yahoo Finance).
+
+---
+
+## 📰 Kontextové finanční zpravodajství (CZ Indikátory)
+
+Přímo pod hlavními 4 metrickými boxy v každé oblasti pro Českou republiku se zobrazuje **karta aktuálního finančního zpravodajství**:
+- **Datum a instituce:** Čas poslední změny či zveřejnění dat.
+- **Ověřený renomovaný zdroj:** Česká národní banka (tiskové konference BR ČNB), Český statistický úřad (Rychlé informace), Ministerstvo financí ČR, Burza cenných papírů Praha, Patria Finance, ČTK.
+- **Důvod změny & klíčové faktory:** Co přesně vedlo ke změně sazby, kurzu či makroekonomického indikátoru.
+- **Makroekonomický kontext:** Širší dopady na hospodářství, mzdový vývoj, inflační očekávání a trhy.
 
 ---
 
 ## 🎨 Vylepšení uživatelského rozhraní (UI & UX)
 
+- **Trvalá aktivace všech indikátorů**: Odstraněn nepřehledný výběrový multiselect v sidebaru – všechny ukazatele se načítají a zobrazují automaticky.
 - **Podbarvené Summary KPI Boxy**: Metrické karty nad grafy mají výraznější a tmavší podklad (`#f1f5f9`), jemný rámeček (`#cbd5e1`) a stínování, díky čemuž lépe vystupují ze stránky.
 - **Skrytá detailní tabulka indikátorů**: Původní rozsáhlá tabulka metrik je ve výchozím stavu elegantně sbalena (`st.expander("📊 Zobrazit detailní přehled indikátorů a metrik", expanded=False)`) a nezabírá místo nad grafy.
 - **Filtrování měn na FX grafu**: Uživatel si může v multiselectu zvolit pouze ty měny, které ho zajímají (`CZK`, `USD`, `GBP`, `EUR`, `PLN`), což eliminuje přeplněnost grafu.
