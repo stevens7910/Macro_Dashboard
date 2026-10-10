@@ -401,47 +401,85 @@ CUSTOM_CSS = """
         border-radius: 50%;
     }
     .sa-hero-strip {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 16px 24px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px 14px;
+        width: 100%;
+        margin-top: 8px;
+    }
+    @media (max-width: 1024px) {
+        .sa-hero-strip {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 640px) {
+        .sa-hero-strip {
+            grid-template-columns: 1fr;
+        }
     }
     .sa-hero-item {
         display: flex;
         flex-direction: column;
+        justify-content: space-between;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 14px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+        min-width: 0;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .sa-hero-item:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
     }
     .sa-hero-label {
-        font-size: 0.74rem;
+        font-size: 0.68rem;
         color: #64748b;
-        font-weight: 500;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 3px;
     }
     .sa-hero-val-row {
         display: flex;
         align-items: baseline;
+        justify-content: space-between;
         gap: 6px;
+        flex-wrap: wrap;
     }
     .sa-hero-val {
         font-size: 1.15rem;
         font-weight: 700;
         color: #0f172a;
         font-variant-numeric: tabular-nums;
+        white-space: nowrap;
     }
     .sa-hero-change-pos {
-        font-size: 0.80rem;
+        font-size: 0.76rem;
         font-weight: 600;
         color: #16a34a;
+        white-space: nowrap;
     }
     .sa-hero-change-neg {
-        font-size: 0.80rem;
+        font-size: 0.76rem;
         font-weight: 600;
         color: #dc2626;
+        white-space: nowrap;
     }
     .sa-hero-change-neutral {
-        font-size: 0.80rem;
+        font-size: 0.76rem;
         font-weight: 500;
         color: #64748b;
+        white-space: nowrap;
+    }
+    .sa-hero-spark-row {
+        margin-top: 5px;
+        width: 100%;
+        overflow: hidden;
     }
 
     /* Dvou-sloupcová tabulka klíčových metrik (Key Metrics Widget) */
@@ -1172,14 +1210,15 @@ daily_usd_pln = safe_metric(last_daily_fx, "usd_pln", usd_pln_curr)
 
 def generate_svg_sparkline(
     series: Any,
-    width: int = 70,
-    height: int = 18,
-    color: str = "#2563eb",
-    fill_color: str = "rgba(37, 99, 235, 0.08)"
+    width: int = 120,
+    height: int = 20,
+    color: str = "#64748b",
+    fill_color: str = "rgba(100, 116, 139, 0.08)"
 ) -> str:
     """
     Vygeneruje lehký monochromatický SVG sparkline graf (vektorový mini graf)
     posledních 30–90 pozorování pro okamžité zobrazení trendu v KPI kartě.
+    Standardizováno na jednotný neutrální monochromatický design.
     """
     if series is None:
         return ""
@@ -1221,8 +1260,8 @@ def generate_svg_sparkline(
     last_x, last_y = coords[-1]
 
     return (
-        f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" '
-        f'style="display: block; margin-top: 3px;" class="macro-sparkline" title="Trend posledních 30–90 pozorování">'
+        f'<svg width="100%" height="{height}" viewBox="0 0 {width} {height}" preserveAspectRatio="none" '
+        f'style="display: block; margin-top: 4px;" class="macro-sparkline" title="Trend posledních pozorování">'
         f'<path d="{fill_d}" fill="{fill_color}" />'
         f'<path d="{path_d}" fill="none" stroke="{color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />'
         f'<circle cx="{last_x}" cy="{last_y}" r="2.2" fill="{color}" />'
@@ -1231,7 +1270,7 @@ def generate_svg_sparkline(
 
 
 # -----------------------------------------------------------------------------
-# VÝPOČTY KONZISTENTNÍCH DELT A ODVOZENÝCH METRIK
+# VÝPOČTY KONZISTENTNÍCH DELT A ODVOZENÝCH METRIK PRO 4x2 KPI MŘÍŽKU
 # -----------------------------------------------------------------------------
 
 # 1. ČESKÁ REPUBLIKA
@@ -1239,85 +1278,150 @@ real_repo_rate = round(repo_curr - cpi_cz_curr, 2)
 real_repo_prev = round(repo_prev - cpi_cz_prev, 2)
 real_repo_delta = round(real_repo_rate - real_repo_prev, 2)
 
+repo_chg_cls = "sa-hero-change-neutral" if abs(repo_delta) < 0.001 else ("sa-hero-change-pos" if repo_delta > 0 else "sa-hero-change-neg")
+repo_chg_str = f"{repo_delta:+.2f} p.b."
+
 prib3m_prev = safe_metric(prev_row, "pribor_3m", prib3m_curr)
 prib3m_delta = round(prib3m_curr - prib3m_prev, 2)
+prib3m_chg_cls = "sa-hero-change-neutral" if abs(prib3m_delta) < 0.001 else ("sa-hero-change-pos" if prib3m_delta > 0 else "sa-hero-change-neg")
+prib3m_chg_str = f"{prib3m_delta:+.2f} p.b."
 
 prev_daily_eur_czk = safe_metric(prev_daily_fx, "eur_czk", daily_eur_czk)
-eur_czk_delta = round(daily_eur_czk - prev_daily_eur_czk, 3)
+eur_czk_delta = round(daily_eur_czk - prev_daily_eur_czk, 2)
 eur_czk_pct = round((eur_czk_delta / prev_daily_eur_czk) * 100, 2) if prev_daily_eur_czk else 0.0
+# Pro korunu: pokles EUR/CZK = posílení (zelená), růst EUR/CZK = oslabení (červená)
+eur_czk_chg_cls = "sa-hero-change-neutral" if abs(eur_czk_delta) < 0.005 else ("sa-hero-change-pos" if eur_czk_delta < 0 else "sa-hero-change-neg")
+eur_czk_chg_str = f"{eur_czk_delta:+.2f} Kč d/d ({eur_czk_pct:+.2f} %)" if abs(eur_czk_delta) >= 0.005 else "+0.00 Kč (+0.00 % d/d)"
 
 czgb10_prev = safe_metric(prev_row, "czgb_10y", czgb10_curr)
 czgb10_delta_bps = round((czgb10_curr - czgb10_prev) * 100, 1)
+czgb10_chg_cls = "sa-hero-change-neutral" if abs(czgb10_delta_bps) < 0.05 else ("sa-hero-change-pos" if czgb10_delta_bps > 0 else "sa-hero-change-neg")
+czgb10_chg_str = f"{czgb10_delta_bps:+.1f} bps d/d"
+
+cpi_cz_chg_cls = "sa-hero-change-pos" if abs(cpi_cz_curr - 2.0) <= 1.0 else ("sa-hero-change-neg" if cpi_cz_curr > 3.0 else "sa-hero-change-neutral")
+
+gdp_cz_chg_cls = "sa-hero-change-neutral" if abs(gdp_cz_delta) < 0.05 else ("sa-hero-change-pos" if gdp_cz_delta > 0 else "sa-hero-change-neg")
+gdp_cz_chg_str = f"{gdp_cz_delta:+.1f} p.b." if abs(gdp_cz_delta) >= 0.05 else "+0.0 p.b."
+
+une_cz_delta = round(une_cz_curr - une_cz_prev, 1)
+une_cz_chg_cls = "sa-hero-change-neutral" if abs(une_cz_delta) < 0.05 else ("sa-hero-change-pos" if une_cz_delta < 0 else "sa-hero-change-neg")
+une_cz_chg_str = f"{une_cz_delta:+.1f} p.b." if abs(une_cz_delta) >= 0.05 else "stabilní"
 
 px_prev = safe_metric(prev_row, "px_index", px_curr)
 px_delta = round(px_curr - px_prev, 0)
+px_pct = round((px_delta / px_prev) * 100, 2) if px_prev else 0.0
+px_chg_cls = "sa-hero-change-neutral" if abs(px_delta) < 0.5 else ("sa-hero-change-pos" if px_delta > 0 else "sa-hero-change-neg")
+px_chg_str = f"{px_delta:+,.0f} b. ({px_pct:+.2f} % d/d)" if abs(px_delta) >= 0.5 else "+0 b. (+0.00 % d/d)"
 
-spark_repo = generate_svg_sparkline(df.get("repo_rate"), width=70, height=18, color="#1d4ed8")
-spark_real_repo = generate_svg_sparkline((df["repo_rate"] - df["cpi_yoy"]) if ("repo_rate" in df.columns and "cpi_yoy" in df.columns) else None, width=70, height=18, color="#4338ca")
-spark_pribor = generate_svg_sparkline(df.get("pribor_3m"), width=70, height=18, color="#0d9488")
-spark_eur_czk = generate_svg_sparkline(df_daily_fx_filtered["eur_czk"] if ("eur_czk" in df_daily_fx_filtered.columns and not df_daily_fx_filtered.empty) else df.get("eur_czk"), width=70, height=18, color="#d97706")
-spark_czgb10 = generate_svg_sparkline(df.get("czgb_10y"), width=70, height=18, color="#7c3aed")
-spark_cpi = generate_svg_sparkline(df.get("cpi_yoy"), width=70, height=18, color="#dc2626" if cpi_cz_curr > 3.0 else "#2563eb")
-spark_px = generate_svg_sparkline(df.get("px_index"), width=70, height=18, color="#059669")
-spark_gdp = generate_svg_sparkline(df.get("gdp_growth_real"), width=70, height=18, color="#0284c7")
+spark_repo = generate_svg_sparkline(df.get("repo_rate"))
+spark_pribor = generate_svg_sparkline(df.get("pribor_3m"))
+spark_eur_czk = generate_svg_sparkline(df_daily_fx_filtered["eur_czk"] if ("eur_czk" in df_daily_fx_filtered.columns and not df_daily_fx_filtered.empty) else df.get("eur_czk"))
+spark_czgb10 = generate_svg_sparkline(df.get("czgb_10y"))
+spark_cpi = generate_svg_sparkline(df.get("cpi_yoy"))
+spark_gdp = generate_svg_sparkline(df.get("gdp_growth_real"))
+spark_une = generate_svg_sparkline(df.get("unemployment_rate"))
+spark_px = generate_svg_sparkline(df.get("px_index"))
 
 # 2. EVROPSKÁ UNIE
-euribor3m_prev = safe_metric(prev_row, "euribor_3m", euribor3m_curr)
-euribor3m_delta = round(euribor3m_curr - euribor3m_prev, 2)
-
-prev_daily_eur_usd = safe_metric(prev_daily_fx, "eur_usd", daily_eur_usd)
-eur_usd_delta = round(daily_eur_usd - prev_daily_eur_usd, 4)
-eur_usd_pct = round((eur_usd_delta / prev_daily_eur_usd) * 100, 2) if prev_daily_eur_usd else 0.0
-
-bund10_prev = safe_metric(prev_row, "bund_10y", bund10_curr)
-bund10_delta_bps = round((bund10_curr - bund10_prev) * 100, 1)
-
 real_ecb_rate = round(ecb_dep_curr - cpi_eu_curr, 2)
 real_ecb_prev = round(ecb_dep_prev - cpi_eu_prev, 2)
 real_ecb_delta = round(real_ecb_rate - real_ecb_prev, 2)
 
+ecb_dep_chg_cls = "sa-hero-change-neutral" if abs(ecb_dep_delta) < 0.001 else ("sa-hero-change-pos" if ecb_dep_delta > 0 else "sa-hero-change-neg")
+ecb_dep_chg_str = f"{ecb_dep_delta:+.2f} p.b."
+
+euribor3m_prev = safe_metric(prev_row, "euribor_3m", euribor3m_curr)
+euribor3m_delta_bps = round((euribor3m_curr - euribor3m_prev) * 100, 1)
+euribor3m_chg_cls = "sa-hero-change-neutral" if abs(euribor3m_delta_bps) < 0.05 else ("sa-hero-change-pos" if euribor3m_delta_bps > 0 else "sa-hero-change-neg")
+euribor3m_chg_str = f"{euribor3m_delta_bps:+.1f} bps d/d"
+
+prev_daily_eur_usd = safe_metric(prev_daily_fx, "eur_usd", daily_eur_usd)
+eur_usd_delta = round(daily_eur_usd - prev_daily_eur_usd, 4)
+eur_usd_pct = round((eur_usd_delta / prev_daily_eur_usd) * 100, 2) if prev_daily_eur_usd else 0.0
+eur_usd_chg_cls = "sa-hero-change-neutral" if abs(eur_usd_delta) < 0.0001 else ("sa-hero-change-pos" if eur_usd_delta > 0 else "sa-hero-change-neg")
+eur_usd_chg_str = f"{eur_usd_delta:+.4f} ({eur_usd_pct:+.2f} % d/d)" if abs(eur_usd_delta) >= 0.0001 else "+0.0000 (+0.00 % d/d)"
+
+bund10_prev = safe_metric(prev_row, "bund_10y", bund10_curr)
+bund10_delta_bps = round((bund10_curr - bund10_prev) * 100, 1)
+bund10_chg_cls = "sa-hero-change-neutral" if abs(bund10_delta_bps) < 0.05 else ("sa-hero-change-pos" if bund10_delta_bps > 0 else "sa-hero-change-neg")
+bund10_chg_str = f"{bund10_delta_bps:+.1f} bps d/d"
+
+cpi_eu_chg_cls = "sa-hero-change-pos" if abs(cpi_eu_curr - 2.0) <= 1.0 else ("sa-hero-change-neg" if cpi_eu_curr > 3.0 else "sa-hero-change-neutral")
+
+gdp_eu_chg_cls = "sa-hero-change-neutral" if abs(gdp_eu_delta) < 0.05 else ("sa-hero-change-pos" if gdp_eu_delta > 0 else "sa-hero-change-neg")
+gdp_eu_chg_str = f"{gdp_eu_delta:+.1f} p.b." if abs(gdp_eu_delta) >= 0.05 else "+0.0 p.b."
+
+une_eu_delta = round(une_eu_curr - une_eu_prev, 1)
+une_eu_chg_cls = "sa-hero-change-neutral" if abs(une_eu_delta) < 0.05 else ("sa-hero-change-pos" if une_eu_delta < 0 else "sa-hero-change-neg")
+une_eu_chg_str = f"{une_eu_delta:+.1f} p.b." if abs(une_eu_delta) >= 0.05 else "stabilní"
+
 stoxx50_prev = safe_metric(prev_row, "stoxx50_index", stoxx50_curr)
 stoxx50_delta = round(stoxx50_curr - stoxx50_prev, 0)
+stoxx50_pct = round((stoxx50_delta / stoxx50_prev) * 100, 2) if stoxx50_prev else 0.0
+stoxx50_chg_cls = "sa-hero-change-neutral" if abs(stoxx50_delta) < 0.5 else ("sa-hero-change-pos" if stoxx50_delta > 0 else "sa-hero-change-neg")
+stoxx50_chg_str = f"{stoxx50_delta:+,.0f} b. ({stoxx50_pct:+.2f} % d/d)" if abs(stoxx50_delta) >= 0.5 else "+0 b. (+0.00 % d/d)"
 
-spark_ecb = generate_svg_sparkline(df.get("ecb_deposit_rate"), width=70, height=18, color="#4338ca")
-spark_real_ecb = generate_svg_sparkline((df["ecb_deposit_rate"] - df["eu_cpi_yoy"]) if ("ecb_deposit_rate" in df.columns and "eu_cpi_yoy" in df.columns) else None, width=70, height=18, color="#3730a3")
-spark_euribor = generate_svg_sparkline(df.get("euribor_3m"), width=70, height=18, color="#0d9488")
-spark_eur_usd = generate_svg_sparkline(df_daily_fx_filtered["eur_usd"] if ("eur_usd" in df_daily_fx_filtered.columns and not df_daily_fx_filtered.empty) else df.get("eur_usd"), width=70, height=18, color="#d97706")
-spark_bund10 = generate_svg_sparkline(df.get("bund_10y"), width=70, height=18, color="#7c3aed")
-spark_eu_cpi = generate_svg_sparkline(df.get("eu_cpi_yoy"), width=70, height=18, color="#dc2626" if cpi_eu_curr > 3.0 else "#2563eb")
-spark_stoxx = generate_svg_sparkline(df.get("stoxx50_index"), width=70, height=18, color="#059669")
-spark_eu_gdp = generate_svg_sparkline(df.get("eu_gdp_growth_real"), width=70, height=18, color="#0284c7")
+spark_ecb = generate_svg_sparkline(df.get("ecb_deposit_rate"))
+spark_euribor = generate_svg_sparkline(df.get("euribor_3m"))
+spark_eur_usd = generate_svg_sparkline(df_daily_fx_filtered["eur_usd"] if ("eur_usd" in df_daily_fx_filtered.columns and not df_daily_fx_filtered.empty) else df.get("eur_usd"))
+spark_bund10 = generate_svg_sparkline(df.get("bund_10y"))
+spark_eu_cpi = generate_svg_sparkline(df.get("eu_cpi_yoy"))
+spark_eu_gdp = generate_svg_sparkline(df.get("eu_gdp_growth_real"))
+spark_eu_une = generate_svg_sparkline(df.get("eu_unemployment_rate"))
+spark_stoxx = generate_svg_sparkline(df.get("stoxx50_index"))
 
 # 3. SPOJENÉ STÁTY
-sofr_prev = safe_metric(prev_row, "sofr_rate", sofr_curr)
-sofr_delta = round(sofr_curr - sofr_prev, 2)
-
-prev_daily_dxy = safe_metric(prev_daily_fx, "dxy_index", daily_dxy)
-dxy_daily_delta = round(daily_dxy - prev_daily_dxy, 2)
-dxy_daily_pct = round((dxy_daily_delta / prev_daily_dxy) * 100, 2) if prev_daily_dxy else 0.0
-
-us10_prev = safe_metric(prev_row, "us_10y", us10_curr)
-us10_delta_bps = round((us10_curr - us10_prev) * 100, 1)
-
 real_fed_rate = round(fed_upper_curr - cpi_us_curr, 2)
 real_fed_prev = round(fed_upper_prev - cpi_us_prev, 2)
 real_fed_delta = round(real_fed_rate - real_fed_prev, 2)
 
+fed_upper_delta_bps = round((fed_upper_curr - fed_upper_prev) * 100, 0)
+fed_chg_cls = "sa-hero-change-neutral" if abs(fed_upper_delta_bps) < 0.1 else ("sa-hero-change-pos" if fed_upper_delta_bps > 0 else "sa-hero-change-neg")
+fed_chg_str = f"{fed_upper_delta_bps:+.0f} bps" if abs(fed_upper_delta_bps) >= 0.1 else "+0 bps"
+
+sofr_prev = safe_metric(prev_row, "sofr_rate", sofr_curr)
+sofr_delta_bps = round((sofr_curr - sofr_prev) * 100, 1)
+sofr_chg_cls = "sa-hero-change-neutral" if abs(sofr_delta_bps) < 0.05 else ("sa-hero-change-pos" if sofr_delta_bps > 0 else "sa-hero-change-neg")
+sofr_chg_str = f"{sofr_delta_bps:+.1f} bps d/d"
+
+prev_daily_dxy = safe_metric(prev_daily_fx, "dxy_index", daily_dxy)
+dxy_daily_delta = round(daily_dxy - prev_daily_dxy, 2)
+dxy_daily_pct = round((dxy_daily_delta / prev_daily_dxy) * 100, 2) if prev_daily_dxy else 0.0
+dxy_chg_cls = "sa-hero-change-neutral" if abs(dxy_daily_delta) < 0.01 else ("sa-hero-change-pos" if dxy_daily_delta > 0 else "sa-hero-change-neg")
+dxy_chg_str = f"{dxy_daily_delta:+.2f} ({dxy_daily_pct:+.2f} % d/d)" if abs(dxy_daily_delta) >= 0.01 else "0.00 (0.00 % d/d)"
+
+us10_prev = safe_metric(prev_row, "us_10y", us10_curr)
+us10_delta_bps = round((us10_curr - us10_prev) * 100, 1)
+us10_chg_cls = "sa-hero-change-neutral" if abs(us10_delta_bps) < 0.05 else ("sa-hero-change-pos" if us10_delta_bps > 0 else "sa-hero-change-neg")
+us10_chg_str = f"{us10_delta_bps:+.1f} bps d/d"
+
+cpi_us_chg_cls = "sa-hero-change-pos" if abs(cpi_us_curr - 2.0) <= 1.0 else ("sa-hero-change-neg" if cpi_us_curr > 3.0 else "sa-hero-change-neutral")
+
+gdp_us_chg_cls = "sa-hero-change-neutral" if abs(gdp_us_delta) < 0.05 else ("sa-hero-change-pos" if gdp_us_delta > 0 else "sa-hero-change-neg")
+gdp_us_chg_str = f"{gdp_us_delta:+.1f} p.b." if abs(gdp_us_delta) >= 0.05 else "+0.0 p.b."
+
+une_us_delta = round(une_us_curr - une_us_prev, 1)
+une_us_chg_cls = "sa-hero-change-neutral" if abs(une_us_delta) < 0.05 else ("sa-hero-change-pos" if une_us_delta < 0 else "sa-hero-change-neg")
+une_us_chg_str = f"{une_us_delta:+.1f} p.b." if abs(une_us_delta) >= 0.05 else "stabilní"
+
 sp500_prev = safe_metric(prev_row, "sp500_index", sp500_curr)
 sp500_delta = round(sp500_curr - sp500_prev, 0)
+sp500_pct = round((sp500_delta / sp500_prev) * 100, 2) if sp500_prev else 0.0
+sp500_chg_cls = "sa-hero-change-neutral" if abs(sp500_delta) < 0.5 else ("sa-hero-change-pos" if sp500_delta > 0 else "sa-hero-change-neg")
+sp500_chg_str = f"{sp500_delta:+,.0f} b. ({sp500_pct:+.2f} % d/d)" if abs(sp500_delta) >= 0.5 else "+0 b. (+0.00 % d/d)"
 
-spark_fed = generate_svg_sparkline(df.get("fed_funds_upper"), width=70, height=18, color="#b91c1c")
-spark_real_fed = generate_svg_sparkline((df["fed_funds_upper"] - df["us_cpi_yoy"]) if ("fed_funds_upper" in df.columns and "us_cpi_yoy" in df.columns) else None, width=70, height=18, color="#991b1b")
-spark_sofr = generate_svg_sparkline(df.get("sofr_rate"), width=70, height=18, color="#0d9488")
-spark_dxy = generate_svg_sparkline(df_daily_fx_filtered["dxy_index"] if ("dxy_index" in df_daily_fx_filtered.columns and not df_daily_fx_filtered.empty) else df.get("dxy_index"), width=70, height=18, color="#d97706")
-spark_us10 = generate_svg_sparkline(df.get("us_10y"), width=70, height=18, color="#7c3aed")
-spark_us_cpi = generate_svg_sparkline(df.get("us_cpi_yoy"), width=70, height=18, color="#dc2626" if cpi_us_curr > 3.0 else "#2563eb")
-spark_sp500 = generate_svg_sparkline(df.get("sp500_index"), width=70, height=18, color="#059669")
-spark_us_gdp = generate_svg_sparkline(df.get("us_gdp_growth_real"), width=70, height=18, color="#0284c7")
+spark_fed = generate_svg_sparkline(df.get("fed_funds_upper"))
+spark_sofr = generate_svg_sparkline(df.get("sofr_rate"))
+spark_dxy = generate_svg_sparkline(df_daily_fx_filtered["dxy_index"] if ("dxy_index" in df_daily_fx_filtered.columns and not df_daily_fx_filtered.empty) else df.get("dxy_index"))
+spark_us10 = generate_svg_sparkline(df.get("us_10y"))
+spark_us_cpi = generate_svg_sparkline(df.get("us_cpi_yoy"))
+spark_us_gdp = generate_svg_sparkline(df.get("us_gdp_growth_real"))
+spark_us_une = generate_svg_sparkline(df.get("us_unemployment_rate"))
+spark_sp500 = generate_svg_sparkline(df.get("sp500_index"))
 
 
 # -----------------------------------------------------------------------------
-# ZOBRAZENÍ TOP HERO BOXU PODLE ZVOLENÉ ZEMĚ
+# ZOBRAZENÍ TOP HERO BOXU PODLE ZVOLENÉ ZEMĚ (SYMETRICKÁ MŘÍŽKA 4 x 2)
 # -----------------------------------------------------------------------------
 
 if is_cz:
@@ -1339,23 +1443,15 @@ if is_cz:
                     <span class="sa-hero-label">2T Repo ČNB</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{repo_curr:.2f} %</span>
-                        <span class="sa-hero-change-neutral">{repo_delta:+.2f} p.b.</span>
+                        <span class="{repo_chg_cls}">{repo_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_repo}</div>
-                </div>
-                <div class="sa-hero-item">
-                    <span class="sa-hero-label">Reálná repo sazba</span>
-                    <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{real_repo_rate:+.2f} %</span>
-                        <span class="{'sa-hero-change-pos' if real_repo_rate >= 0 else 'sa-hero-change-neg'}">{real_repo_delta:+.2f} p.b.</span>
-                    </div>
-                    <div class="sa-hero-spark-row">{spark_real_repo}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">PRIBOR 3M</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{prib3m_curr:.2f} %</span>
-                        <span class="sa-hero-change-neutral">{prib3m_delta:+.2f} p.b.</span>
+                        <span class="{prib3m_chg_cls}">{prib3m_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_pribor}</div>
                 </div>
@@ -1363,7 +1459,7 @@ if is_cz:
                     <span class="sa-hero-label">Kurz EUR/CZK</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{daily_eur_czk:.2f} Kč</span>
-                        <span class="{'sa-hero-change-pos' if eur_czk_delta < 0 else ('sa-hero-change-neg' if eur_czk_delta > 0 else 'sa-hero-change-neutral')}">{eur_czk_delta:+.2f} ({eur_czk_pct:+.2f} % d/d)</span>
+                        <span class="{eur_czk_chg_cls}">{eur_czk_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_eur_czk}</div>
                 </div>
@@ -1371,7 +1467,7 @@ if is_cz:
                     <span class="sa-hero-label">10Y CZGB Výnos</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{czgb10_curr:.2f} %</span>
-                        <span class="{'sa-hero-change-pos' if czgb10_delta_bps < 0 else ('sa-hero-change-neg' if czgb10_delta_bps > 0 else 'sa-hero-change-neutral')}">{czgb10_delta_bps:+.1f} bps d/d</span>
+                        <span class="{czgb10_chg_cls}">{czgb10_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_czgb10}</div>
                 </div>
@@ -1379,25 +1475,33 @@ if is_cz:
                     <span class="sa-hero-label">Inflace ČR (CPI)</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{cpi_cz_curr:.1f} %</span>
-                        <span class="sa-hero-change-pos">Cíl 2.0 %</span>
+                        <span class="{cpi_cz_chg_cls}">Cíl 2.0 %</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_cpi}</div>
+                </div>
+                <div class="sa-hero-item">
+                    <span class="sa-hero-label">Reálný růst HDP</span>
+                    <div class="sa-hero-val-row">
+                        <span class="sa-hero-val">{gdp_cz_curr:+.1f} % YoY</span>
+                        <span class="{gdp_cz_chg_cls}">{gdp_cz_chg_str}</span>
+                    </div>
+                    <div class="sa-hero-spark-row">{spark_gdp}</div>
+                </div>
+                <div class="sa-hero-item">
+                    <span class="sa-hero-label">Míra nezaměstnanosti</span>
+                    <div class="sa-hero-val-row">
+                        <span class="sa-hero-val">{une_cz_curr:.1f} %</span>
+                        <span class="{une_cz_chg_cls}">{une_cz_chg_str}</span>
+                    </div>
+                    <div class="sa-hero-spark-row">{spark_une}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Index PX (Praha)</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{px_curr:,.0f} b.</span>
-                        <span class="{'sa-hero-change-pos' if px_delta >= 0 else 'sa-hero-change-neg'}">{px_delta:+,.0f} b.</span>
+                        <span class="{px_chg_cls}">{px_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_px}</div>
-                </div>
-                <div class="sa-hero-item">
-                    <span class="sa-hero-label">Reálný růst HDP</span>
-                    <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{gdp_cz_curr:+.1f} %</span>
-                        <span class="{'sa-hero-change-pos' if gdp_cz_delta >= 0 else 'sa-hero-change-neg'}">{gdp_cz_delta:+.1f} p.b.</span>
-                    </div>
-                    <div class="sa-hero-spark-row">{spark_gdp}</div>
                 </div>
             </div>
         </div>
@@ -1424,23 +1528,15 @@ elif is_eu:
                     <span class="sa-hero-label">Depozitní sazba ECB</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{ecb_dep_curr:.2f} %</span>
-                        <span class="sa-hero-change-neutral">{ecb_dep_delta:+.2f} p.b.</span>
+                        <span class="{ecb_dep_chg_cls}">{ecb_dep_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_ecb}</div>
-                </div>
-                <div class="sa-hero-item">
-                    <span class="sa-hero-label">Reálná sazba ECB</span>
-                    <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{real_ecb_rate:+.2f} %</span>
-                        <span class="{'sa-hero-change-pos' if real_ecb_rate >= 0 else 'sa-hero-change-neg'}">{real_ecb_delta:+.2f} p.b.</span>
-                    </div>
-                    <div class="sa-hero-spark-row">{spark_real_ecb}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">EURIBOR 3M</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{euribor3m_curr:.2f} %</span>
-                        <span class="sa-hero-change-neutral">{euribor3m_delta:+.2f} p.b.</span>
+                        <span class="{euribor3m_chg_cls}">{euribor3m_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_euribor}</div>
                 </div>
@@ -1448,7 +1544,7 @@ elif is_eu:
                     <span class="sa-hero-label">Kurz EUR/USD</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{daily_eur_usd:.4f} $</span>
-                        <span class="{'sa-hero-change-pos' if eur_usd_delta >= 0 else 'sa-hero-change-neg'}">{eur_usd_delta:+.4f} ({eur_usd_pct:+.2f} % d/d)</span>
+                        <span class="{eur_usd_chg_cls}">{eur_usd_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_eur_usd}</div>
                 </div>
@@ -1456,7 +1552,7 @@ elif is_eu:
                     <span class="sa-hero-label">10Y Německý Bund</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{bund10_curr:.2f} %</span>
-                        <span class="{'sa-hero-change-pos' if bund10_delta_bps < 0 else ('sa-hero-change-neg' if bund10_delta_bps > 0 else 'sa-hero-change-neutral')}">{bund10_delta_bps:+.1f} bps d/d</span>
+                        <span class="{bund10_chg_cls}">{bund10_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_bund10}</div>
                 </div>
@@ -1464,25 +1560,33 @@ elif is_eu:
                     <span class="sa-hero-label">Inflace Eurozóny (HICP)</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{cpi_eu_curr:.1f} %</span>
-                        <span class="sa-hero-change-pos">Cíl 2.0 %</span>
+                        <span class="{cpi_eu_chg_cls}">Cíl 2.0 %</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_eu_cpi}</div>
+                </div>
+                <div class="sa-hero-item">
+                    <span class="sa-hero-label">Reálný růst HDP EU</span>
+                    <div class="sa-hero-val-row">
+                        <span class="sa-hero-val">{gdp_eu_curr:+.1f} % YoY</span>
+                        <span class="{gdp_eu_chg_cls}">{gdp_eu_chg_str}</span>
+                    </div>
+                    <div class="sa-hero-spark-row">{spark_eu_gdp}</div>
+                </div>
+                <div class="sa-hero-item">
+                    <span class="sa-hero-label">Nezaměstnanost EU</span>
+                    <div class="sa-hero-val-row">
+                        <span class="sa-hero-val">{une_eu_curr:.1f} %</span>
+                        <span class="{une_eu_chg_cls}">{une_eu_chg_str}</span>
+                    </div>
+                    <div class="sa-hero-spark-row">{spark_eu_une}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Euro Stoxx 50</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{stoxx50_curr:,.0f} b.</span>
-                        <span class="{'sa-hero-change-pos' if stoxx50_delta >= 0 else 'sa-hero-change-neg'}">{stoxx50_delta:+,.0f} b.</span>
+                        <span class="{stoxx50_chg_cls}">{stoxx50_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_stoxx}</div>
-                </div>
-                <div class="sa-hero-item">
-                    <span class="sa-hero-label">Reálný růst HDP EU</span>
-                    <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{gdp_eu_curr:+.1f} %</span>
-                        <span class="{'sa-hero-change-pos' if gdp_eu_delta >= 0 else 'sa-hero-change-neg'}">{gdp_eu_delta:+.1f} p.b.</span>
-                    </div>
-                    <div class="sa-hero-spark-row">{spark_eu_gdp}</div>
                 </div>
             </div>
         </div>
@@ -1508,24 +1612,16 @@ else:
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Fed Funds Target</span>
                     <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{fed_upper_curr:.2f} %</span>
-                        <span class="sa-hero-change-neutral">{fed_upper_delta:+.2f} p.b.</span>
+                        <span class="sa-hero-val">{fed_lower_curr:.2f} – {fed_upper_curr:.2f} %</span>
+                        <span class="{fed_chg_cls}">{fed_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_fed}</div>
-                </div>
-                <div class="sa-hero-item">
-                    <span class="sa-hero-label">Reálná Fed sazba</span>
-                    <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{real_fed_rate:+.2f} %</span>
-                        <span class="{'sa-hero-change-pos' if real_fed_rate >= 0 else 'sa-hero-change-neg'}">{real_fed_delta:+.2f} p.b.</span>
-                    </div>
-                    <div class="sa-hero-spark-row">{spark_real_fed}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">SOFR</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{sofr_curr:.2f} %</span>
-                        <span class="sa-hero-change-neutral">{sofr_delta:+.2f} p.b.</span>
+                        <span class="{sofr_chg_cls}">{sofr_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_sofr}</div>
                 </div>
@@ -1533,7 +1629,7 @@ else:
                     <span class="sa-hero-label">Dolarový index DXY</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{daily_dxy:.2f}</span>
-                        <span class="{'sa-hero-change-pos' if dxy_daily_delta >= 0 else 'sa-hero-change-neg'}">{dxy_daily_delta:+.2f} ({dxy_daily_pct:+.2f} % d/d)</span>
+                        <span class="{dxy_chg_cls}">{dxy_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_dxy}</div>
                 </div>
@@ -1541,7 +1637,7 @@ else:
                     <span class="sa-hero-label">10Y US Treasury</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{us10_curr:.2f} %</span>
-                        <span class="{'sa-hero-change-pos' if us10_delta_bps < 0 else ('sa-hero-change-neg' if us10_delta_bps > 0 else 'sa-hero-change-neutral')}">{us10_delta_bps:+.1f} bps d/d</span>
+                        <span class="{us10_chg_cls}">{us10_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_us10}</div>
                 </div>
@@ -1549,25 +1645,33 @@ else:
                     <span class="sa-hero-label">Inflace USA (CPI)</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{cpi_us_curr:.1f} %</span>
-                        <span class="sa-hero-change-pos">Cíl 2.0 %</span>
+                        <span class="{cpi_us_chg_cls}">Cíl 2.0 %</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_us_cpi}</div>
                 </div>
                 <div class="sa-hero-item">
-                    <span class="sa-hero-label">S&P 500</span>
+                    <span class="sa-hero-label">Reálný růst HDP USA</span>
                     <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{sp500_curr:,.0f} b.</span>
-                        <span class="{'sa-hero-change-pos' if sp500_delta >= 0 else 'sa-hero-change-neg'}">{sp500_delta:+,.0f} b.</span>
-                    </div>
-                    <div class="sa-hero-spark-row">{spark_sp500}</div>
-                </div>
-                <div class="sa-hero-item">
-                    <span class="sa-hero-label">HDP USA (YoY)</span>
-                    <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{gdp_us_curr:+.1f} %</span>
-                        <span class="{'sa-hero-change-pos' if gdp_us_delta >= 0 else 'sa-hero-change-neg'}">{gdp_us_delta:+.1f} p.b.</span>
+                        <span class="sa-hero-val">{gdp_us_curr:+.1f} % YoY</span>
+                        <span class="{gdp_us_chg_cls}">{gdp_us_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_us_gdp}</div>
+                </div>
+                <div class="sa-hero-item">
+                    <span class="sa-hero-label">Nezaměstnanost USA (U-3)</span>
+                    <div class="sa-hero-val-row">
+                        <span class="sa-hero-val">{une_us_curr:.1f} %</span>
+                        <span class="{une_us_chg_cls}">{une_us_chg_str}</span>
+                    </div>
+                    <div class="sa-hero-spark-row">{spark_us_une}</div>
+                </div>
+                <div class="sa-hero-item">
+                    <span class="sa-hero-label">Index S&P 500</span>
+                    <div class="sa-hero-val-row">
+                        <span class="sa-hero-val">{sp500_curr:,.0f} b.</span>
+                        <span class="{sp500_chg_cls}">{sp500_chg_str}</span>
+                    </div>
+                    <div class="sa-hero-spark-row">{spark_sp500}</div>
                 </div>
             </div>
         </div>
