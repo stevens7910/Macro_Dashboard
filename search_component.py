@@ -688,163 +688,88 @@ def handle_indicator_search_navigation() -> None:
 
 def render_indicator_search_bar() -> None:
     """
-    Vykreslí vyhledávací pole s ikonou lupy, placeholdrem a zkratkou Ctrl + K v sidebaru
-    a injektuje interaktivní Command Palette / Search Drawer overlay.
+    Vykreslí interaktivní vyhledávací pole s reálným textovým vstupem v sidebaru,
+    placeholdrem, ikonou lupy, zkratkou Ctrl + K a našeprávacím drawerem/dropdownem.
     """
     catalog = build_indicator_search_catalog()
     catalog_json = json.dumps(catalog, ensure_ascii=False)
 
     html_code = f"""
-    <!-- STYLY PRO VYHLEDÁVÁNÍ V SIDEBARU A INTERAKTIVNÍ SEARCH DRAWER -->
+    <!-- STYLY PRO INTERAKTIVNÍ SEARCH BAR A AUTOCOMPLETE DRAWER -->
     <style>
-    /* 1. Sidebar trigger input box */
-    .sb-search-trigger-container {{
+    .macro-search-wrapper {{
+        position: relative;
         margin-top: 10px;
         margin-bottom: 14px;
         width: 100%;
-    }}
-
-    .sb-search-trigger-box {{
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #f8fafc;
-        border: 1px solid #cbd5e1;
-        border-radius: 8px;
-        padding: 7px 11px;
-        cursor: pointer;
-        transition: all 0.15s ease-in-out;
-        user-select: none;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    }}
-
-    .sb-search-trigger-box:hover {{
-        background: #ffffff;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
-    }}
-
-    .sb-search-trigger-left {{
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 0;
-        flex: 1;
-    }}
-
-    .sb-search-icon {{
-        font-size: 0.95rem;
-        color: #64748b;
-        flex-shrink: 0;
-    }}
-
-    .sb-search-placeholder {{
-        font-size: 0.81rem;
-        color: #64748b;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-weight: 450;
-    }}
-
-    .sb-search-shortcut-badge {{
-        display: inline-flex;
-        align-items: center;
-        gap: 3px;
-        background: #e2e8f0;
-        border: 1px solid #cbd5e1;
-        border-radius: 5px;
-        padding: 2px 6px;
-        font-size: 0.68rem;
-        font-weight: 700;
-        color: #334155;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
-        letter-spacing: -0.01em;
-        flex-shrink: 0;
-        margin-left: 6px;
-    }}
-
-    /* 2. Command Palette / Search Drawer Overlay */
-    #macro-search-drawer-backdrop {{
-        position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.65);
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
-        z-index: 9999999;
-        display: none;
-        align-items: flex-start;
-        justify-content: center;
-        padding-top: 8vh;
         box-sizing: border-box;
-        animation: fadeInDrawer 0.15s ease-out forwards;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        z-index: 10000;
     }}
 
-    @keyframes fadeInDrawer {{
-        from {{ opacity: 0; }}
-        to {{ opacity: 1; }}
+    div[data-testid="stElementContainer"]:has(.macro-search-wrapper),
+    .stHtml:has(.macro-search-wrapper) {{
+        overflow: visible !important;
     }}
 
-    .macro-search-modal-card {{
-        width: 94vw;
-        max-width: 660px;
-        max-height: 82vh;
-        background: #ffffff;
-        border-radius: 14px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(0,0,0,0.05);
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        animation: slideDownModal 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }}
-
-    @keyframes slideDownModal {{
-        from {{ transform: translateY(-16px) scale(0.98); opacity: 0; }}
-        to {{ transform: translateY(0) scale(1); opacity: 1; }}
-    }}
-
-    /* Search input area */
-    .macro-search-input-header {{
+    .macro-search-box {{
         display: flex;
         align-items: center;
-        padding: 13px 18px;
-        border-bottom: 1px solid #e2e8f0;
         background: #ffffff;
-        gap: 12px;
-    }}
-
-    .macro-search-input-icon {{
-        font-size: 1.25rem;
-        color: #3b82f6;
-        flex-shrink: 0;
-    }}
-
-    .macro-search-input-field {{
+        border: 1.5px solid #cbd5e1;
+        border-radius: 9px;
+        padding: 6px 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: all 0.15s ease-in-out;
+        box-sizing: border-box;
         width: 100%;
-        border: none;
-        outline: none;
-        font-size: 1.02rem;
+        cursor: text;
+    }}
+
+    .macro-search-box:focus-within {{
+        border-color: #2563eb;
+        background: #ffffff;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }}
+
+    .macro-search-icon {{
+        font-size: 0.95rem;
+        margin-right: 8px;
+        flex-shrink: 0;
+        line-height: 1;
+        user-select: none;
+    }}
+
+    .macro-search-input {{
+        flex: 1;
+        min-width: 0;
+        border: none !important;
+        outline: none !important;
+        background: transparent !important;
+        font-size: 0.81rem;
         font-weight: 500;
         color: #0f172a;
-        background: transparent;
+        padding: 2px 0;
         font-family: inherit;
+        box-shadow: none !important;
     }}
 
-    .macro-search-input-field::placeholder {{
-        color: #94a3b8;
-        font-weight: 400;
+    .macro-search-input::placeholder {{
+        color: #64748b;
+        font-weight: 450;
+        opacity: 0.9;
     }}
 
     .macro-search-clear-btn {{
+        display: none;
         background: transparent;
         border: none;
         color: #94a3b8;
-        font-size: 1.15rem;
+        font-size: 0.95rem;
         cursor: pointer;
-        padding: 2px 6px;
-        border-radius: 4px;
-        display: none;
+        padding: 0 4px;
+        line-height: 1;
+        border-radius: 3px;
     }}
 
     .macro-search-clear-btn:hover {{
@@ -852,55 +777,86 @@ def render_indicator_search_bar() -> None:
         background: #f1f5f9;
     }}
 
-    .macro-search-esc-badge {{
+    .macro-search-shortcut {{
         background: #f1f5f9;
         border: 1px solid #cbd5e1;
         border-radius: 5px;
-        padding: 2px 7px;
+        padding: 2px 6px;
         font-size: 0.68rem;
         font-weight: 700;
         color: #475569;
         font-family: monospace;
+        letter-spacing: -0.01em;
         flex-shrink: 0;
+        margin-left: 6px;
         user-select: none;
+        line-height: 1.2;
     }}
 
-    /* Quick suggestions bar */
-    .macro-search-quick-chips {{
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 9px 18px;
-        background: #f8fafc;
-        border-bottom: 1px solid #f1f5f9;
-        overflow-x: auto;
-        white-space: nowrap;
-        scrollbar-width: none;
-    }}
-    .macro-search-quick-chips::-webkit-scrollbar {{
+    /* Dropdown results container right below the search box */
+    .macro-search-dropdown {{
         display: none;
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-height: 480px;
+        overflow-y: auto;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        box-shadow: 0 14px 30px -4px rgba(15, 23, 42, 0.22), 0 4px 10px -2px rgba(15, 23, 42, 0.08);
+        z-index: 999999;
+        box-sizing: border-box;
+        padding: 8px 10px;
+        scrollbar-width: thin;
+        animation: dropdownSlideIn 0.12s ease-out forwards;
     }}
 
-    .macro-search-chip-label {{
-        font-size: 0.73rem;
-        font-weight: 700;
+    @keyframes dropdownSlideIn {{
+        from {{ opacity: 0; transform: translateY(-4px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
+
+    .macro-search-dropdown.is-open {{
+        display: block !important;
+    }}
+
+    /* Quick tips container */
+    .macro-search-quick-tips {{
+        padding: 6px 4px 10px 4px;
+        border-bottom: 1px solid #f1f5f9;
+        margin-bottom: 6px;
+    }}
+
+    .macro-search-tips-title {{
+        font-size: 0.72rem;
+        font-weight: 750;
         color: #64748b;
         text-transform: uppercase;
-        letter-spacing: 0.03em;
-        margin-right: 2px;
+        letter-spacing: 0.04em;
+        margin-bottom: 6px;
+    }}
+
+    .macro-search-tips-chips {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
     }}
 
     .macro-search-chip {{
         display: inline-block;
-        padding: 3px 9px;
-        background: #ffffff;
+        padding: 3px 8px;
+        background: #f8fafc;
         border: 1px solid #cbd5e1;
         border-radius: 12px;
-        font-size: 0.74rem;
+        font-size: 0.73rem;
         color: #334155;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.12s ease;
+        user-select: none;
     }}
 
     .macro-search-chip:hover {{
@@ -909,45 +865,38 @@ def render_indicator_search_bar() -> None:
         color: #0369a1;
     }}
 
-    /* Results list */
-    .macro-search-results-container {{
-        overflow-y: auto;
-        padding: 10px 14px;
-        flex: 1;
-        max-height: 58vh;
-        scrollbar-width: thin;
-    }}
-
+    /* Region Group Header */
     .macro-search-group-header {{
         font-size: 0.72rem;
         font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.05em;
         color: #64748b;
-        padding: 9px 10px 4px 10px;
+        padding: 8px 8px 3px 8px;
         display: flex;
         align-items: center;
         justify-content: space-between;
     }}
 
     .macro-search-group-count {{
-        font-size: 0.68rem;
-        font-weight: 600;
+        font-size: 0.66rem;
+        font-weight: 700;
         background: #f1f5f9;
         color: #475569;
-        padding: 1px 6px;
-        border-radius: 10px;
+        padding: 1px 5px;
+        border-radius: 8px;
     }}
 
+    /* Result item */
     .macro-search-item {{
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 9px 12px;
-        margin-bottom: 3px;
-        border-radius: 8px;
+        padding: 8px 10px;
+        margin-bottom: 2px;
+        border-radius: 7px;
         cursor: pointer;
-        transition: background 0.12s ease, border-color 0.12s ease;
+        transition: background 0.12s ease, border-left-color 0.12s ease;
         border-left: 3px solid transparent;
     }}
 
@@ -960,14 +909,14 @@ def render_indicator_search_bar() -> None:
     .macro-search-item-left {{
         min-width: 0;
         flex: 1;
-        padding-right: 12px;
+        padding-right: 8px;
     }}
 
     .macro-search-item-name {{
-        font-size: 0.90rem;
+        font-size: 0.86rem;
         font-weight: 750;
         color: #0f172a;
-        line-height: 1.3;
+        line-height: 1.25;
         margin-bottom: 2px;
         word-break: break-word;
     }}
@@ -983,8 +932,8 @@ def render_indicator_search_bar() -> None:
     .macro-search-item-meta {{
         display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 0.75rem;
+        gap: 5px;
+        font-size: 0.72rem;
         color: #64748b;
         white-space: nowrap;
         overflow: hidden;
@@ -992,7 +941,7 @@ def render_indicator_search_bar() -> None:
     }}
 
     .macro-search-item-cat {{
-        font-weight: 550;
+        font-weight: 600;
         color: #475569;
     }}
 
@@ -1003,7 +952,7 @@ def render_indicator_search_bar() -> None:
     .macro-search-item-right {{
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         flex-shrink: 0;
     }}
 
@@ -1011,172 +960,104 @@ def render_indicator_search_bar() -> None:
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 2px 7px;
+        padding: 2px 6px;
         border-radius: 4px;
-        font-size: 0.70rem;
+        font-size: 0.67rem;
         font-weight: 800;
         letter-spacing: 0.02em;
         text-transform: uppercase;
         border: 1px solid transparent;
     }}
 
-    .macro-search-enter-hint {{
-        display: none;
-        font-size: 0.70rem;
-        color: #2563eb;
-        font-weight: 700;
-        background: #dbeafe;
-        padding: 2px 6px;
-        border-radius: 4px;
-    }}
-
-    .macro-search-item.is-selected .macro-search-enter-hint {{
-        display: inline-block;
-    }}
-
     /* Empty state */
     .macro-search-empty-state {{
         text-align: center;
-        padding: 36px 20px;
+        padding: 24px 14px;
         color: #64748b;
     }}
 
     .macro-search-empty-icon {{
-        font-size: 2.2rem;
-        margin-bottom: 10px;
+        font-size: 1.8rem;
+        margin-bottom: 6px;
         display: block;
         opacity: 0.7;
     }}
 
     .macro-search-empty-title {{
-        font-size: 1.02rem;
+        font-size: 0.95rem;
         font-weight: 750;
         color: #1e293b;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
     }}
 
     .macro-search-empty-sub {{
-        font-size: 0.82rem;
+        font-size: 0.78rem;
         color: #64748b;
-        max-width: 400px;
-        margin: 0 auto;
-        line-height: 1.45;
+        line-height: 1.4;
     }}
 
-    /* Footer with keyboard hints */
-    .macro-search-footer {{
-        padding: 8px 18px;
-        background: #f8fafc;
-        border-top: 1px solid #e2e8f0;
+    /* Dropdown footer */
+    .macro-search-dropdown-footer {{
+        margin-top: 6px;
+        padding: 6px 6px 2px 6px;
+        border-top: 1px solid #f1f5f9;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        font-size: 0.73rem;
+        font-size: 0.68rem;
         color: #64748b;
         user-select: none;
     }}
 
-    .macro-search-footer-shortcuts {{
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }}
-
-    .macro-search-footer-kbd {{
-        background: #ffffff;
+    .macro-search-dropdown-footer kbd {{
+        background: #f1f5f9;
         border: 1px solid #cbd5e1;
-        border-radius: 4px;
-        padding: 1px 5px;
-        font-size: 0.68rem;
+        border-radius: 3px;
+        padding: 1px 4px;
+        font-size: 0.64rem;
         font-family: monospace;
         color: #334155;
         font-weight: 700;
-        margin-right: 3px;
     }}
     </style>
 
-    <!-- SIDEBAR SEARCH BAR ELEMENT -->
-    <div class="sb-search-trigger-container">
-        <div class="sb-search-trigger-box" id="macro-sidebar-search-btn" title="Hledat indikátor (Ctrl + K)">
-            <div class="sb-search-trigger-left">
-                <span class="sb-search-icon">🔍</span>
-                <span class="sb-search-placeholder">Hledat indikátor... (např. CPI, repo, Bund, PRIBOR)</span>
-            </div>
-            <span class="sb-search-shortcut-badge"><kbd>Ctrl</kbd> + <kbd>K</kbd></span>
+    <!-- REAL TEXT INPUT IN SIDEBAR WITH LIVE DROPDOWN DRAWER -->
+    <div class="macro-search-wrapper" id="macro-search-wrapper">
+        <div class="macro-search-box" id="macro-search-box" onclick="const el=document.getElementById('macro-sidebar-search-input'); if(el) el.focus();">
+            <span class="macro-search-icon">🔍</span>
+            <input type="text"
+                   id="macro-sidebar-search-input"
+                   class="macro-search-input"
+                   placeholder="Hledat indikátor... (např. CPI, repo, Bund, PRIBOR)"
+                   autocomplete="off"
+                   autocorrect="off"
+                   autocapitalize="off"
+                   spellcheck="false"
+                   oninput="window.macroSearchOnInput && window.macroSearchOnInput(this.value)"
+                   onfocus="window.macroSearchOnFocus && window.macroSearchOnFocus(this.value)"
+                   onkeydown="window.macroSearchOnKeydown && window.macroSearchOnKeydown(event)" />
+            <button type="button" id="macro-sidebar-clear-btn" class="macro-search-clear-btn" title="Vymazat" onclick="window.macroSearchClear && window.macroSearchClear()">✕</button>
+            <span class="macro-search-shortcut"><kbd>Ctrl</kbd> + <kbd>K</kbd></span>
         </div>
-    </div>
 
-    <!-- COMMAND PALETTE / SEARCH DRAWER MODAL OVERLAY -->
-    <div id="macro-search-drawer-backdrop">
-        <div class="macro-search-modal-card" id="macro-search-modal-card">
-            <!-- Header s vyhledávacím vstupem -->
-            <div class="macro-search-input-header">
-                <span class="macro-search-input-icon">🔍</span>
-                <input type="text"
-                       id="macro-search-modal-input"
-                       class="macro-search-input-field"
-                       placeholder="Hledat indikátor... (např. CPI, repo, Bund, PRIBOR)"
-                       autocomplete="off"
-                       spellcheck="false" />
-                <button type="button" id="macro-search-clear-btn" class="macro-search-clear-btn" title="Vymazat">✕</button>
-                <span class="macro-search-esc-badge"><kbd>ESC</kbd></span>
+        <div id="macro-sidebar-dropdown" class="macro-search-dropdown">
+            <div id="macro-sidebar-dropdown-content">
+                <!-- Dynamicky generovaný obsah -->
             </div>
-
-            <!-- Rychlé populární filtry / chips -->
-            <div class="macro-search-quick-chips">
-                <span class="macro-search-chip-label">Tipy:</span>
-                <span class="macro-search-chip" data-query="repo">2T Repo sazba</span>
-                <span class="macro-search-chip" data-query="cpi">Inflace (CPI)</span>
-                <span class="macro-search-chip" data-query="bund">10Y Bund</span>
-                <span class="macro-search-chip" data-query="pribor">PRIBOR 3M</span>
-                <span class="macro-search-chip" data-query="hypo">Hypotéky</span>
-                <span class="macro-search-chip" data-query="sp500">S&P 500</span>
-                <span class="macro-search-chip" data-query="vix">Volatilita VIX</span>
-                <span class="macro-search-chip" data-query="hdp">HDP</span>
-                <span class="macro-search-chip" data-query="mzdy">Mzdy</span>
-            </div>
-
-            <!-- Scrollovatelný kontejner výsledků -->
-            <div class="macro-search-results-container" id="macro-search-results-list">
-                <!-- Zde se dynamicky renderují seskupené výsledky -->
-            </div>
-
-            <!-- Patička s nápovědou klávesových zkratek -->
-            <div class="macro-search-footer">
-                <div class="macro-search-footer-shortcuts">
-                    <span><span class="macro-search-footer-kbd">↑</span><span class="macro-search-footer-kbd">↓</span> navigace</span>
-                    <span><span class="macro-search-footer-kbd">↵</span> přejít na indikátor</span>
-                    <span><span class="macro-search-footer-kbd">esc</span> zavřít</span>
-                </div>
-                <div>
-                    <span id="macro-search-count-total">101</span> ukazatelů (ČR, EU, USA)
-                </div>
+            <div class="macro-search-dropdown-footer">
+                <div><span><kbd>↑</kbd><kbd>↓</kbd> posun • <kbd>↵</kbd> přejít • <kbd>esc</kbd> zavřít</span></div>
+                <div><span id="macro-search-total-count">101</span> ukazatelů</div>
             </div>
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIKA NAŠEPTÁVAČE, FUZZY SEARCH A KLÁVESNICOVÉ NAVIGACE -->
+    <!-- JAVASCRIPT: FUZZY SEARCH, KLÁVESNICE, VÝBĚR A HLAVNÍ NAVIGACE -->
     <script>
     (function() {{
-        // Datový katalog všech 101 indikátorů
-        const INDICATORS_CATALOG = {catalog_json};
+        const CATALOG = {catalog_json};
+        let selectedIdx = 0;
+        let currentResults = [];
 
-        // Získání správného kontextu dokumentu (i pro iframe fallback)
-        const topWin = (typeof window.parent !== 'undefined' && window.parent && window.parent.document) ? window.parent : window;
-        const topDoc = topWin.document;
-
-        // Přemístění overlaye na document.body pro prevenci clippingu či transformací
-        function setupModalDom() {{
-            const existingBackdrop = topDoc.getElementById('macro-search-drawer-backdrop');
-            const localBackdrop = document.getElementById('macro-search-drawer-backdrop');
-            if (localBackdrop && (!existingBackdrop || existingBackdrop === localBackdrop)) {{
-                if (localBackdrop.parentNode !== topDoc.body) {{
-                    topDoc.body.appendChild(localBackdrop);
-                }}
-            }}
-        }}
-
-        // Normalizace diakritiky: převod na lowercase bez háčků a čárek
         function stripDiacritics(str) {{
             if (!str) return '';
             return str
@@ -1186,7 +1067,6 @@ def render_indicator_search_bar() -> None:
                 .trim();
         }}
 
-        // Zvýraznění shodujícího se textu
         function highlightMatch(text, rawQuery) {{
             if (!rawQuery) return text;
             const normText = stripDiacritics(text);
@@ -1202,85 +1082,95 @@ def render_indicator_search_bar() -> None:
                    text.substring(idx + rawQuery.length);
         }}
 
-        // Získání DOM elementů z top documentu
-        function getElements() {{
+        function getDoms() {{
             return {{
-                backdrop: topDoc.getElementById('macro-search-drawer-backdrop'),
-                card: topDoc.getElementById('macro-search-modal-card'),
-                input: topDoc.getElementById('macro-search-modal-input'),
-                clearBtn: topDoc.getElementById('macro-search-clear-btn'),
-                resultsList: topDoc.getElementById('macro-search-results-list'),
-                sidebarBtn: topDoc.getElementById('macro-sidebar-search-btn') || document.getElementById('macro-sidebar-search-btn')
+                wrapper: document.getElementById('macro-search-wrapper'),
+                input: document.getElementById('macro-sidebar-search-input'),
+                clearBtn: document.getElementById('macro-sidebar-clear-btn'),
+                dropdown: document.getElementById('macro-sidebar-dropdown'),
+                content: document.getElementById('macro-sidebar-dropdown-content')
             }};
         }}
 
-        let selectedIndex = 0;
-        let currentFilteredResults = [];
-
-        // Otevření draweru
-        function openDrawer(initialQuery = '') {{
-            setupModalDom();
-            const els = getElements();
-            if (!els.backdrop || !els.input) return;
-
-            els.backdrop.style.display = 'flex';
-            if (initialQuery) {{
-                els.input.value = initialQuery;
+        function openDropdown() {{
+            const doms = getDoms();
+            if (doms.dropdown) {{
+                doms.dropdown.classList.add('is-open');
+                renderResults(doms.input ? doms.input.value : '');
             }}
-            els.input.focus();
-            renderSearchResults(els.input.value);
         }}
 
-        // Zavření draweru
-        function closeDrawer() {{
-            const els = getElements();
-            if (!els.backdrop) return;
-            els.backdrop.style.display = 'none';
-            if (els.input) {{
-                els.input.value = '';
+        function closeDropdown() {{
+            const doms = getDoms();
+            if (doms.dropdown) {{
+                doms.dropdown.classList.remove('is-open');
             }}
-            selectedIndex = 0;
+            selectedIdx = 0;
         }}
 
-        // Navigace na indikátor
-        function navigateToIndicator(code) {{
-            closeDrawer();
+        function navigateTo(code) {{
+            const doms = getDoms();
+            if (doms.input) doms.input.value = '';
+            closeDropdown();
+
+            const topWin = (typeof window.parent !== 'undefined' && window.parent && window.parent.location) ? window.parent : window;
             const url = new URL(topWin.location.href);
             url.searchParams.set('search_indicator', code);
             topWin.location.href = url.toString();
         }}
 
-        // Vykreslení výsledků
-        function renderSearchResults(query = '') {{
-            const els = getElements();
-            if (!els.resultsList) return;
+        function renderResults(query = '') {{
+            const doms = getDoms();
+            if (!doms.content) return;
 
-            const qClean = stripDiacritics(query);
-            if (els.clearBtn) {{
-                els.clearBtn.style.display = qClean.length > 0 ? 'inline-block' : 'none';
+            const cleanQ = stripDiacritics(query);
+            if (doms.clearBtn) {{
+                doms.clearBtn.style.display = cleanQ.length > 0 ? 'inline-block' : 'none';
             }}
 
-            let filtered = [];
-            if (!qClean) {{
-                // Pokud je pole prázdné, nabídneme reprezentativní výběr klíčových ukazatelů
-                filtered = INDICATORS_CATALOG.filter(item => [
-                    'repo_rate', 'cpi_yoy', 'czgb_10y', 'pribor_3m', 'cz_mortgage_rate',
-                    'ecb_deposit_rate', 'bund_10y', 'eu_cpi_yoy', 'stoxx50_index',
-                    'fed_funds_upper', 'us_10y', 'us_cpi_yoy', 'sp500_index', 'vix_index'
+            // Pokud je dotaz prázdný, zobrazíme rychlé tipy a výběr hlavních ukazatelů
+            if (!cleanQ) {{
+                const defaultItems = CATALOG.filter(item => [
+                    'repo_rate', 'cpi_yoy', 'czgb_10y', 'cz_mortgage_rate',
+                    'ecb_deposit_rate', 'bund_10y', 'eu_cpi_yoy',
+                    'fed_funds_upper', 'us_10y', 'sp500_index', 'vix_index'
                 ].includes(item.code));
-            }} else {{
-                // Multi-token fuzzy matching od 1 zadaného znaku
-                const tokens = qClean.split(/\s+/).filter(Boolean);
-                filtered = INDICATORS_CATALOG.filter(item => {{
-                    return tokens.every(tok => item.searchText.includes(tok));
-                }});
+
+                currentResults = defaultItems;
+                selectedIdx = 0;
+
+                let html = `
+                    <div class="macro-search-quick-tips">
+                        <div class="macro-search-tips-title">💡 Rychlé tipy & hledané pojmy:</div>
+                        <div class="macro-search-tips-chips">
+                            <span class="macro-search-chip" data-q="repo">2T Repo sazba</span>
+                            <span class="macro-search-chip" data-q="cpi">Inflace CPI</span>
+                            <span class="macro-search-chip" data-q="bund">10Y Bund</span>
+                            <span class="macro-search-chip" data-q="pribor">PRIBOR 3M</span>
+                            <span class="macro-search-chip" data-q="hypo">Hypotéky</span>
+                            <span class="macro-search-chip" data-q="sp500">S&P 500</span>
+                            <span class="macro-search-chip" data-q="vix">VIX</span>
+                            <span class="macro-search-chip" data-q="mzdy">Mzdy</span>
+                        </div>
+                    </div>
+                `;
+                html += renderGroupedList(defaultItems, query);
+                doms.content.innerHTML = html;
+                bindItemsEvents();
+                return;
             }}
 
-            currentFilteredResults = filtered;
-            selectedIndex = 0;
+            // Multi-token fuzzy matching od 1 znaku
+            const tokens = cleanQ.split(/\s+/).filter(Boolean);
+            const filtered = CATALOG.filter(item => {{
+                return tokens.every(tok => item.searchText.includes(tok));
+            }});
+
+            currentResults = filtered;
+            selectedIdx = 0;
 
             if (filtered.length === 0) {{
-                els.resultsList.innerHTML = `
+                doms.content.innerHTML = `
                     <div class="macro-search-empty-state">
                         <span class="macro-search-empty-icon">🔍</span>
                         <div class="macro-search-empty-title">Žádný indikátor nebyl nalezen.</div>
@@ -1292,39 +1182,43 @@ def render_indicator_search_bar() -> None:
                 return;
             }}
 
-            // Seskupení podle regionů (ČR, EU, USA)
+            doms.content.innerHTML = renderGroupedList(filtered, query);
+            bindItemsEvents();
+        }}
+
+        function renderGroupedList(items, query) {{
             const groups = {{
                 'CZ': {{ title: '🇨🇿 Česká republika', items: [] }},
                 'EU': {{ title: '🇪🇺 Evropská unie', items: [] }},
                 'US': {{ title: '🇺🇸 Spojené státy', items: [] }}
             }};
 
-            filtered.forEach((item, globalIdx) => {{
+            items.forEach((item, globalIdx) => {{
                 if (groups[item.region]) {{
                     groups[item.region].items.push({{ item, globalIdx }});
                 }}
             }});
 
-            let html = '';
+            let out = '';
             ['CZ', 'EU', 'US'].forEach(regKey => {{
                 const grp = groups[regKey];
                 if (grp.items.length > 0) {{
-                    html += `
+                    out += `
                         <div class="macro-search-group-header">
                             <span>${{grp.title}}</span>
                             <span class="macro-search-group-count">${{grp.items.length}}</span>
                         </div>
                     `;
                     grp.items.forEach(({{ item, globalIdx }}) => {{
-                        const isSelected = (globalIdx === selectedIndex);
-                        const highlightedName = highlightMatch(item.name, query);
-                        html += `
-                            <div class="macro-search-item ${{isSelected ? 'is-selected' : ''}}"
+                        const isSel = (globalIdx === selectedIdx);
+                        const highlighted = highlightMatch(item.name, query);
+                        out += `
+                            <div class="macro-search-item ${{isSel ? 'is-selected' : ''}}"
                                  data-idx="${{globalIdx}}"
                                  data-code="${{item.code}}"
-                                 id="macro-search-item-${{globalIdx}}">
+                                 id="macro-item-${{globalIdx}}">
                                 <div class="macro-search-item-left">
-                                    <div class="macro-search-item-name">${{highlightedName}}</div>
+                                    <div class="macro-search-item-name">${{highlighted}}</div>
                                     <div class="macro-search-item-meta">
                                         <span class="macro-search-item-cat">${{item.category}}</span>
                                         <span class="macro-search-item-bc">• ${{item.mainTab}} › ${{item.subTabLabel}}</span>
@@ -1335,44 +1229,26 @@ def render_indicator_search_bar() -> None:
                                           style="background: ${{item.badgeBg}}; color: ${{item.badgeColor}}; border-color: ${{item.badgeBorder}};">
                                         ${{item.regionBadge}}
                                     </span>
-                                    <span class="macro-search-enter-hint">↵</span>
                                 </div>
                             </div>
                         `;
                     }});
                 }}
             }});
-
-            els.resultsList.innerHTML = html;
-
-            // Navázání click událostí na výsledky
-            const itemsDom = els.resultsList.querySelectorAll('.macro-search-item');
-            itemsDom.forEach(node => {{
-                node.addEventListener('click', () => {{
-                    const code = node.getAttribute('data-code');
-                    if (code) navigateToIndicator(code);
-                }});
-                node.addEventListener('mouseenter', () => {{
-                    const idx = parseInt(node.getAttribute('data-idx'), 10);
-                    if (!isNaN(idx)) {{
-                        updateActiveIndex(idx, false);
-                    }}
-                }});
-            }});
+            return out;
         }}
 
-        // Aktualizace aktivní položky při šipkách
-        function updateActiveIndex(newIdx, shouldScroll = true) {{
-            if (currentFilteredResults.length === 0) return;
-            const els = getElements();
-            if (!els.resultsList) return;
+        function updateSelection(newIdx, shouldScroll = true) {{
+            if (currentResults.length === 0) return;
+            const doms = getDoms();
+            if (!doms.content) return;
 
-            const oldNode = els.resultsList.querySelector(`.macro-search-item[data-idx="${{selectedIndex}}"]`);
+            const oldNode = doms.content.querySelector(`.macro-search-item[data-idx="${{selectedIdx}}"]`);
             if (oldNode) oldNode.classList.remove('is-selected');
 
-            selectedIndex = Math.max(0, Math.min(newIdx, currentFilteredResults.length - 1));
+            selectedIdx = Math.max(0, Math.min(newIdx, currentResults.length - 1));
 
-            const newNode = els.resultsList.querySelector(`.macro-search-item[data-idx="${{selectedIndex}}"]`);
+            const newNode = doms.content.querySelector(`.macro-search-item[data-idx="${{selectedIdx}}"]`);
             if (newNode) {{
                 newNode.classList.add('is-selected');
                 if (shouldScroll) {{
@@ -1381,103 +1257,173 @@ def render_indicator_search_bar() -> None:
             }}
         }}
 
-        // Globální listenery klávesnice
-        function bindEventListeners() {{
-            setupModalDom();
-            const els = getElements();
+        function bindItemsEvents() {{
+            const doms = getDoms();
+            if (!doms.content) return;
 
-            // 1. Otevření kliknutím na sidebar tlačítko
-            const sbBtn = topDoc.getElementById('macro-sidebar-search-btn') || document.getElementById('macro-sidebar-search-btn');
-            if (sbBtn) {{
-                sbBtn.onclick = () => openDrawer();
-            }}
-
-            // 2. Klávesová zkratka Ctrl+K / Cmd+K kdekoliv na stránce
-            topWin.addEventListener('keydown', (e) => {{
-                if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {{
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const backdrop = topDoc.getElementById('macro-search-drawer-backdrop');
-                    if (backdrop && backdrop.style.display === 'flex') {{
-                        closeDrawer();
-                    }} else {{
-                        openDrawer();
-                    }}
-                }} else if (e.key === 'Escape') {{
-                    const backdrop = topDoc.getElementById('macro-search-drawer-backdrop');
-                    if (backdrop && backdrop.style.display === 'flex') {{
-                        e.preventDefault();
-                        closeDrawer();
-                    }}
-                }}
+            // Kliknutí na výsledky
+            const items = doms.content.querySelectorAll('.macro-search-item');
+            items.forEach(it => {{
+                it.addEventListener('click', () => {{
+                    const code = it.getAttribute('data-code');
+                    if (code) navigateTo(code);
+                }});
+                it.addEventListener('mouseenter', () => {{
+                    const idx = parseInt(it.getAttribute('data-idx'), 10);
+                    if (!isNaN(idx)) updateSelection(idx, false);
+                }});
             }});
 
-            // 3. Ovládání uvnitř modalu
-            if (els.input) {{
-                els.input.oninput = (e) => {{
-                    renderSearchResults(e.target.value);
-                }};
-
-                els.input.onkeydown = (e) => {{
-                    if (e.key === 'ArrowDown') {{
-                        e.preventDefault();
-                        updateActiveIndex(selectedIndex + 1, true);
-                    }} else if (e.key === 'ArrowUp') {{
-                        e.preventDefault();
-                        updateActiveIndex(selectedIndex - 1, true);
-                    }} else if (e.key === 'Enter') {{
-                        e.preventDefault();
-                        if (currentFilteredResults.length > 0 && currentFilteredResults[selectedIndex]) {{
-                            navigateToIndicator(currentFilteredResults[selectedIndex].code);
-                        }}
-                    }}
-                }};
-            }}
-
-            // 4. Vymazání vstupu tlačítkem ✕
-            if (els.clearBtn) {{
-                els.clearBtn.onclick = () => {{
-                    if (els.input) {{
-                        els.input.value = '';
-                        els.input.focus();
-                        renderSearchResults('');
-                    }}
-                }};
-            }}
-
-            // 5. Zavření kliknutím na backdrop
-            if (els.backdrop) {{
-                els.backdrop.onclick = (e) => {{
-                    if (e.target === els.backdrop) {{
-                        closeDrawer();
-                    }}
-                }};
-            }}
-
-            // 6. Rychlé chipy (Tipy)
-            const chips = topDoc.querySelectorAll('.macro-search-chip');
+            // Kliknutí na chipy
+            const chips = doms.content.querySelectorAll('.macro-search-chip');
             chips.forEach(chip => {{
-                chip.onclick = () => {{
-                    const q = chip.getAttribute('data-query');
-                    if (els.input && q) {{
-                        els.input.value = q;
-                        els.input.focus();
-                        renderSearchResults(q);
+                chip.addEventListener('click', (e) => {{
+                    e.stopPropagation();
+                    const q = chip.getAttribute('data-q');
+                    if (doms.input && q) {{
+                        doms.input.value = q;
+                        doms.input.focus();
+                        renderResults(q);
                     }}
-                }};
+                }});
             }});
         }}
 
-        // Inicializace při načtení
-        setTimeout(bindEventListeners, 120);
-        setTimeout(setupModalDom, 250);
+        // Globální napojení pro okamžitou odezvu HTML eventů
+        window.macroSearchOnInput = function(val) {{
+            openDropdown();
+            renderResults(val);
+        }};
+
+        window.macroSearchOnFocus = function(val) {{
+            openDropdown();
+            renderResults(val || '');
+        }};
+
+        window.macroSearchOnKeydown = function(e) {{
+            e.stopPropagation();
+            if (e.key === 'ArrowDown') {{
+                e.preventDefault();
+                updateSelection(selectedIdx + 1, true);
+            }} else if (e.key === 'ArrowUp') {{
+                e.preventDefault();
+                updateSelection(selectedIdx - 1, true);
+            }} else if (e.key === 'Enter') {{
+                e.preventDefault();
+                if (currentResults.length > 0 && currentResults[selectedIdx]) {{
+                    navigateTo(currentResults[selectedIdx].code);
+                }}
+            }} else if (e.key === 'Escape') {{
+                e.preventDefault();
+                const doms = getDoms();
+                if (doms.input) doms.input.value = '';
+                closeDropdown();
+            }}
+        }};
+
+        window.macroSearchClear = function() {{
+            const doms = getDoms();
+            if (doms.input) {{
+                doms.input.value = '';
+                doms.input.focus();
+                renderResults('');
+            }}
+        }};
+
+        function init() {{
+            const doms = getDoms();
+            if (!doms.input) return;
+
+            // 1. Psaní do vstupu
+            doms.input.addEventListener('input', (e) => {{
+                openDropdown();
+                renderResults(e.target.value);
+            }});
+
+            // 2. Focus na vstup
+            doms.input.addEventListener('focus', () => {{
+                openDropdown();
+            }});
+
+            // 3. Klávesnice uvnitř vstupu - izolace od Streamlit hotkeys
+            doms.input.addEventListener('keydown', (e) => {{
+                e.stopPropagation();
+                if (e.key === 'ArrowDown') {{
+                    e.preventDefault();
+                    updateSelection(selectedIdx + 1, true);
+                }} else if (e.key === 'ArrowUp') {{
+                    e.preventDefault();
+                    updateSelection(selectedIdx - 1, true);
+                }} else if (e.key === 'Enter') {{
+                    e.preventDefault();
+                    if (currentResults.length > 0 && currentResults[selectedIdx]) {{
+                        navigateTo(currentResults[selectedIdx].code);
+                    }}
+                }} else if (e.key === 'Escape') {{
+                    e.preventDefault();
+                    if (doms.input) doms.input.value = '';
+                    closeDropdown();
+                }}
+            }});
+
+            doms.input.addEventListener('keyup', (e) => {{
+                e.stopPropagation();
+            }});
+
+            doms.input.addEventListener('keypress', (e) => {{
+                e.stopPropagation();
+            }});
+
+            // 4. Tlačítko pro vymazání ✕
+            if (doms.clearBtn) {{
+                doms.clearBtn.addEventListener('click', (e) => {{
+                    e.stopPropagation();
+                    if (doms.input) {{
+                        doms.input.value = '';
+                        doms.input.focus();
+                        renderResults('');
+                    }}
+                }});
+            }}
+
+            // 5. Zavření při kliknutí mimo vyhledávač
+            document.addEventListener('click', (e) => {{
+                if (doms.wrapper && !doms.wrapper.contains(e.target)) {{
+                    closeDropdown();
+                }}
+            }});
+
+            // 6. Globální zkratka Ctrl+K / Cmd+K kdekoliv na stránce i v parent okně
+            const handleGlobalK = (e) => {{
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {{
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (doms.input) {{
+                        doms.input.focus();
+                        doms.input.select();
+                        openDropdown();
+                    }}
+                }}
+            }};
+            window.addEventListener('keydown', handleGlobalK);
+            try {{
+                if (window.parent && window.parent !== window) {{
+                    window.parent.addEventListener('keydown', handleGlobalK);
+                }}
+            }} catch (err) {{}}
+        }}
+
+        // Inicializujeme ihned a pojistíme dalším voláním
+        init();
+        setTimeout(init, 100);
+        setTimeout(init, 350);
     }})();
     </script>
     """
 
-    # Vykreslení do sidebaru
+    # Vykreslení do sidebaru s povoleným JavaScriptem
     if hasattr(st.sidebar, "html"):
-        st.sidebar.html(html_code)
+        st.sidebar.html(html_code, unsafe_allow_javascript=True)
     else:
         st.sidebar.markdown(html_code, unsafe_allow_html=True)
 
@@ -1515,6 +1461,6 @@ def render_scroll_anchor_effect() -> None:
     </script>
     """
     if hasattr(st, "html"):
-        st.html(script)
+        st.html(script, unsafe_allow_javascript=True)
     else:
         st.markdown(script, unsafe_allow_html=True)
