@@ -4,7 +4,7 @@ app.py
 Český, Evropský & US Makroekonomický Dashboard ve Streamlit.
 Přehledná, vysoce responzivní a modulární aplikace pro komplexní vizualizaci
 a srovnání makroekonomických indikátorů České republiky, Evropské unie (Eurozóny)
-a Spojených států amerických.
+a Spojených států amerických a světových akciových trhů (PX, Euro Stoxx 50, S&P 500, NASDAQ).
 """
 
 from __future__ import annotations
@@ -26,6 +26,7 @@ from data_loader import (
     CZ_INDICATORS,
     EU_INDICATORS,
     US_INDICATORS,
+    MARKET_INDICATORS,
     get_cached_macro_data
 )
 
@@ -34,7 +35,7 @@ from data_loader import (
 # =============================================================================
 
 st.set_page_config(
-    page_title="Makro Monitor | ČR & EU & USA Macroeconomic Terminal",
+    page_title="Makro & Tržní Monitor | ČR, EU & USA Terminal",
     page_icon="📈",
     layout="wide",
     initial_sidebar_state="auto",  # Mobilně přívětivé: automatické sbalení na telefonu
@@ -75,29 +76,31 @@ CUSTOM_CSS = """
         }
     }
     
-    /* Vzhled metrických KPI karet (Stock Analysis styl) */
+    /* VZHLED METRICKÝCH SUMMARY BOXŮ (VÝRAZNĚJŠÍ A TMAVŠÍ PODBARVENÍ) */
     div[data-testid="stMetric"] {
-        background-color: #ffffff !important;
-        border: 1px solid #e5e7eb !important;
+        background-color: #f1f5f9 !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 8px !important;
         padding: 12px 16px !important;
-        box-shadow: none !important;
-        transition: border-color 0.15s ease !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.2s ease !important;
     }
     div[data-testid="stMetric"]:hover {
+        background-color: #e2e8f0 !important;
         border-color: #94a3b8 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
     }
     div[data-testid="stMetricLabel"] p {
-        font-size: 0.78rem !important;
-        font-weight: 600 !important;
-        color: #64748b !important;
+        font-size: 0.80rem !important;
+        font-weight: 700 !important;
+        color: #475569 !important;
         text-transform: uppercase !important;
         letter-spacing: 0.04em !important;
-        margin-bottom: 2px !important;
+        margin-bottom: 3px !important;
     }
     div[data-testid="stMetricValue"] {
-        font-size: 1.60rem !important;
-        font-weight: 700 !important;
+        font-size: 1.65rem !important;
+        font-weight: 800 !important;
         color: #0f172a !important;
         font-variant-numeric: tabular-nums !important;
     }
@@ -139,7 +142,7 @@ CUSTOM_CSS = """
         font-size: 1.15rem;
         font-weight: 700;
         color: #0f172a;
-        margin-top: 1.1rem;
+        margin-top: 0.8rem;
         margin-bottom: 0.4rem;
         display: flex;
         align-items: center;
@@ -148,21 +151,22 @@ CUSTOM_CSS = """
         padding-left: 10px;
     }
 
-    /* ZÁLOŽKY (TABS): MINIMALISTICKÝ DESIGN (STOCK ANALYSIS) */
+    /* ZÁLOŽKY (TABS): AGREGOVANÉ KATEGORIE S TMAVŠÍM PODBARVENÍM */
     div[data-baseweb="tab-list"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        gap: 2px 6px !important;
-        border-bottom: 1px solid #e5e7eb !important;
-        padding-bottom: 6px !important;
-        margin-bottom: 1.3rem !important;
+        gap: 4px 6px !important;
+        background-color: #f1f5f9 !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 10px !important;
+        padding: 5px 8px !important;
+        margin-bottom: 1.1rem !important;
         overflow-x: auto !important;
         white-space: nowrap !important;
         scrollbar-width: thin !important;
         -webkit-overflow-scrolling: touch !important;
-        background: transparent !important;
         width: 100% !important;
     }
 
@@ -175,10 +179,10 @@ CUSTOM_CSS = """
         background-color: transparent !important;
         color: #475569 !important;
         border: none !important;
-        border-radius: 6px !important;
-        padding: 6px 13px !important;
+        border-radius: 7px !important;
+        padding: 7px 15px !important;
         font-size: 0.88rem !important;
-        font-weight: 500 !important;
+        font-weight: 600 !important;
         transition: all 0.15s ease !important;
         white-space: nowrap !important;
         box-shadow: none !important;
@@ -187,23 +191,24 @@ CUSTOM_CSS = """
     }
 
     button[data-baseweb="tab"]:hover {
-        background-color: #f1f5f9 !important;
+        background-color: #e2e8f0 !important;
         color: #0f172a !important;
     }
 
     button[data-baseweb="tab"][aria-selected="true"],
     button[data-baseweb="tab"][data-selected="true"] {
-        background-color: #e9ecef !important;
-        color: #0f172a !important;
+        background-color: #1e293b !important;
+        color: #ffffff !important;
         font-weight: 700 !important;
-        border-radius: 6px !important;
+        border-radius: 7px !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
     }
 
     button[data-baseweb="tab"][aria-selected="true"] p,
     button[data-baseweb="tab"][aria-selected="true"] span,
     button[data-baseweb="tab"][data-selected="true"] p,
     button[data-baseweb="tab"][data-selected="true"] span {
-        color: #0f172a !important;
+        color: #ffffff !important;
         font-weight: 700 !important;
     }
 
@@ -213,7 +218,7 @@ CUSTOM_CSS = """
         border: 1px solid #e5e7eb;
         border-radius: 10px;
         padding: 16px 20px;
-        margin-bottom: 18px;
+        margin-bottom: 14px;
     }
     .sa-header-top {
         display: flex;
@@ -307,11 +312,12 @@ CUSTOM_CSS = """
 
     /* Dvou-sloupcová tabulka klíčových metrik (Key Metrics Widget) */
     .sa-stats-card {
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
         border-radius: 8px;
         padding: 14px 18px;
-        margin-bottom: 18px;
+        margin-top: 6px;
+        margin-bottom: 12px;
     }
     .sa-stats-grid {
         display: grid;
@@ -328,7 +334,7 @@ CUSTOM_CSS = """
         justify-content: space-between;
         align-items: center;
         padding: 7px 0;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid #e2e8f0;
         font-size: 0.86rem;
     }
     .sa-stat-row:last-child {
@@ -449,7 +455,6 @@ def format_delta_str(curr: Optional[float], prev: Optional[float], unit: str = "
 
 def render_plotly_chart(fig: go.Figure, key: Optional[str] = None) -> None:
     """Vykreslí Plotly graf s plnou kompatibilitou napříč verzemi a mobilní optimalizací."""
-    # Na dotykových displejích vypneme scroll zoom, aby uživatel mohl hladce posouvat stránku prstem
     chart_config = {
         "scrollZoom": False,
         "displayModeBar": False,
@@ -481,8 +486,8 @@ with col_top_left:
         <div style="display: flex; align-items: center; gap: 10px; padding: 2px 0;">
             <span style="font-size: 1.4rem;">🏛️</span>
             <div>
-                <div style="font-size: 1.15rem; font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">MAKROEKONOMICKÝ MONITOR</div>
-                <div style="font-size: 0.72rem; font-weight: 600; color: #64748B; text-transform: uppercase;">Institucionální analýza &bull; ČNB &bull; ECB &bull; Federal Reserve &bull; Denní data</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">MAKROEKONOMICKÝ & TRŽNÍ MONITOR</div>
+                <div style="font-size: 0.72rem; font-weight: 600; color: #64748B; text-transform: uppercase;">Institucionální analýza &bull; ČNB &bull; ECB &bull; Fed &bull; Akciové indexy</div>
             </div>
         </div>
         """,
@@ -490,7 +495,6 @@ with col_top_left:
     )
 
 with col_top_right:
-    # Přepínač vpravo nahoře pro 3 ekonomiky
     economy_options = ["🇨🇿 Česká republika", "🇪🇺 Evropská unie", "🇺🇸 Spojené státy"]
     if hasattr(st, "segmented_control"):
         selected_economy = st.segmented_control(
@@ -667,7 +671,7 @@ if is_cz:
         "pribor_3m", "cpi_yoy", "cpi_core_yoy", "gdp_growth_real",
         "retail_sales_yoy", "industrial_prod_yoy",
         "unemployment_rate", "eur_czk", "pln_czk", "gbp_czk",
-        "public_debt_gdp_pct", "czgb_10y"
+        "public_debt_gdp_pct", "czgb_10y", "px_index"
     ]
 elif is_eu:
     available_indicator_keys = list(EU_INDICATORS.keys())
@@ -676,7 +680,7 @@ elif is_eu:
         "eu_cpi_yoy", "eu_core_cpi_yoy", "eu_gdp_growth_real",
         "eu_retail_sales_yoy", "eu_industrial_prod_yoy",
         "eu_unemployment_rate", "eur_usd", "eur_pln", "eur_gbp",
-        "eu_public_debt_gdp_pct", "bund_10y"
+        "eu_public_debt_gdp_pct", "bund_10y", "stoxx50_index"
     ]
 else:
     available_indicator_keys = list(US_INDICATORS.keys())
@@ -685,7 +689,7 @@ else:
         "us_3m", "us_cpi_yoy", "us_core_cpi_yoy", "us_gdp_growth_real",
         "us_retail_sales_yoy", "us_industrial_prod_yoy",
         "us_unemployment_rate", "dxy_index", "eur_usd", "gbp_usd", "usd_pln",
-        "us_public_debt_gdp_pct", "us_10y"
+        "us_public_debt_gdp_pct", "us_10y", "sp500_index", "nasdaq_index"
     ]
 
 selected_indicators = st.sidebar.multiselect(
@@ -729,7 +733,7 @@ if st.sidebar.button("🔄 Obnovit data (Vymazat cache)", use_container_width=Tr
 # 5. NAČTENÍ DAT S CACHOVÁNÍM
 # =============================================================================
 
-with st.spinner("Načítám data z ČNB, Eurostatu a U.S. Department of the Treasury..."):
+with st.spinner("Načítám data z ČNB, Eurostatu, Yahoo Finance a U.S. Treasury..."):
     df_raw, status_info, df_daily_fx = get_cached_macro_data(
         frequency=frequency_code,
         fred_api_key=fred_key_input,
@@ -787,7 +791,7 @@ if df.empty:
 
 
 # =============================================================================
-# 7. HLAVNÍ PLOCHA DASHBOARDU: ZÁHLAVÍ & KEY METRICS (STOCK ANALYSIS STYL)
+# 7. HLAVNÍ PLOCHA DASHBOARDU: ZÁHLAVÍ & TOP SUMMARY
 # =============================================================================
 
 last_row = df.iloc[-1]
@@ -830,6 +834,7 @@ czgb2_curr = safe_metric(last_row, "czgb_2y", 3.70)
 cz_spread_curr = safe_metric(last_row, "czgb_spread_10y_2y", round(czgb10_curr - czgb2_curr, 2))
 debt_cz_pct = safe_metric(last_row, "public_debt_gdp_pct", 44.0)
 deficit_cz_curr = safe_metric(last_row, "budget_deficit_czk_bn", -65.0)
+px_curr = safe_metric(last_row, "px_index", 1680.0)
 
 # --- Hodnoty pro EU (Eurozóna) ---
 ecb_dep_curr = safe_metric(last_row, "ecb_deposit_rate", 3.00)
@@ -867,6 +872,7 @@ bund_spread_curr = safe_metric(last_row, "bund_spread_10y_2y", round(bund10_curr
 debt_eu_pct = safe_metric(last_row, "eu_public_debt_gdp_pct", 88.6)
 debt_eu_nom = safe_metric(last_row, "eu_public_debt_eur_bn", 13200.0)
 deficit_eu_curr = safe_metric(last_row, "eu_budget_deficit_eur_bn", -110.0)
+stoxx50_curr = safe_metric(last_row, "stoxx50_index", 5150.0)
 
 # --- Hodnoty pro USA ---
 fed_upper_curr = safe_metric(last_row, "fed_funds_upper", 4.50)
@@ -907,6 +913,8 @@ us_spread_curr = safe_metric(last_row, "us_spread_10y_2y", round(us10_curr - us2
 debt_us_pct = safe_metric(last_row, "us_public_debt_gdp_pct", 123.5)
 debt_us_nom = safe_metric(last_row, "us_public_debt_usd_bn", 35500.0)
 deficit_us_curr = safe_metric(last_row, "us_budget_deficit_usd_bn", -450.0)
+sp500_curr = safe_metric(last_row, "sp500_index", 6100.0)
+nasdaq_curr = safe_metric(last_row, "nasdaq_index", 20100.0)
 
 # Poslední denní FX data
 last_daily_fx = df_daily_fx_filtered.iloc[-1] if not df_daily_fx_filtered.empty else last_row
@@ -928,7 +936,7 @@ daily_usd_pln = safe_metric(last_daily_fx, "usd_pln", usd_pln_curr)
 
 
 # -----------------------------------------------------------------------------
-# ZOBRAZENÍ TOP HERO BOXU A KEY STATS PODLE ZVOLENÉ ZEMĚ / REGIONU
+# ZOBRAZENÍ TOP HERO BOXU PODLE ZVOLENÉ ZEMĚ
 # -----------------------------------------------------------------------------
 
 if is_cz:
@@ -938,11 +946,11 @@ if is_cz:
             <div class="sa-header-top">
                 <div class="sa-header-title-box">
                     <h1 class="sa-header-title">🇨🇿 Česká republika</h1>
-                    <span class="sa-ticker-badge">CZ MACRO MONITOR</span>
+                    <span class="sa-ticker-badge">CZ MACRO & MARKET MONITOR</span>
                 </div>
                 <div class="sa-header-meta">
                     <span class="sa-live-dot"></span>
-                    <span><strong>TRHY AKTIVNÍ</strong> &bull; ČNB &bull; Eurostat &bull; {date_str}</span>
+                    <span><strong>TRHY AKTIVNÍ</strong> &bull; ČNB &bull; BCPP &bull; Eurostat &bull; {date_str}</span>
                 </div>
             </div>
             <div class="sa-hero-strip">
@@ -968,10 +976,10 @@ if is_cz:
                     </div>
                 </div>
                 <div class="sa-hero-item">
-                    <span class="sa-hero-label">Jádrová inflace</span>
+                    <span class="sa-hero-label">Index PX (Praha)</span>
                     <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{core_cpi_cz_curr:.1f} %</span>
-                        <span class="sa-hero-change-neutral">Čistá CPI</span>
+                        <span class="sa-hero-val">{px_curr:,.0f} b.</span>
+                        <span class="sa-hero-change-pos">BCPP</span>
                     </div>
                 </div>
                 <div class="sa-hero-item">
@@ -982,14 +990,7 @@ if is_cz:
                     </div>
                 </div>
                 <div class="sa-hero-item">
-                    <span class="sa-hero-label">Nezaměstnanost</span>
-                    <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{une_cz_curr:.1f} %</span>
-                        <span class="sa-hero-change-pos">ILO ČR</span>
-                    </div>
-                </div>
-                <div class="sa-hero-item">
-                    <span class="sa-hero-label">Kurz EUR/CZK (Denní)</span>
+                    <span class="sa-hero-label">Kurz EUR/CZK</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{daily_eur_czk:.2f} Kč</span>
                         <span class="sa-hero-change-neutral">ČNB fix</span>
@@ -1008,85 +1009,6 @@ if is_cz:
         unsafe_allow_html=True
     )
 
-    # 2-sloupcová tabulka pro ČR
-    st.markdown(
-        f"""
-        <div class="sa-stats-card">
-            <div class="sa-stats-grid">
-                <div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">2T Repo sazba ČNB</span>
-                        <span class="sa-stat-val">{repo_curr:.2f} % <span class="sa-hero-change-neutral">{repo_delta:+.2f}</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Diskontní sazba (spodní koridor)</span>
-                        <span class="sa-stat-val">{disc_curr:.2f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Lombardní sazba (horní koridor)</span>
-                        <span class="sa-stat-val">{lomb_curr:.2f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">PRIBOR 3M (referenční sazba)</span>
-                        <span class="sa-stat-val">{prib3m_curr:.2f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Meziroční inflace CPI</span>
-                        <span class="sa-stat-val">{cpi_cz_curr:.1f} % <span class="sa-hero-change-pos">Cíl 2.0 %</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Jádrová inflace ČR (Core CPI)</span>
-                        <span class="sa-stat-val">{core_cpi_cz_curr:.1f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Maloobchodní tržby (Spotřeba YoY)</span>
-                        <span class="sa-stat-val">{retail_cz_curr:+.1f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Průmyslová produkce (YoY)</span>
-                        <span class="sa-stat-val">{ind_cz_curr:+.1f} %</span>
-                    </div>
-                </div>
-                <div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Reálný růst HDP (YoY)</span>
-                        <span class="sa-stat-val">{gdp_cz_curr:+.1f} % <span class="sa-hero-change-pos">{gdp_cz_delta:+.1f}</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Míra nezaměstnanosti (ILO)</span>
-                        <span class="sa-stat-val">{une_cz_curr:.1f} % <span class="sa-hero-change-pos">Nejnižší v EU</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">EUR/CZK &bull; USD/CZK (denní)</span>
-                        <span class="sa-stat-val">{daily_eur_czk:.2f} &bull; {daily_usd_czk:.2f} Kč</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">PLN/CZK &bull; GBP/CZK (denní)</span>
-                        <span class="sa-stat-val">{daily_pln_czk:.2f} &bull; {daily_gbp_czk:.2f} Kč</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Výnos 10Y CZGB (státní dluhopis)</span>
-                        <span class="sa-stat-val">{czgb10_curr:.2f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Sklon křivky CZGB (10Y − 2Y)</span>
-                        <span class="sa-stat-val">{cz_spread_curr * 100:+.0f} bps <span class="{'sa-hero-change-pos' if cz_spread_curr >= 0 else 'sa-hero-change-neg'}">{'Normální' if cz_spread_curr >= 0 else 'Inverze'}</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Veřejný dluh ČR (% HDP)</span>
-                        <span class="sa-stat-val">{debt_cz_pct:.1f} % <span class="sa-hero-change-pos">&lt; 60 % limit</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Kvartální saldo rozpočtu</span>
-                        <span class="sa-stat-val">{deficit_cz_curr:,.1f} mld. Kč</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
 elif is_eu:
     st.markdown(
         f"""
@@ -1094,11 +1016,11 @@ elif is_eu:
             <div class="sa-header-top">
                 <div class="sa-header-title-box">
                     <h1 class="sa-header-title">🇪🇺 Evropská unie / Eurozóna</h1>
-                    <span class="sa-ticker-badge">EU MACRO MONITOR</span>
+                    <span class="sa-ticker-badge">EU MACRO & MARKET MONITOR</span>
                 </div>
                 <div class="sa-header-meta">
                     <span class="sa-live-dot"></span>
-                    <span><strong>TRHY AKTIVNÍ</strong> &bull; ECB &bull; Eurostat &bull; {date_str}</span>
+                    <span><strong>TRHY AKTIVNÍ</strong> &bull; ECB &bull; Eurostat &bull; STOXX &bull; {date_str}</span>
                 </div>
             </div>
             <div class="sa-hero-strip">
@@ -1124,10 +1046,10 @@ elif is_eu:
                     </div>
                 </div>
                 <div class="sa-hero-item">
-                    <span class="sa-hero-label">Jádrová inflace EU</span>
+                    <span class="sa-hero-label">Euro Stoxx 50</span>
                     <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{core_cpi_eu_curr:.1f} %</span>
-                        <span class="sa-hero-change-neutral">Core HICP</span>
+                        <span class="sa-hero-val">{stoxx50_curr:,.0f} b.</span>
+                        <span class="sa-hero-change-pos">EU Blue-chips</span>
                     </div>
                 </div>
                 <div class="sa-hero-item">
@@ -1138,14 +1060,7 @@ elif is_eu:
                     </div>
                 </div>
                 <div class="sa-hero-item">
-                    <span class="sa-hero-label">Míra nezaměstnanosti EU</span>
-                    <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{une_eu_curr:.1f} %</span>
-                        <span class="sa-hero-change-pos">Eurostat</span>
-                    </div>
-                </div>
-                <div class="sa-hero-item">
-                    <span class="sa-hero-label">Měnový kurz EUR/USD</span>
+                    <span class="sa-hero-label">Kurz EUR/USD</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{daily_eur_usd:.4f} $</span>
                         <span class="sa-hero-change-neutral">Denní FX</span>
@@ -1164,85 +1079,6 @@ elif is_eu:
         unsafe_allow_html=True
     )
 
-    # 2-sloupcová tabulka pro EU
-    st.markdown(
-        f"""
-        <div class="sa-stats-card">
-            <div class="sa-stats-grid">
-                <div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Depozitní sazba ECB (hlavní kotva)</span>
-                        <span class="sa-stat-val">{ecb_dep_curr:.2f} % <span class="sa-hero-change-neutral">{ecb_dep_delta:+.2f}</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Hlavní refinanční operace (MRO)</span>
-                        <span class="sa-stat-val">{ecb_refi_curr:.2f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Mezní zápůjční sazba ECB (strop)</span>
-                        <span class="sa-stat-val">{ecb_lend_curr:.2f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">EURIBOR 3M &bull; €STR peněžní sazba</span>
-                        <span class="sa-stat-val">{euribor3m_curr:.2f} % &bull; {estr_curr:.2f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Harmonizovaná inflace (HICP)</span>
-                        <span class="sa-stat-val">{cpi_eu_curr:.1f} % <span class="sa-hero-change-pos">Cíl 2.0 %</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Jádrová inflace EU (Core HICP)</span>
-                        <span class="sa-stat-val">{core_cpi_eu_curr:.1f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Maloobchodní tržby EU (Spotřeba YoY)</span>
-                        <span class="sa-stat-val">{retail_eu_curr:+.1f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Průmyslová produkce EU (YoY)</span>
-                        <span class="sa-stat-val">{ind_eu_curr:+.1f} %</span>
-                    </div>
-                </div>
-                <div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Reálný růst HDP Eurozóny (YoY)</span>
-                        <span class="sa-stat-val">{gdp_eu_curr:+.1f} % <span class="sa-hero-change-pos">{gdp_eu_delta:+.1f}</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Míra nezaměstnanosti v EU</span>
-                        <span class="sa-stat-val">{une_eu_curr:.1f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Měnový kurz EUR/USD &bull; EUR/CZK</span>
-                        <span class="sa-stat-val">{daily_eur_usd:.4f} $ &bull; {daily_eur_czk:.2f} Kč</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Měnový kurz EUR/PLN &bull; EUR/GBP</span>
-                        <span class="sa-stat-val">{daily_eur_pln:.4f} zł &bull; {daily_eur_gbp:.4f} £</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Výnos 10Y Německý Bund (Benchmark)</span>
-                        <span class="sa-stat-val">{bund10_curr:.2f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Sklon Bund křivky (10Y − 2Y)</span>
-                        <span class="sa-stat-val">{bund_spread_curr * 100:+.0f} bps <span class="{'sa-hero-change-pos' if bund_spread_curr >= 0 else 'sa-hero-change-neg'}">{'Normální' if bund_spread_curr >= 0 else 'Inverze'}</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Veřejný dluh Eurozóny k HDP</span>
-                        <span class="sa-stat-val">{debt_eu_pct:.1f} % <span class="sa-hero-change-neutral">{debt_eu_nom:,.0f} mld. €</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Kvartální deficit vládních institucí</span>
-                        <span class="sa-stat-val">{deficit_eu_curr:,.0f} mld. EUR</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
 else:
     st.markdown(
         f"""
@@ -1250,11 +1086,11 @@ else:
             <div class="sa-header-top">
                 <div class="sa-header-title-box">
                     <h1 class="sa-header-title">🇺🇸 Spojené státy americké</h1>
-                    <span class="sa-ticker-badge">US MACRO MONITOR</span>
+                    <span class="sa-ticker-badge">US MACRO & MARKET MONITOR</span>
                 </div>
                 <div class="sa-header-meta">
                     <span class="sa-live-dot"></span>
-                    <span><strong>TRHY AKTIVNÍ</strong> &bull; Federal Reserve &bull; U.S. Treasury &bull; {date_str}</span>
+                    <span><strong>TRHY AKTIVNÍ</strong> &bull; Fed &bull; NYSE &bull; NASDAQ &bull; {date_str}</span>
                 </div>
             </div>
             <div class="sa-hero-strip">
@@ -1266,7 +1102,7 @@ else:
                     </div>
                 </div>
                 <div class="sa-hero-item">
-                    <span class="sa-hero-label">SOFR / 3M T-Bill</span>
+                    <span class="sa-hero-label">SOFR</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{sofr_curr:.2f} %</span>
                         <span class="sa-hero-change-neutral">Peněžní trh</span>
@@ -1280,31 +1116,17 @@ else:
                     </div>
                 </div>
                 <div class="sa-hero-item">
-                    <span class="sa-hero-label">Jádrová inflace USA</span>
+                    <span class="sa-hero-label">S&P 500</span>
                     <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{core_cpi_us_curr:.1f} %</span>
-                        <span class="sa-hero-change-neutral">Core CPI</span>
+                        <span class="sa-hero-val">{sp500_curr:,.0f} b.</span>
+                        <span class="sa-hero-change-pos">Index USA</span>
                     </div>
                 </div>
                 <div class="sa-hero-item">
-                    <span class="sa-hero-label">Reálný růst HDP USA</span>
-                    <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{gdp_us_curr:+.1f} %</span>
-                        <span class="{'sa-hero-change-pos' if gdp_us_delta >= 0 else 'sa-hero-change-neg'}">{gdp_us_delta:+.1f} p.b.</span>
-                    </div>
-                </div>
-                <div class="sa-hero-item">
-                    <span class="sa-hero-label">Míra nezaměstnanosti USA</span>
-                    <div class="sa-hero-val-row">
-                        <span class="sa-hero-val">{une_us_curr:.1f} %</span>
-                        <span class="sa-hero-change-pos">U-3 BLS</span>
-                    </div>
-                </div>
-                <div class="sa-hero-item">
-                    <span class="sa-hero-label">Dolarový index (DXY)</span>
+                    <span class="sa-hero-label">Dolarový index DXY</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{daily_dxy:.2f}</span>
-                        <span class="sa-hero-change-neutral">Globální koš</span>
+                        <span class="sa-hero-change-neutral">Koš měn</span>
                     </div>
                 </div>
                 <div class="sa-hero-item">
@@ -1320,659 +1142,610 @@ else:
         unsafe_allow_html=True
     )
 
-    # 2-sloupcová tabulka pro USA
-    st.markdown(
-        f"""
-        <div class="sa-stats-card">
-            <div class="sa-stats-grid">
-                <div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Fed Funds Target (horní limit)</span>
-                        <span class="sa-stat-val">{fed_upper_curr:.2f} % <span class="sa-hero-change-neutral">{fed_upper_delta:+.2f}</span></span>
+
+# -----------------------------------------------------------------------------
+# SKRYTÁ DETAILNÍ TABULKA INDIKÁTORŮ (MOŽNOST ZOBRAZIT PŘES EXPANDER)
+# -----------------------------------------------------------------------------
+
+with st.expander("📊 Zobrazit detailní přehled indikátorů a metrik", expanded=False):
+    if is_cz:
+        st.markdown(
+            f"""
+            <div class="sa-stats-card">
+                <div class="sa-stats-grid">
+                    <div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">2T Repo sazba ČNB</span>
+                            <span class="sa-stat-val">{repo_curr:.2f} % <span class="sa-hero-change-neutral">{repo_delta:+.2f}</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Diskontní sazba (spodní koridor)</span>
+                            <span class="sa-stat-val">{disc_curr:.2f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Lombardní sazba (horní koridor)</span>
+                            <span class="sa-stat-val">{lomb_curr:.2f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">PRIBOR 3M (referenční sazba)</span>
+                            <span class="sa-stat-val">{prib3m_curr:.2f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Meziroční inflace CPI</span>
+                            <span class="sa-stat-val">{cpi_cz_curr:.1f} % <span class="sa-hero-change-pos">Cíl 2.0 %</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Jádrová inflace ČR (Core CPI)</span>
+                            <span class="sa-stat-val">{core_cpi_cz_curr:.1f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Maloobchodní tržby (Spotřeba YoY)</span>
+                            <span class="sa-stat-val">{retail_cz_curr:+.1f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Průmyslová produkce (YoY)</span>
+                            <span class="sa-stat-val">{ind_cz_curr:+.1f} %</span>
+                        </div>
                     </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Fed Funds Target (dolní limit)</span>
-                        <span class="sa-stat-val">{fed_lower_curr:.2f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Efektivní sazba EFFR</span>
-                        <span class="sa-stat-val">{fed_effr_curr:.2f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">SOFR &bull; 3M US Treasury Bill</span>
-                        <span class="sa-stat-val">{sofr_curr:.2f} % &bull; {us3m_curr:.2f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Spotřebitelská inflace (CPI Headline)</span>
-                        <span class="sa-stat-val">{cpi_us_curr:.1f} % <span class="sa-hero-change-pos">Cíl 2.0 %</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Jádrová inflace USA (Core CPI)</span>
-                        <span class="sa-stat-val">{core_cpi_us_curr:.1f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Maloobchodní tržby USA (Spotřeba YoY)</span>
-                        <span class="sa-stat-val">{retail_us_curr:+.1f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Průmyslová produkce USA (YoY)</span>
-                        <span class="sa-stat-val">{ind_us_curr:+.1f} %</span>
-                    </div>
-                </div>
-                <div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Reálný růst HDP USA (YoY)</span>
-                        <span class="sa-stat-val">{gdp_us_curr:+.1f} % <span class="sa-hero-change-pos">{gdp_us_delta:+.1f}</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Míra nezaměstnanosti (U-3)</span>
-                        <span class="sa-stat-val">{une_us_curr:.1f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Dolarový index DXY &bull; EUR/USD</span>
-                        <span class="sa-stat-val">{daily_dxy:.2f} b. &bull; {daily_eur_usd:.4f} $</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">GBP/USD &bull; USD/PLN &bull; USD/JPY</span>
-                        <span class="sa-stat-val">{daily_gbp_usd:.4f} &bull; {daily_usd_pln:.2f} &bull; {daily_usd_jpy:.1f}</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Výnos 10Y US Treasury (Benchmark)</span>
-                        <span class="sa-stat-val">{us10_curr:.2f} %</span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Sklon US křivky (10Y − 2Y)</span>
-                        <span class="sa-stat-val">{us_spread_curr * 100:+.0f} bps <span class="{'sa-hero-change-pos' if us_spread_curr >= 0 else 'sa-hero-change-neg'}">{'Normální' if us_spread_curr >= 0 else 'Inverze'}</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Federální dluh USA k HDP</span>
-                        <span class="sa-stat-val">{debt_us_pct:.1f} % <span class="sa-hero-change-neutral">{debt_us_nom:,.0f} mld. $</span></span>
-                    </div>
-                    <div class="sa-stat-row">
-                        <span class="sa-stat-label">Kvartální federální deficit</span>
-                        <span class="sa-stat-val">{deficit_us_curr:,.0f} mld. USD</span>
+                    <div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Reálný růst HDP (YoY)</span>
+                            <span class="sa-stat-val">{gdp_cz_curr:+.1f} % <span class="sa-hero-change-pos">{gdp_cz_delta:+.1f}</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Míra nezaměstnanosti (ILO)</span>
+                            <span class="sa-stat-val">{une_cz_curr:.1f} % <span class="sa-hero-change-pos">Nejnižší v EU</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">EUR/CZK &bull; USD/CZK (denní)</span>
+                            <span class="sa-stat-val">{daily_eur_czk:.2f} &bull; {daily_usd_czk:.2f} Kč</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">PLN/CZK &bull; GBP/CZK (denní)</span>
+                            <span class="sa-stat-val">{daily_pln_czk:.2f} &bull; {daily_gbp_czk:.2f} Kč</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Výnos 10Y CZGB (státní dluhopis)</span>
+                            <span class="sa-stat-val">{czgb10_curr:.2f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Sklon křivky CZGB (10Y − 2Y)</span>
+                            <span class="sa-stat-val">{cz_spread_curr * 100:+.0f} bps <span class="{'sa-hero-change-pos' if cz_spread_curr >= 0 else 'sa-hero-change-neg'}">{'Normální' if cz_spread_curr >= 0 else 'Inverze'}</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Veřejný dluh ČR (% HDP)</span>
+                            <span class="sa-stat-val">{debt_cz_pct:.1f} % <span class="sa-hero-change-pos">&lt; 60 % limit</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Kvartální saldo rozpočtu</span>
+                            <span class="sa-stat-val">{deficit_cz_curr:,.1f} mld. Kč</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+            """,
+            unsafe_allow_html=True
+        )
+
+    elif is_eu:
+        st.markdown(
+            f"""
+            <div class="sa-stats-card">
+                <div class="sa-stats-grid">
+                    <div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Depozitní sazba ECB</span>
+                            <span class="sa-stat-val">{ecb_dep_curr:.2f} % <span class="sa-hero-change-neutral">{ecb_dep_delta:+.2f}</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Refinanční operace (MRO)</span>
+                            <span class="sa-stat-val">{ecb_refi_curr:.2f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Mezní zápůjční sazba ECB</span>
+                            <span class="sa-stat-val">{ecb_lend_curr:.2f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">EURIBOR 3M &bull; €STR</span>
+                            <span class="sa-stat-val">{euribor3m_curr:.2f} % &bull; {estr_curr:.2f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Harmonizovaná inflace (HICP)</span>
+                            <span class="sa-stat-val">{cpi_eu_curr:.1f} % <span class="sa-hero-change-pos">Cíl 2.0 %</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Jádrová inflace EU (Core HICP)</span>
+                            <span class="sa-stat-val">{core_cpi_eu_curr:.1f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Maloobchodní tržby EU (Spotřeba YoY)</span>
+                            <span class="sa-stat-val">{retail_eu_curr:+.1f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Průmyslová produkce EU (YoY)</span>
+                            <span class="sa-stat-val">{ind_eu_curr:+.1f} %</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Reálný růst HDP Eurozóny (YoY)</span>
+                            <span class="sa-stat-val">{gdp_eu_curr:+.1f} % <span class="sa-hero-change-pos">{gdp_eu_delta:+.1f}</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Míra nezaměstnanosti v EU</span>
+                            <span class="sa-stat-val">{une_eu_curr:.1f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">EUR/USD &bull; EUR/CZK</span>
+                            <span class="sa-stat-val">{daily_eur_usd:.4f} $ &bull; {daily_eur_czk:.2f} Kč</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">EUR/PLN &bull; EUR/GBP</span>
+                            <span class="sa-stat-val">{daily_eur_pln:.4f} zł &bull; {daily_eur_gbp:.4f} £</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Výnos 10Y Německý Bund</span>
+                            <span class="sa-stat-val">{bund10_curr:.2f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Sklon Bund křivky (10Y − 2Y)</span>
+                            <span class="sa-stat-val">{bund_spread_curr * 100:+.0f} bps <span class="{'sa-hero-change-pos' if bund_spread_curr >= 0 else 'sa-hero-change-neg'}">{'Normální' if bund_spread_curr >= 0 else 'Inverze'}</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Veřejný dluh Eurozóny k HDP</span>
+                            <span class="sa-stat-val">{debt_eu_pct:.1f} % <span class="sa-hero-change-neutral">{debt_eu_nom:,.0f} mld. €</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Kvartální deficit vládních institucí</span>
+                            <span class="sa-stat-val">{deficit_eu_curr:,.0f} mld. EUR</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    else:
+        st.markdown(
+            f"""
+            <div class="sa-stats-card">
+                <div class="sa-stats-grid">
+                    <div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Fed Funds Target (horní limit)</span>
+                            <span class="sa-stat-val">{fed_upper_curr:.2f} % <span class="sa-hero-change-neutral">{fed_upper_delta:+.2f}</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Fed Funds Target (dolní limit)</span>
+                            <span class="sa-stat-val">{fed_lower_curr:.2f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Efektivní sazba EFFR</span>
+                            <span class="sa-stat-val">{fed_effr_curr:.2f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">SOFR &bull; 3M T-Bill</span>
+                            <span class="sa-stat-val">{sofr_curr:.2f} % &bull; {us3m_curr:.2f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Spotřebitelská inflace (CPI Headline)</span>
+                            <span class="sa-stat-val">{cpi_us_curr:.1f} % <span class="sa-hero-change-pos">Cíl 2.0 %</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Jádrová inflace USA (Core CPI)</span>
+                            <span class="sa-stat-val">{core_cpi_us_curr:.1f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Maloobchodní tržby USA (Spotřeba YoY)</span>
+                            <span class="sa-stat-val">{retail_us_curr:+.1f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Průmyslová produkce USA (YoY)</span>
+                            <span class="sa-stat-val">{ind_us_curr:+.1f} %</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Reálný růst HDP USA (YoY)</span>
+                            <span class="sa-stat-val">{gdp_us_curr:+.1f} % <span class="sa-hero-change-pos">{gdp_us_delta:+.1f}</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Míra nezaměstnanosti (U-3)</span>
+                            <span class="sa-stat-val">{une_us_curr:.1f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Dolarový index DXY &bull; EUR/USD</span>
+                            <span class="sa-stat-val">{daily_dxy:.2f} b. &bull; {daily_eur_usd:.4f} $</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">GBP/USD &bull; USD/PLN &bull; USD/JPY</span>
+                            <span class="sa-stat-val">{daily_gbp_usd:.4f} &bull; {daily_usd_pln:.2f} &bull; {daily_usd_jpy:.1f}</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Výnos 10Y US Treasury (Benchmark)</span>
+                            <span class="sa-stat-val">{us10_curr:.2f} %</span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Sklon US křivky (10Y − 2Y)</span>
+                            <span class="sa-stat-val">{us_spread_curr * 100:+.0f} bps <span class="{'sa-hero-change-pos' if us_spread_curr >= 0 else 'sa-hero-change-neg'}">{'Normální' if us_spread_curr >= 0 else 'Inverze'}</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Federální dluh USA k HDP</span>
+                            <span class="sa-stat-val">{debt_us_pct:.1f} % <span class="sa-hero-change-neutral">{debt_us_nom:,.0f} mld. $</span></span>
+                        </div>
+                        <div class="sa-stat-row">
+                            <span class="sa-stat-label">Kvartální federální deficit</span>
+                            <span class="sa-stat-val">{deficit_us_curr:,.0f} mld. USD</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 
 # =============================================================================
-# 8. GENERÁTORY GRAFŮ (PLOTLY BUILDERS PRO ČR, EU I USA)
+# 8. GENERÁTORY GRAFŮ (PLOTLY BUILDERS)
 # =============================================================================
 
 # --- A. SAZBY ---
 def build_rates_chart(dframe: pd.DataFrame, indicators: List[str]) -> go.Figure:
     """Graf měnové politiky ČNB (úrokový koridor) a PRIBOR sazeb."""
     fig = go.Figure()
-
     if "lombard_rate" in indicators and "lombard_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["lombard_rate"],
-            mode="lines",
+            x=dframe["date"], y=dframe["lombard_rate"], mode="lines",
             name="Lombardní sazba ČNB (horní mez)",
             line=dict(color="rgba(148, 163, 184, 0.7)", width=1.5, dash="dash"),
             hoverinfo="x+y+name"
         ))
-
     if "discount_rate" in indicators and "discount_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["discount_rate"],
-            mode="lines",
+            x=dframe["date"], y=dframe["discount_rate"], mode="lines",
             name="Diskontní sazba ČNB (dolní mez)",
             line=dict(color="rgba(148, 163, 184, 0.7)", width=1.5, dash="dash"),
             fill="tonexty" if ("lombard_rate" in indicators and "lombard_rate" in dframe.columns) else None,
-            fillcolor="rgba(226, 232, 240, 0.35)",
-            hoverinfo="x+y+name"
+            fillcolor="rgba(226, 232, 240, 0.35)", hoverinfo="x+y+name"
         ))
-
     if "repo_rate" in indicators and "repo_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["repo_rate"],
-            mode="lines",
+            x=dframe["date"], y=dframe["repo_rate"], mode="lines",
             name="2T Repo sazba ČNB (klíčová)",
             line=dict(color="#1D4ED8", width=3.5, shape="hv"),
             hovertemplate="<b>2T Repo sazba</b>: %{y:.2f} %<extra></extra>"
         ))
-
-    pribor_colors = {
-        "pribor_1m": ("#06B6D4", "PRIBOR 1M", 1.5),
-        "pribor_3m": ("#0D9488", "PRIBOR 3M (benchmark)", 2.4),
-        "pribor_6m": ("#047857", "PRIBOR 6M", 1.5)
-    }
+    pribor_colors = {"pribor_1m": ("#06B6D4", "PRIBOR 1M", 1.5), "pribor_3m": ("#0D9488", "PRIBOR 3M (benchmark)", 2.4), "pribor_6m": ("#047857", "PRIBOR 6M", 1.5)}
     for p_col, (p_color, p_name, p_width) in pribor_colors.items():
         if p_col in indicators and p_col in dframe.columns:
             fig.add_trace(go.Scatter(
-                x=dframe["date"],
-                y=dframe[p_col],
-                mode="lines",
-                name=p_name,
+                x=dframe["date"], y=dframe[p_col], mode="lines", name=p_name,
                 line=dict(color=p_color, width=p_width, dash="dot" if p_col != "pribor_3m" else "solid"),
                 hovertemplate=f"<b>{p_name}</b>: %{{y:.2f}} %<extra></extra>"
             ))
-
     fig.update_layout(
-        height=430,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
+        height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Úrokové sazby (%)", title_font=dict(color="#1D4ED8"), tickfont=dict(color="#1D4ED8"), showgrid=True, gridcolor="#f1f5f9", ticksuffix=" %"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
 def build_eu_rates_chart(dframe: pd.DataFrame, indicators: List[str]) -> go.Figure:
-    """Graf měnové politiky ECB (depozitní koridor) a mezibankovních sazeb EURIBOR / €STR."""
+    """Graf měnové politiky ECB a sazeb EURIBOR / €STR."""
     fig = go.Figure()
-
     if "ecb_lending_rate" in indicators and "ecb_lending_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["ecb_lending_rate"],
-            mode="lines",
+            x=dframe["date"], y=dframe["ecb_lending_rate"], mode="lines",
             name="Mezní zápůjční sazba ECB (strop)",
             line=dict(color="rgba(148, 163, 184, 0.7)", width=1.5, dash="dash"),
             hoverinfo="x+y+name"
         ))
-
     if "ecb_deposit_rate" in indicators and "ecb_deposit_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["ecb_deposit_rate"],
-            mode="lines",
+            x=dframe["date"], y=dframe["ecb_deposit_rate"], mode="lines",
             name="Depozitní sazba ECB (hlavní kotva)",
             line=dict(color="#1D4ED8", width=3.5, shape="hv"),
             fill="tonexty" if ("ecb_lending_rate" in indicators and "ecb_lending_rate" in dframe.columns) else None,
-            fillcolor="rgba(226, 232, 240, 0.35)",
-            hovertemplate="<b>ECB Depo sazba</b>: %{y:.2f} %<extra></extra>"
+            fillcolor="rgba(226, 232, 240, 0.35)", hovertemplate="<b>ECB Depo sazba</b>: %{y:.2f} %<extra></extra>"
         ))
-
     if "ecb_refi_rate" in indicators and "ecb_refi_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["ecb_refi_rate"],
-            mode="lines",
-            name="Hlavní refinanční sazba ECB (MRO)",
+            x=dframe["date"], y=dframe["ecb_refi_rate"], mode="lines",
+            name="Refinanční sazba ECB (MRO)",
             line=dict(color="#4F46E5", width=2.0, dash="dash"),
             hovertemplate="<b>ECB Refi (MRO)</b>: %{y:.2f} %<extra></extra>"
         ))
-
     if "euribor_3m" in indicators and "euribor_3m" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["euribor_3m"],
-            mode="lines",
-            name="EURIBOR 3M (tržní benchmark)",
-            line=dict(color="#0D9488", width=2.5),
-            hovertemplate="<b>EURIBOR 3M</b>: %{y:.2f} %<extra></extra>"
+            x=dframe["date"], y=dframe["euribor_3m"], mode="lines", name="EURIBOR 3M (benchmark)",
+            line=dict(color="#0D9488", width=2.5), hovertemplate="<b>EURIBOR 3M</b>: %{y:.2f} %<extra></extra>"
         ))
-
     if "estr_rate" in indicators and "estr_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["estr_rate"],
-            mode="lines",
-            name="€STR (Overnight sazba ECB)",
-            line=dict(color="#D97706", width=1.8, dash="dot"),
-            hovertemplate="<b>€STR</b>: %{y:.2f} %<extra></extra>"
+            x=dframe["date"], y=dframe["estr_rate"], mode="lines", name="€STR (Overnight ECB)",
+            line=dict(color="#D97706", width=1.8, dash="dot"), hovertemplate="<b>€STR</b>: %{y:.2f} %<extra></extra>"
         ))
-
     fig.update_layout(
-        height=430,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
+        height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Úrokové sazby EUR (%)", title_font=dict(color="#1D4ED8"), tickfont=dict(color="#1D4ED8"), showgrid=True, gridcolor="#f1f5f9", ticksuffix=" %"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
 def build_us_rates_chart(dframe: pd.DataFrame, indicators: List[str]) -> go.Figure:
-    """Graf měnové politiky Fedu (cílový koridor) a peněžního trhu USA (SOFR & T-Bills)."""
+    """Graf měnové politiky Fedu a peněžního trhu USA."""
     fig = go.Figure()
-
     if "fed_funds_upper" in indicators and "fed_funds_upper" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["fed_funds_upper"],
-            mode="lines",
+            x=dframe["date"], y=dframe["fed_funds_upper"], mode="lines",
             name="Fed Funds Target (horní limit)",
             line=dict(color="rgba(148, 163, 184, 0.8)", width=1.5, dash="dash"),
             hoverinfo="x+y+name"
         ))
-
     if "fed_funds_lower" in indicators and "fed_funds_lower" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["fed_funds_lower"],
-            mode="lines",
+            x=dframe["date"], y=dframe["fed_funds_lower"], mode="lines",
             name="Fed Funds Target (dolní limit)",
             line=dict(color="rgba(148, 163, 184, 0.8)", width=1.5, dash="dash"),
             fill="tonexty" if ("fed_funds_upper" in indicators and "fed_funds_upper" in dframe.columns) else None,
-            fillcolor="rgba(226, 232, 240, 0.35)",
-            hoverinfo="x+y+name"
+            fillcolor="rgba(226, 232, 240, 0.35)", hoverinfo="x+y+name"
         ))
-
     if "fed_effective_rate" in indicators and "fed_effective_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["fed_effective_rate"],
-            mode="lines",
+            x=dframe["date"], y=dframe["fed_effective_rate"], mode="lines",
             name="Efektivní Fed Funds (EFFR)",
             line=dict(color="#1D4ED8", width=3.2, shape="hv"),
             hovertemplate="<b>EFFR</b>: %{y:.2f} %<extra></extra>"
         ))
-
     if "sofr_rate" in indicators and "sofr_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["sofr_rate"],
-            mode="lines",
+            x=dframe["date"], y=dframe["sofr_rate"], mode="lines",
             name="SOFR (Secured Overnight Rate)",
             line=dict(color="#0D9488", width=2.2),
             hovertemplate="<b>SOFR</b>: %{y:.2f} %<extra></extra>"
         ))
-
     if "us_3m" in indicators and "us_3m" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["us_3m"],
-            mode="lines",
+            x=dframe["date"], y=dframe["us_3m"], mode="lines",
             name="3M US Treasury Bill",
             line=dict(color="#D97706", width=2.0, dash="dot"),
             hovertemplate="<b>3M T-Bill</b>: %{y:.2f} %<extra></extra>"
         ))
-
     fig.update_layout(
-        height=430,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
+        height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Úrokové sazby USD (%)", title_font=dict(color="#1D4ED8"), tickfont=dict(color="#1D4ED8"), showgrid=True, gridcolor="#f1f5f9", ticksuffix=" %"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
-# --- B. INFLACE (HEADLINE & CORE) ---
+# --- B. INFLACE ---
 def build_inflation_chart(dframe: pd.DataFrame) -> go.Figure:
-    """Detailní graf celkové i jádrové inflace v ČR s inflačním cílem ČNB a reálnou úrokovou sazbou."""
+    """Graf inflace ČR (Headline & Core CPI) s 2% cílem ČNB a reálnou sazbou."""
     fig = make_subplots(specs=[[{"secondary_y": True}]])
-
     fig.add_hrect(
-        y0=1.0, y1=3.0,
-        fillcolor="rgba(34, 197, 94, 0.12)",
-        line_width=0,
-        annotation_text="Toleranční pásmo ČNB (1–3 %)",
-        annotation_position="top left",
-        annotation_font=dict(color="#166534", size=11),
-        secondary_y=False
+        y0=1.0, y1=3.0, fillcolor="rgba(34, 197, 94, 0.12)", line_width=0,
+        annotation_text="Toleranční pásmo ČNB (1–3 %)", annotation_position="top left",
+        annotation_font=dict(color="#166534", size=11), secondary_y=False
     )
-
     fig.add_hline(
-        y=2.0,
-        line=dict(color="#16A34A", width=1.8, dash="dash"),
-        annotation_text="Inflační cíl (2.0 %)",
-        annotation_position="bottom right",
-        annotation_font=dict(color="#16A34A", size=11),
-        secondary_y=False
+        y=2.0, line=dict(color="#16A34A", width=1.8, dash="dash"),
+        annotation_text="Inflační cíl (2.0 %)", annotation_position="bottom right",
+        annotation_font=dict(color="#16A34A", size=11), secondary_y=False
     )
-
     if "cpi_yoy" in dframe.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe["date"],
-                y=dframe["cpi_yoy"],
-                mode="lines+markers",
-                name="Celková inflace CPI (YoY %)",
-                line=dict(color="#DC2626", width=3.0),
-                marker=dict(size=5, color="#DC2626"),
-                hovertemplate="<b>Inflace CPI ČR</b>: %{y:.1f} %<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
+        fig.add_trace(go.Scatter(
+            x=dframe["date"], y=dframe["cpi_yoy"], mode="lines+markers",
+            name="Celková inflace CPI (YoY %)", line=dict(color="#DC2626", width=3.0),
+            marker=dict(size=4, color="#DC2626"), hovertemplate="<b>CPI ČR</b>: %{y:.1f} %<extra></extra>"
+        ), secondary_y=False)
     if "cpi_core_yoy" in dframe.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe["date"],
-                y=dframe["cpi_core_yoy"],
-                mode="lines",
-                name="Jádrová inflace ČR (Core CPI)",
-                line=dict(color="#D97706", width=2.4),
-                hovertemplate="<b>Jádrová inflace ČR</b>: %{y:.1f} %<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
+        fig.add_trace(go.Scatter(
+            x=dframe["date"], y=dframe["cpi_core_yoy"], mode="lines",
+            name="Jádrová inflace ČR (Core CPI)", line=dict(color="#D97706", width=2.4),
+            hovertemplate="<b>Jádrová inflace ČR</b>: %{y:.1f} %<extra></extra>"
+        ), secondary_y=False)
     if "repo_rate" in dframe.columns and "cpi_yoy" in dframe.columns:
         real_rate = dframe["repo_rate"] - dframe["cpi_yoy"]
-        fig.add_trace(
-            go.Scatter(
-                x=dframe["date"],
-                y=real_rate,
-                mode="lines",
-                name="Reálná sazba (Repo − CPI)",
-                line=dict(color="#6366F1", width=2.0, dash="dot"),
-                hovertemplate="<b>Reálná sazba</b>: %{y:.1f} %<extra></extra>"
-            ),
-            secondary_y=True
-        )
+        fig.add_trace(go.Scatter(
+            x=dframe["date"], y=real_rate, mode="lines",
+            name="Reálná sazba (Repo − CPI)", line=dict(color="#6366F1", width=2.0, dash="dot"),
+            hovertemplate="<b>Reálná sazba</b>: %{y:.1f} %<extra></extra>"
+        ), secondary_y=True)
         fig.add_hline(y=0.0, line=dict(color="#94A3B8", width=1.2, dash="dash"), secondary_y=True)
-
     fig.update_layout(
-        height=430,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
+        height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Meziroční inflace (%)", title_font=dict(color="#DC2626"), tickfont=dict(color="#DC2626"), showgrid=True, gridcolor="#f1f5f9", ticksuffix=" %"),
         yaxis2=dict(title="Reálná úroková míra (%)", title_font=dict(color="#6366F1"), tickfont=dict(color="#6366F1"), overlaying="y", side="right", showgrid=False, ticksuffix=" %"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
 def build_eu_inflation_chart(dframe: pd.DataFrame) -> go.Figure:
-    """Graf celkové i jádrové inflace v Eurozóně (Headline & Core HICP) s 2.0% cílem ECB."""
+    """Graf inflace Eurozóny (Headline & Core HICP)."""
     fig = make_subplots(specs=[[{"secondary_y": True}]])
-
     fig.add_hline(
-        y=2.0,
-        line=dict(color="#16A34A", width=1.8, dash="dash"),
-        annotation_text="Inflační cíl ECB (2.0 %)",
-        annotation_position="bottom right",
-        annotation_font=dict(color="#16A34A", size=11),
-        secondary_y=False
+        y=2.0, line=dict(color="#16A34A", width=1.8, dash="dash"),
+        annotation_text="Inflační cíl ECB (2.0 %)", annotation_position="bottom right",
+        annotation_font=dict(color="#16A34A", size=11), secondary_y=False
     )
-
     if "eu_cpi_yoy" in dframe.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe["date"],
-                y=dframe["eu_cpi_yoy"],
-                mode="lines+markers",
-                name="Harmonizovaná inflace (HICP YoY %)",
-                line=dict(color="#DC2626", width=3.0),
-                marker=dict(size=4, color="#DC2626"),
-                hovertemplate="<b>EU HICP</b>: %{y:.1f} %<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
+        fig.add_trace(go.Scatter(
+            x=dframe["date"], y=dframe["eu_cpi_yoy"], mode="lines+markers",
+            name="Harmonizovaná inflace (HICP YoY %)", line=dict(color="#DC2626", width=3.0),
+            marker=dict(size=4, color="#DC2626"), hovertemplate="<b>EU HICP</b>: %{y:.1f} %<extra></extra>"
+        ), secondary_y=False)
     if "eu_core_cpi_yoy" in dframe.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe["date"],
-                y=dframe["eu_core_cpi_yoy"],
-                mode="lines",
-                name="Jádrová inflace EU (Core HICP)",
-                line=dict(color="#D97706", width=2.4),
-                hovertemplate="<b>EU Core HICP</b>: %{y:.1f} %<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
+        fig.add_trace(go.Scatter(
+            x=dframe["date"], y=dframe["eu_core_cpi_yoy"], mode="lines",
+            name="Jádrová inflace EU (Core HICP)", line=dict(color="#D97706", width=2.4),
+            hovertemplate="<b>EU Core HICP</b>: %{y:.1f} %<extra></extra>"
+        ), secondary_y=False)
     if "ecb_deposit_rate" in dframe.columns and "eu_cpi_yoy" in dframe.columns:
         real_eu_rate = dframe["ecb_deposit_rate"] - dframe["eu_cpi_yoy"]
-        fig.add_trace(
-            go.Scatter(
-                x=dframe["date"],
-                y=real_eu_rate,
-                mode="lines",
-                name="Reálná sazba ECB (Depo − HICP)",
-                line=dict(color="#6366F1", width=2.0, dash="dot"),
-                hovertemplate="<b>Reálná sazba ECB</b>: %{y:.1f} %<extra></extra>"
-            ),
-            secondary_y=True
-        )
+        fig.add_trace(go.Scatter(
+            x=dframe["date"], y=real_eu_rate, mode="lines",
+            name="Reálná sazba ECB (Depo − HICP)", line=dict(color="#6366F1", width=2.0, dash="dot"),
+            hovertemplate="<b>Reálná sazba ECB</b>: %{y:.1f} %<extra></extra>"
+        ), secondary_y=True)
         fig.add_hline(y=0.0, line=dict(color="#94A3B8", width=1.2, dash="dash"), secondary_y=True)
-
     fig.update_layout(
-        height=430,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
+        height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Inflace Eurozóny (% YoY)", title_font=dict(color="#DC2626"), tickfont=dict(color="#DC2626"), showgrid=True, gridcolor="#f1f5f9", ticksuffix=" %"),
         yaxis2=dict(title="Reálná úroková míra EUR (%)", title_font=dict(color="#6366F1"), tickfont=dict(color="#6366F1"), overlaying="y", side="right", showgrid=False, ticksuffix=" %"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
 def build_us_inflation_chart(dframe: pd.DataFrame) -> go.Figure:
-    """Graf inflace v USA (Headline CPI a Core CPI) s 2.0% cílem Fedu a reálnou sazbou."""
+    """Graf inflace USA (Headline CPI a Core CPI)."""
     fig = make_subplots(specs=[[{"secondary_y": True}]])
-
     fig.add_hline(
-        y=2.0,
-        line=dict(color="#16A34A", width=1.8, dash="dash"),
-        annotation_text="Inflační cíl Fedu (2.0 %)",
-        annotation_position="bottom right",
-        annotation_font=dict(color="#16A34A", size=11),
-        secondary_y=False
+        y=2.0, line=dict(color="#16A34A", width=1.8, dash="dash"),
+        annotation_text="Inflační cíl Fedu (2.0 %)", annotation_position="bottom right",
+        annotation_font=dict(color="#16A34A", size=11), secondary_y=False
     )
-
     if "us_cpi_yoy" in dframe.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe["date"],
-                y=dframe["us_cpi_yoy"],
-                mode="lines+markers",
-                name="Headline CPI USA (meziročně v %)",
-                line=dict(color="#DC2626", width=3.0),
-                marker=dict(size=4, color="#DC2626"),
-                hovertemplate="<b>Headline CPI</b>: %{y:.1f} %<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
+        fig.add_trace(go.Scatter(
+            x=dframe["date"], y=dframe["us_cpi_yoy"], mode="lines+markers",
+            name="Headline CPI USA (YoY %)", line=dict(color="#DC2626", width=3.0),
+            marker=dict(size=4, color="#DC2626"), hovertemplate="<b>Headline CPI</b>: %{y:.1f} %<extra></extra>"
+        ), secondary_y=False)
     if "us_core_cpi_yoy" in dframe.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe["date"],
-                y=dframe["us_core_cpi_yoy"],
-                mode="lines",
-                name="Jádrová inflace (Core CPI)",
-                line=dict(color="#D97706", width=2.4, dash="solid"),
-                hovertemplate="<b>Core CPI</b>: %{y:.1f} %<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
+        fig.add_trace(go.Scatter(
+            x=dframe["date"], y=dframe["us_core_cpi_yoy"], mode="lines",
+            name="Jádrová inflace (Core CPI)", line=dict(color="#D97706", width=2.4),
+            hovertemplate="<b>Core CPI</b>: %{y:.1f} %<extra></extra>"
+        ), secondary_y=False)
     if "fed_effective_rate" in dframe.columns and "us_cpi_yoy" in dframe.columns:
         real_us_rate = dframe["fed_effective_rate"] - dframe["us_cpi_yoy"]
-        fig.add_trace(
-            go.Scatter(
-                x=dframe["date"],
-                y=real_us_rate,
-                mode="lines",
-                name="Reálná sazba (Fed EFFR − CPI)",
-                line=dict(color="#6366F1", width=2.0, dash="dot"),
-                hovertemplate="<b>Reálná sazba USA</b>: %{y:.1f} %<extra></extra>"
-            ),
-            secondary_y=True
-        )
+        fig.add_trace(go.Scatter(
+            x=dframe["date"], y=real_us_rate, mode="lines",
+            name="Reálná sazba (Fed EFFR − CPI)", line=dict(color="#6366F1", width=2.0, dash="dot"),
+            hovertemplate="<b>Reálná sazba USA</b>: %{y:.1f} %<extra></extra>"
+        ), secondary_y=True)
         fig.add_hline(y=0.0, line=dict(color="#94A3B8", width=1.2, dash="dash"), secondary_y=True)
-
     fig.update_layout(
-        height=430,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
+        height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Inflace USA (% YoY)", title_font=dict(color="#DC2626"), tickfont=dict(color="#DC2626"), showgrid=True, gridcolor="#f1f5f9", ticksuffix=" %"),
         yaxis2=dict(title="Reálná úroková míra USA (%)", title_font=dict(color="#6366F1"), tickfont=dict(color="#6366F1"), overlaying="y", side="right", showgrid=False, ticksuffix=" %"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
 # --- C. HDP ---
 def build_gdp_chart(dframe: pd.DataFrame, indicators: List[str]) -> go.Figure:
-    """Kombinovaný graf HDP ČR (nominál v mld. CZK a reálný růst v %)."""
+    """Kombinovaný graf HDP ČR."""
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     df_gdp_plot = dframe.drop_duplicates(subset=["quarter"] if "quarter" in dframe.columns else ["date"]).copy()
-
     if "gdp_nominal_czk_bn" in indicators and "gdp_nominal_czk_bn" in dframe.columns:
-        fig.add_trace(
-            go.Bar(
-                x=df_gdp_plot["date"],
-                y=df_gdp_plot["gdp_nominal_czk_bn"],
-                name="Nominální HDP (mld. CZK)",
-                marker=dict(color="rgba(71, 85, 105, 0.55)", line=dict(color="#334155", width=1)),
-                hovertemplate="<b>Nominální HDP ČR</b>: %{y:,.1f} mld. CZK<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
+        fig.add_trace(go.Bar(
+            x=df_gdp_plot["date"], y=df_gdp_plot["gdp_nominal_czk_bn"],
+            name="Nominální HDP (mld. CZK)", marker=dict(color="rgba(71, 85, 105, 0.55)", line=dict(color="#334155", width=1)),
+            hovertemplate="<b>Nominální HDP ČR</b>: %{y:,.1f} mld. CZK<extra></extra>"
+        ), secondary_y=False)
     if "gdp_growth_real" in indicators and "gdp_growth_real" in dframe.columns:
         marker_colors = ["#16A34A" if val >= 0 else "#DC2626" for val in df_gdp_plot["gdp_growth_real"]]
-        fig.add_trace(
-            go.Scatter(
-                x=df_gdp_plot["date"],
-                y=df_gdp_plot["gdp_growth_real"],
-                mode="lines+markers",
-                name="Reálný růst HDP ČR (YoY %)",
-                line=dict(color="#D97706", width=3),
-                marker=dict(size=7, color=marker_colors, line=dict(color="#FFFFFF", width=1.5)),
-                hovertemplate="<b>Reálný růst ČR</b>: %{y:+.1f} %<extra></extra>"
-            ),
-            secondary_y=True
-        )
+        fig.add_trace(go.Scatter(
+            x=df_gdp_plot["date"], y=df_gdp_plot["gdp_growth_real"], mode="lines+markers",
+            name="Reálný růst HDP ČR (YoY %)", line=dict(color="#D97706", width=3),
+            marker=dict(size=7, color=marker_colors, line=dict(color="#FFFFFF", width=1.5)),
+            hovertemplate="<b>Reálný růst ČR</b>: %{y:+.1f} %<extra></extra>"
+        ), secondary_y=True)
         fig.add_hline(y=0.0, line=dict(color="#94A3B8", width=1.5, dash="dash"), secondary_y=True)
-
     fig.update_layout(
-        height=430,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
+        height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Nominální HDP (mld. CZK)", title_font=dict(color="#334155"), tickfont=dict(color="#334155"), showgrid=True, gridcolor="#f1f5f9", ticksuffix=" mld."),
         yaxis2=dict(title="Reálný růst HDP (YoY %)", title_font=dict(color="#D97706"), tickfont=dict(color="#D97706"), overlaying="y", side="right", showgrid=False, ticksuffix=" %"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
 def build_eu_gdp_chart(dframe: pd.DataFrame, indicators: List[str]) -> go.Figure:
-    """Kombinovaný graf HDP Eurozóny / EU (nominál v mld. EUR a reálný růst v %)."""
+    """Kombinovaný graf HDP Eurozóny / EU."""
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     df_gdp_plot = dframe.drop_duplicates(subset=["quarter"] if "quarter" in dframe.columns else ["date"]).copy()
-
     if "eu_gdp_nominal_eur_bn" in indicators and "eu_gdp_nominal_eur_bn" in dframe.columns:
-        fig.add_trace(
-            go.Bar(
-                x=df_gdp_plot["date"],
-                y=df_gdp_plot["eu_gdp_nominal_eur_bn"],
-                name="Nominální HDP Eurozóny (mld. EUR)",
-                marker=dict(color="rgba(30, 58, 138, 0.50)", line=dict(color="#1e3a8a", width=1)),
-                hovertemplate="<b>Nominální HDP EU</b>: %{y:,.0f} mld. EUR<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
+        fig.add_trace(go.Bar(
+            x=df_gdp_plot["date"], y=df_gdp_plot["eu_gdp_nominal_eur_bn"],
+            name="Nominální HDP Eurozóny (mld. EUR)", marker=dict(color="rgba(30, 58, 138, 0.50)", line=dict(color="#1e3a8a", width=1)),
+            hovertemplate="<b>Nominální HDP EU</b>: %{y:,.0f} mld. EUR<extra></extra>"
+        ), secondary_y=False)
     if "eu_gdp_growth_real" in indicators and "eu_gdp_growth_real" in dframe.columns:
         marker_colors = ["#16A34A" if val >= 0 else "#DC2626" for val in df_gdp_plot["eu_gdp_growth_real"]]
-        fig.add_trace(
-            go.Scatter(
-                x=df_gdp_plot["date"],
-                y=df_gdp_plot["eu_gdp_growth_real"],
-                mode="lines+markers",
-                name="Reálný růst HDP Eurozóny (YoY %)",
-                line=dict(color="#2563EB", width=3),
-                marker=dict(size=7, color=marker_colors, line=dict(color="#FFFFFF", width=1.5)),
-                hovertemplate="<b>Reálný růst EU</b>: %{y:+.1f} %<extra></extra>"
-            ),
-            secondary_y=True
-        )
+        fig.add_trace(go.Scatter(
+            x=df_gdp_plot["date"], y=df_gdp_plot["eu_gdp_growth_real"], mode="lines+markers",
+            name="Reálný růst HDP Eurozóny (YoY %)", line=dict(color="#2563EB", width=3),
+            marker=dict(size=7, color=marker_colors, line=dict(color="#FFFFFF", width=1.5)),
+            hovertemplate="<b>Reálný růst EU</b>: %{y:+.1f} %<extra></extra>"
+        ), secondary_y=True)
         fig.add_hline(y=0.0, line=dict(color="#94A3B8", width=1.5, dash="dash"), secondary_y=True)
-
     fig.update_layout(
-        height=430,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
+        height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Nominální HDP EU (mld. EUR)", title_font=dict(color="#1e3a8a"), tickfont=dict(color="#1e3a8a"), showgrid=True, gridcolor="#f1f5f9", ticksuffix=" mld. €"),
         yaxis2=dict(title="Reálný růst HDP EU (YoY %)", title_font=dict(color="#2563EB"), tickfont=dict(color="#2563EB"), overlaying="y", side="right", showgrid=False, ticksuffix=" %"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
 def build_us_gdp_chart(dframe: pd.DataFrame, indicators: List[str]) -> go.Figure:
-    """Kombinovaný graf HDP USA (nominál v mld. USD a reálný růst v %)."""
+    """Kombinovaný graf HDP USA."""
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     df_gdp_plot = dframe.drop_duplicates(subset=["quarter"] if "quarter" in dframe.columns else ["date"]).copy()
-
     if "us_gdp_nominal_usd_bn" in indicators and "us_gdp_nominal_usd_bn" in dframe.columns:
-        fig.add_trace(
-            go.Bar(
-                x=df_gdp_plot["date"],
-                y=df_gdp_plot["us_gdp_nominal_usd_bn"],
-                name="Nominální HDP USA (mld. USD)",
-                marker=dict(color="rgba(30, 41, 59, 0.55)", line=dict(color="#0f172a", width=1)),
-                hovertemplate="<b>Nominální HDP USA</b>: %{y:,.0f} mld. USD<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
+        fig.add_trace(go.Bar(
+            x=df_gdp_plot["date"], y=df_gdp_plot["us_gdp_nominal_usd_bn"],
+            name="Nominální HDP USA (mld. USD)", marker=dict(color="rgba(30, 41, 59, 0.55)", line=dict(color="#0f172a", width=1)),
+            hovertemplate="<b>Nominální HDP USA</b>: %{y:,.0f} mld. USD<extra></extra>"
+        ), secondary_y=False)
     if "us_gdp_growth_real" in indicators and "us_gdp_growth_real" in dframe.columns:
         marker_colors = ["#16A34A" if val >= 0 else "#DC2626" for val in df_gdp_plot["us_gdp_growth_real"]]
-        fig.add_trace(
-            go.Scatter(
-                x=df_gdp_plot["date"],
-                y=df_gdp_plot["us_gdp_growth_real"],
-                mode="lines+markers",
-                name="Reálný růst HDP USA (YoY %)",
-                line=dict(color="#2563EB", width=3),
-                marker=dict(size=7, color=marker_colors, line=dict(color="#FFFFFF", width=1.5)),
-                hovertemplate="<b>Reálný růst USA</b>: %{y:+.1f} %<extra></extra>"
-            ),
-            secondary_y=True
-        )
+        fig.add_trace(go.Scatter(
+            x=df_gdp_plot["date"], y=df_gdp_plot["us_gdp_growth_real"], mode="lines+markers",
+            name="Reálný růst HDP USA (YoY %)", line=dict(color="#2563EB", width=3),
+            marker=dict(size=7, color=marker_colors, line=dict(color="#FFFFFF", width=1.5)),
+            hovertemplate="<b>Reálný růst USA</b>: %{y:+.1f} %<extra></extra>"
+        ), secondary_y=True)
         fig.add_hline(y=0.0, line=dict(color="#94A3B8", width=1.5, dash="dash"), secondary_y=True)
-
     fig.update_layout(
-        height=430,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
+        height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Nominální HDP USA (mld. USD)", title_font=dict(color="#0f172a"), tickfont=dict(color="#0f172a"), showgrid=True, gridcolor="#f1f5f9", ticksuffix=" mld. $"),
         yaxis2=dict(title="Reálný růst HDP USA (YoY %)", title_font=dict(color="#2563EB"), tickfont=dict(color="#2563EB"), overlaying="y", side="right", showgrid=False, ticksuffix=" %"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
-# --- D. PRŮMYSL A SPOTŘEBA (EKONOMICKÁ AKTIVITA) ---
+# --- D. PRŮMYSL A SPOTŘEBA ---
 def build_activity_chart(dframe: pd.DataFrame, region: str = "CZ") -> go.Figure:
-    """Graf spotřeby (maloobchodních tržeb) a průmyslové produkce pro vybraný region."""
+    """Graf spotřeby a průmyslové produkce."""
     fig = go.Figure()
-
     if region == "CZ":
         retail_col, ind_col = "retail_sales_yoy", "industrial_prod_yoy"
         retail_name, ind_name = "Maloobchodní tržby ČR (Spotřeba YoY)", "Průmyslová produkce ČR (YoY)"
@@ -1985,181 +1758,334 @@ def build_activity_chart(dframe: pd.DataFrame, region: str = "CZ") -> go.Figure:
 
     if retail_col in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe[retail_col],
-            mode="lines+markers",
-            name=retail_name,
-            line=dict(color="#0284C7", width=2.6),
-            marker=dict(size=4, color="#0284C7"),
-            hovertemplate=f"<b>{retail_name}</b>: %{{y:+.1f}} %<extra></extra>"
+            x=dframe["date"], y=dframe[retail_col], mode="lines+markers",
+            name=retail_name, line=dict(color="#0284C7", width=2.6),
+            marker=dict(size=4, color="#0284C7"), hovertemplate=f"<b>{retail_name}</b>: %{{y:+.1f}} %<extra></extra>"
         ))
-
     if ind_col in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe[ind_col],
-            mode="lines+markers",
-            name=ind_name,
-            line=dict(color="#7C3AED", width=2.4),
-            marker=dict(size=4, color="#7C3AED"),
-            hovertemplate=f"<b>{ind_name}</b>: %{{y:+.1f}} %<extra></extra>"
+            x=dframe["date"], y=dframe[ind_col], mode="lines+markers",
+            name=ind_name, line=dict(color="#7C3AED", width=2.4),
+            marker=dict(size=4, color="#7C3AED"), hovertemplate=f"<b>{ind_name}</b>: %{{y:+.1f}} %<extra></extra>"
         ))
-
     fig.add_hline(y=0.0, line=dict(color="#94A3B8", width=1.5, dash="dash"))
-
     fig.update_layout(
-        height=430,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
+        height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Meziroční růst / pokles (%)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
 # --- E. TRH PRÁCE ---
 def build_unemployment_chart(dframe: pd.DataFrame) -> go.Figure:
-    """Plošný graf míry nezaměstnanosti v ČR s průměrem a extrémy."""
+    """Plošný graf míry nezaměstnanosti v ČR."""
     fig = go.Figure()
-
     if "unemployment_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["unemployment_rate"],
-            mode="lines",
-            name="Míra nezaměstnanosti v ČR",
-            line=dict(color="#4F46E5", width=2.8),
-            fill="tozeroy",
-            fillcolor="rgba(79, 70, 229, 0.08)",
-            hovertemplate="<b>Nezaměstnanost ČR</b>: %{y:.1f} %<extra></extra>"
+            x=dframe["date"], y=dframe["unemployment_rate"], mode="lines",
+            name="Míra nezaměstnanosti v ČR", line=dict(color="#4F46E5", width=2.8),
+            fill="tozeroy", fillcolor="rgba(79, 70, 229, 0.08)", hovertemplate="<b>Nezaměstnanost ČR</b>: %{y:.1f} %<extra></extra>"
         ))
-
         avg_une = dframe["unemployment_rate"].mean()
-        fig.add_hline(
-            y=avg_une,
-            line=dict(color="#64748B", width=1.5, dash="dash"),
-            annotation_text=f"Průměr: {avg_une:.2f} %",
-            annotation_position="top right",
-            annotation_font=dict(color="#64748B", size=11)
-        )
-
+        fig.add_hline(y=avg_une, line=dict(color="#64748B", width=1.5, dash="dash"), annotation_text=f"Průměr: {avg_une:.2f} %", annotation_position="top right")
         min_val = dframe["unemployment_rate"].min()
         max_val = dframe["unemployment_rate"].max()
         min_row = dframe.loc[dframe["unemployment_rate"] == min_val].iloc[0]
         max_row = dframe.loc[dframe["unemployment_rate"] == max_val].iloc[0]
-
         fig.add_trace(go.Scatter(
-            x=[min_row["date"], max_row["date"]],
-            y=[min_val, max_val],
-            mode="markers+text",
-            name="Extrémy (Min / Max)",
-            marker=dict(size=8, color=["#16A34A", "#DC2626"]),
-            text=[f"Min: {min_val:.1f} %", f"Max: {max_val:.1f} %"],
-            textposition=["bottom center", "top center"],
-            showlegend=False,
-            hoverinfo="skip"
+            x=[min_row["date"], max_row["date"]], y=[min_val, max_val], mode="markers+text",
+            name="Extrémy", marker=dict(size=8, color=["#16A34A", "#DC2626"]),
+            text=[f"Min: {min_val:.1f} %", f"Max: {max_val:.1f} %"], textposition=["bottom center", "top center"],
+            showlegend=False, hoverinfo="skip"
         ))
-
         fig.update_layout(
-            height=430,
-            hovermode="x unified",
-            margin=dict(l=20, r=20, t=30, b=20),
+            height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
             xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
             yaxis=dict(title="Míra nezaměstnanosti (%)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9", range=[0, max(6.0, max_val + 1.0)]),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            plot_bgcolor="#FFFFFF",
-            paper_bgcolor="#FFFFFF"
+            plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
         )
     return fig
 
 
 def build_eu_unemployment_chart(dframe: pd.DataFrame) -> go.Figure:
-    """Graf míry nezaměstnanosti v Eurozóně / EU dle Eurostatu."""
+    """Graf míry nezaměstnanosti v EU."""
     fig = go.Figure()
-
     if "eu_unemployment_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=dframe["eu_unemployment_rate"],
-            mode="lines",
-            name="Míra nezaměstnanosti v EU",
-            line=dict(color="#2563EB", width=2.8),
-            fill="tozeroy",
-            fillcolor="rgba(37, 99, 235, 0.08)",
-            hovertemplate="<b>Nezaměstnanost EU</b>: %{y:.1f} %<extra></extra>"
+            x=dframe["date"], y=dframe["eu_unemployment_rate"], mode="lines",
+            name="Míra nezaměstnanosti v EU", line=dict(color="#2563EB", width=2.8),
+            fill="tozeroy", fillcolor="rgba(37, 99, 235, 0.08)", hovertemplate="<b>Nezaměstnanost EU</b>: %{y:.1f} %<extra></extra>"
         ))
-
         avg_une = dframe["eu_unemployment_rate"].mean()
-        fig.add_hline(
-            y=avg_une,
-            line=dict(color="#64748B", width=1.5, dash="dash"),
-            annotation_text=f"Průměr EU: {avg_une:.2f} %",
-            annotation_position="top right",
-            annotation_font=dict(color="#64748B", size=11)
-        )
-
-        min_val = dframe["eu_unemployment_rate"].min()
-        max_val = dframe["eu_unemployment_rate"].max()
-        min_row = dframe.loc[dframe["eu_unemployment_rate"] == min_val].iloc[0]
-        max_row = dframe.loc[dframe["eu_unemployment_rate"] == max_val].iloc[0]
-
-        fig.add_trace(go.Scatter(
-            x=[min_row["date"], max_row["date"]],
-            y=[min_val, max_val],
-            mode="markers+text",
-            name="Extrémy",
-            marker=dict(size=8, color=["#16A34A", "#DC2626"]),
-            text=[f"Min: {min_val:.1f} %", f"Max: {max_val:.1f} %"],
-            textposition=["bottom center", "top center"],
-            showlegend=False,
-            hoverinfo="skip"
-        ))
-
+        fig.add_hline(y=avg_une, line=dict(color="#64748B", width=1.5, dash="dash"), annotation_text=f"Průměr EU: {avg_une:.2f} %", annotation_position="top right")
         fig.update_layout(
-            height=430,
-            hovermode="x unified",
-            margin=dict(l=20, r=20, t=30, b=20),
+            height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
             xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
-            yaxis=dict(title="Míra nezaměstnanosti EU (%)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9", range=[0, max(12.0, max_val + 1.0)]),
+            yaxis=dict(title="Míra nezaměstnanosti EU (%)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9"),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            plot_bgcolor="#FFFFFF",
-            paper_bgcolor="#FFFFFF"
+            plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
         )
     return fig
 
 
 def build_us_unemployment_chart(dframe: pd.DataFrame) -> go.Figure:
-    """Graf trhu práce v USA (míra nezaměstnanosti U-3)."""
+    """Graf míry nezaměstnanosti USA."""
     fig = go.Figure()
-
     if "us_unemployment_rate" in dframe.columns:
         fig.add_trace(go.Scatter(
+            x=dframe["date"], y=dframe["us_unemployment_rate"], mode="lines",
+            name="Míra nezaměstnanosti USA (U-3)", line=dict(color="#2563EB", width=2.8),
+            fill="tozeroy", fillcolor="rgba(37, 99, 235, 0.08)", hovertemplate="<b>Nezaměstnanost USA</b>: %{y:.1f} %<extra></extra>"
+        ))
+        avg_une = dframe["us_unemployment_rate"].mean()
+        fig.add_hline(y=avg_une, line=dict(color="#64748B", width=1.5, dash="dash"), annotation_text=f"Průměr USA: {avg_une:.2f} %", annotation_position="top right")
+        fig.update_layout(
+            height=430, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+            xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
+            yaxis=dict(title="Míra nezaměstnanosti USA (%)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9"),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
+        )
+    return fig
+
+
+# --- F. DYNAMICKÝ VÝBĚR MĚN (FX - OMEZENÍ PŘEPLNĚNÉHO GRAFU) ---
+def build_dynamic_fx_chart_cz(dframe_daily: pd.DataFrame, selected_currencies: List[str]) -> go.Figure:
+    """Dynamický devizový graf ČNB přizpůsobený zvoleným měnám."""
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    curr_set = set(selected_currencies) if selected_currencies else {"EUR", "USD", "CZK"}
+
+    # EUR/CZK
+    if ("EUR" in curr_set and "CZK" in curr_set) or (len(curr_set) == 1 and "EUR" in curr_set):
+        if "eur_czk" in dframe_daily.columns:
+            fig.add_trace(go.Scatter(
+                x=dframe_daily["date"], y=dframe_daily["eur_czk"], mode="lines",
+                name="EUR / CZK", line=dict(color="#2563EB", width=2.4),
+                hovertemplate="<b>EUR/CZK</b>: %{y:.4f} Kč<extra></extra>"
+            ), secondary_y=False)
+
+    # USD/CZK
+    if ("USD" in curr_set and "CZK" in curr_set) or (len(curr_set) == 1 and "USD" in curr_set):
+        if "usd_czk" in dframe_daily.columns:
+            fig.add_trace(go.Scatter(
+                x=dframe_daily["date"], y=dframe_daily["usd_czk"], mode="lines",
+                name="USD / CZK", line=dict(color="#059669", width=2.0),
+                hovertemplate="<b>USD/CZK</b>: %{y:.4f} Kč<extra></extra>"
+            ), secondary_y=False)
+
+    # GBP/CZK
+    if ("GBP" in curr_set and "CZK" in curr_set) or (len(curr_set) == 1 and "GBP" in curr_set):
+        if "gbp_czk" in dframe_daily.columns:
+            fig.add_trace(go.Scatter(
+                x=dframe_daily["date"], y=dframe_daily["gbp_czk"], mode="lines",
+                name="GBP / CZK", line=dict(color="#D97706", width=2.0),
+                hovertemplate="<b>GBP/CZK</b>: %{y:.4f} Kč<extra></extra>"
+            ), secondary_y=False)
+
+    # PLN/CZK (pravá osa pro detailní rozlišení kurzu cca 5.5-6.0 Kč)
+    if ("PLN" in curr_set and "CZK" in curr_set) or (len(curr_set) == 1 and "PLN" in curr_set):
+        if "pln_czk" in dframe_daily.columns:
+            fig.add_trace(go.Scatter(
+                x=dframe_daily["date"], y=dframe_daily["pln_czk"], mode="lines",
+                name="PLN / CZK (pravá osa)", line=dict(color="#DC2626", width=2.0, dash="dot"),
+                hovertemplate="<b>PLN/CZK</b>: %{y:.4f} Kč<extra></extra>"
+            ), secondary_y=True)
+
+    fig.update_layout(
+        height=450, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis=dict(title="Kurz EUR, USD, GBP (Kč)", ticksuffix=" Kč", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis2=dict(title="Kurz PLN (Kč)", title_font=dict(color="#DC2626"), tickfont=dict(color="#DC2626"), overlaying="y", side="right", showgrid=False, ticksuffix=" Kč"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
+    )
+    return fig
+
+
+def build_dynamic_fx_chart_eu(dframe_daily: pd.DataFrame, selected_currencies: List[str]) -> go.Figure:
+    """Dynamický devizový graf Eurozóny."""
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    curr_set = set(selected_currencies) if selected_currencies else {"EUR", "USD", "CZK"}
+
+    if "USD" in curr_set and "eur_usd" in dframe_daily.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe_daily["date"], y=dframe_daily["eur_usd"], mode="lines",
+            name="EUR / USD", line=dict(color="#059669", width=2.4),
+            hovertemplate="<b>EUR/USD</b>: %{y:.4f} $<extra></extra>"
+        ), secondary_y=False)
+
+    if "GBP" in curr_set and "eur_gbp" in dframe_daily.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe_daily["date"], y=dframe_daily["eur_gbp"], mode="lines",
+            name="EUR / GBP", line=dict(color="#D97706", width=2.0),
+            hovertemplate="<b>EUR/GBP</b>: %{y:.4f} £<extra></extra>"
+        ), secondary_y=False)
+
+    if "CZK" in curr_set and "eur_czk" in dframe_daily.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe_daily["date"], y=dframe_daily["eur_czk"], mode="lines",
+            name="EUR / CZK (pravá osa)", line=dict(color="#2563EB", width=2.2),
+            hovertemplate="<b>EUR/CZK</b>: %{y:.2f} Kč<extra></extra>"
+        ), secondary_y=True)
+
+    if "PLN" in curr_set and "eur_pln" in dframe_daily.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe_daily["date"], y=dframe_daily["eur_pln"], mode="lines",
+            name="EUR / PLN (pravá osa)", line=dict(color="#DC2626", width=2.0, dash="dot"),
+            hovertemplate="<b>EUR/PLN</b>: %{y:.4f} zł<extra></extra>"
+        ), secondary_y=True)
+
+    fig.update_layout(
+        height=450, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis=dict(title="Kurz EUR/USD & EUR/GBP", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis2=dict(title="Kurz EUR/CZK & EUR/PLN", overlaying="y", side="right", showgrid=False),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
+    )
+    return fig
+
+
+def build_dynamic_fx_chart_us(dframe_daily: pd.DataFrame, selected_currencies: List[str]) -> go.Figure:
+    """Dynamický devizový graf USA s DXY indexem a vybranými měnovými páry."""
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    curr_set = set(selected_currencies) if selected_currencies else {"USD", "EUR", "GBP"}
+
+    if "USD" in curr_set and "dxy_index" in dframe_daily.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe_daily["date"], y=dframe_daily["dxy_index"], mode="lines",
+            name="U.S. Dollar Index (DXY)", line=dict(color="#1E293B", width=2.6),
+            hovertemplate="<b>DXY Index</b>: %{y:.2f} b.<extra></extra>"
+        ), secondary_y=False)
+
+    if "EUR" in curr_set and "eur_usd" in dframe_daily.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe_daily["date"], y=dframe_daily["eur_usd"], mode="lines",
+            name="EUR / USD", line=dict(color="#2563EB", width=2.0),
+            hovertemplate="<b>EUR/USD</b>: %{y:.4f} $<extra></extra>"
+        ), secondary_y=True)
+
+    if "GBP" in curr_set and "gbp_usd" in dframe_daily.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe_daily["date"], y=dframe_daily["gbp_usd"], mode="lines",
+            name="GBP / USD (Cable)", line=dict(color="#D97706", width=2.0),
+            hovertemplate="<b>GBP/USD</b>: %{y:.4f} $<extra></extra>"
+        ), secondary_y=True)
+
+    if "PLN" in curr_set and "usd_pln" in dframe_daily.columns:
+        fig.add_trace(go.Scatter(
+            x=dframe_daily["date"], y=dframe_daily["usd_pln"], mode="lines",
+            name="USD / PLN", line=dict(color="#DC2626", width=1.8, dash="dot"),
+            hovertemplate="<b>USD/PLN</b>: %{y:.4f} zł<extra></extra>"
+        ), secondary_y=True)
+
+    fig.update_layout(
+        height=450, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
+        xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis=dict(title="Dolarový index DXY (body)", title_font=dict(color="#1E293B"), tickfont=dict(color="#1E293B"), showgrid=True, gridcolor="#f1f5f9"),
+        yaxis2=dict(title="Měnové kurzy ($)", title_font=dict(color="#2563EB"), tickfont=dict(color="#2563EB"), overlaying="y", side="right", showgrid=False),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
+    )
+    return fig
+
+
+# --- G. AKCIOVÉ INDEXY (TRHY) ---
+def build_stock_comparison_chart(dframe: pd.DataFrame, selected_indices: List[str], mode: str = "pct") -> go.Figure:
+    """Srovnávací graf normalizované výkonnosti akciových indexů."""
+    fig = go.Figure()
+    if dframe.empty or not selected_indices:
+        return fig
+
+    index_configs = {
+        "Index PX (Praha)": ("px_index", "#DC2626", "Index PX (Praha)"),
+        "Euro Stoxx 50 (EU)": ("stoxx50_index", "#059669", "Euro Stoxx 50 (EU)"),
+        "S&P 500 (USA)": ("sp500_index", "#2563EB", "S&P 500 (USA)"),
+        "NASDAQ (USA)": ("nasdaq_index", "#7C3AED", "NASDAQ Composite (USA)")
+    }
+
+    first_row = dframe.iloc[0]
+
+    for label in selected_indices:
+        cfg = index_configs.get(label)
+        if not cfg:
+            continue
+        col, color, name = cfg
+        if col in dframe.columns:
+            base_val = first_row.get(col)
+            if base_val is not None and not pd.isna(base_val) and base_val > 0:
+                if mode == "pct":
+                    y_vals = ((dframe[col] / base_val) - 1.0) * 100.0
+                    hover = f"<b>{name}</b>: %{{y:+.2f}} % (hodnota: %{{customdata:,.1f}} b.)<extra></extra>"
+                else:
+                    y_vals = (dframe[col] / base_val) * 100.0
+                    hover = f"<b>{name}</b>: %{{y:.1f}} b. (hodnota: %{{customdata:,.1f}} b.)<extra></extra>"
+
+                fig.add_trace(go.Scatter(
+                    x=dframe["date"],
+                    y=y_vals,
+                    mode="lines",
+                    name=name,
+                    line=dict(color=color, width=2.6),
+                    customdata=dframe[col],
+                    hovertemplate=hover
+                ))
+
+    ref_line = 0.0 if mode == "pct" else 100.0
+    fig.add_hline(y=ref_line, line=dict(color="#64748B", width=1.5, dash="dash"),
+                  annotation_text="Báze (0 %)" if mode == "pct" else "Báze (100 b.)",
+                  annotation_position="bottom left")
+
+    y_title = "Relativní zhodnocení (%)" if mode == "pct" else "Index rebase (báze = 100)"
+    suffix = " %" if mode == "pct" else " b."
+
+    fig.update_layout(
+        height=460,
+        hovermode="x unified",
+        margin=dict(l=20, r=20, t=30, b=20),
+        xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis=dict(title=y_title, ticksuffix=suffix, showgrid=True, gridcolor="#f1f5f9"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF"
+    )
+    return fig
+
+
+def build_single_stock_chart(dframe: pd.DataFrame, col: str, title: str, color: str = "#2563EB") -> go.Figure:
+    """Detailní cenový graf konkrétního akciového indexu s trendem a extrémy."""
+    fig = go.Figure()
+    if col in dframe.columns:
+        fig.add_trace(go.Scatter(
             x=dframe["date"],
-            y=dframe["us_unemployment_rate"],
+            y=dframe[col],
             mode="lines",
-            name="Míra nezaměstnanosti USA (U-3)",
-            line=dict(color="#2563EB", width=2.8),
+            name=title,
+            line=dict(color=color, width=2.8),
             fill="tozeroy",
-            fillcolor="rgba(37, 99, 235, 0.08)",
-            hovertemplate="<b>Nezaměstnanost USA</b>: %{y:.1f} %<extra></extra>"
+            fillcolor=f"rgba{tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + (0.06,)}",
+            hovertemplate=f"<b>{title}</b>: %{{y:,.1f}} bodů<extra></extra>"
         ))
 
-        avg_une = dframe["us_unemployment_rate"].mean()
-        fig.add_hline(
-            y=avg_une,
-            line=dict(color="#64748B", width=1.5, dash="dash"),
-            annotation_text=f"Průměr USA: {avg_une:.2f} %",
-            annotation_position="top right",
-            annotation_font=dict(color="#64748B", size=11)
-        )
+        if len(dframe) >= 12:
+            sma12 = dframe[col].rolling(window=12, min_periods=3).mean()
+            fig.add_trace(go.Scatter(
+                x=dframe["date"],
+                y=sma12,
+                mode="lines",
+                name="12M klouzavý průměr",
+                line=dict(color="#64748B", width=1.5, dash="dot"),
+                hovertemplate="<b>12M SMA</b>: %{y:,.1f} bodů<extra></extra>"
+            ))
 
-        min_val = dframe["us_unemployment_rate"].min()
-        max_val = dframe["us_unemployment_rate"].max()
-        min_row = dframe.loc[dframe["us_unemployment_rate"] == min_val].iloc[0]
-        max_row = dframe.loc[dframe["us_unemployment_rate"] == max_val].iloc[0]
+        min_val = dframe[col].min()
+        max_val = dframe[col].max()
+        min_row = dframe.loc[dframe[col] == min_val].iloc[0]
+        max_row = dframe.loc[dframe[col] == max_val].iloc[0]
 
         fig.add_trace(go.Scatter(
             x=[min_row["date"], max_row["date"]],
@@ -2167,738 +2093,280 @@ def build_us_unemployment_chart(dframe: pd.DataFrame) -> go.Figure:
             mode="markers+text",
             name="Extrémy",
             marker=dict(size=8, color=["#16A34A", "#DC2626"]),
-            text=[f"Min: {min_val:.1f} %", f"Max: {max_val:.1f} % (Covid)"],
+            text=[f"Min: {min_val:,.0f}", f"Max: {max_val:,.0f}"],
             textposition=["bottom center", "top center"],
             showlegend=False,
             hoverinfo="skip"
         ))
 
-        fig.update_layout(
-            height=430,
-            hovermode="x unified",
-            margin=dict(l=20, r=20, t=30, b=20),
-            xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
-            yaxis=dict(title="Míra nezaměstnanosti USA (%)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9", range=[0, max(8.0, max_val + 1.0)]),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            plot_bgcolor="#FFFFFF",
-            paper_bgcolor="#FFFFFF"
-        )
-    return fig
-
-
-# --- F. MĚNOVÉ KURZY (DENNÍ DATA VČETNĚ PLN & GBP) ---
-def build_fx_daily_chart_cz(dframe_daily: pd.DataFrame) -> go.Figure:
-    """Vysokofrekvenční graf denních devizových kurzů EUR/CZK, USD/CZK, GBP/CZK a PLN/CZK."""
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-
-    if "eur_czk" in dframe_daily.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe_daily["date"],
-                y=dframe_daily["eur_czk"],
-                mode="lines",
-                name="EUR / CZK (hlavní pár)",
-                line=dict(color="#2563EB", width=2.4),
-                hovertemplate="<b>EUR/CZK</b>: %{y:.4f} Kč<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
-    if "usd_czk" in dframe_daily.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe_daily["date"],
-                y=dframe_daily["usd_czk"],
-                mode="lines",
-                name="USD / CZK",
-                line=dict(color="#059669", width=2.0),
-                hovertemplate="<b>USD/CZK</b>: %{y:.4f} Kč<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
-    if "gbp_czk" in dframe_daily.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe_daily["date"],
-                y=dframe_daily["gbp_czk"],
-                mode="lines",
-                name="GBP / CZK",
-                line=dict(color="#D97706", width=1.8, dash="solid"),
-                hovertemplate="<b>GBP/CZK</b>: %{y:.4f} Kč<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
-    if "pln_czk" in dframe_daily.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe_daily["date"],
-                y=dframe_daily["pln_czk"],
-                mode="lines",
-                name="PLN / CZK (pravá osa)",
-                line=dict(color="#DC2626", width=2.0, dash="dot"),
-                hovertemplate="<b>PLN/CZK</b>: %{y:.4f} Kč<extra></extra>"
-            ),
-            secondary_y=True
-        )
-
-    fig.add_hline(
-        y=27.00,
-        line=dict(color="#DC2626", width=1.4, dash="dash"),
-        annotation_text="Dřívější intervence ČNB (27.00)",
-        annotation_position="bottom right",
-        annotation_font=dict(color="#DC2626", size=10),
-        secondary_y=False
-    )
-
     fig.update_layout(
-        height=450,
+        height=430,
         hovermode="x unified",
         margin=dict(l=20, r=20, t=30, b=20),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
-        yaxis=dict(title="Kurz EUR, USD, GBP (Kč)", ticksuffix=" Kč", showgrid=True, gridcolor="#f1f5f9"),
-        yaxis2=dict(title="Kurz PLN (Kč)", title_font=dict(color="#DC2626"), tickfont=dict(color="#DC2626"), overlaying="y", side="right", showgrid=False, ticksuffix=" Kč"),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
+        yaxis=dict(title="Hodnota indexu (body)", showgrid=True, gridcolor="#f1f5f9"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
         plot_bgcolor="#FFFFFF",
         paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
-def build_fx_daily_chart_eu(dframe_daily: pd.DataFrame) -> go.Figure:
-    """Graf denních měnových kurzů eura: EUR/USD, EUR/CZK, EUR/PLN a EUR/GBP."""
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-
-    if "eur_czk" in dframe_daily.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe_daily["date"],
-                y=dframe_daily["eur_czk"],
-                mode="lines",
-                name="EUR / CZK (levá osa)",
-                line=dict(color="#2563EB", width=2.2),
-                hovertemplate="<b>EUR/CZK</b>: %{y:.4f} Kč<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
-    if "eur_pln" in dframe_daily.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe_daily["date"],
-                y=dframe_daily["eur_pln"],
-                mode="lines",
-                name="EUR / PLN (levá osa)",
-                line=dict(color="#DC2626", width=2.0),
-                hovertemplate="<b>EUR/PLN</b>: %{y:.4f} zł<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
-    if "eur_usd" in dframe_daily.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe_daily["date"],
-                y=dframe_daily["eur_usd"],
-                mode="lines",
-                name="EUR / USD (pravá osa)",
-                line=dict(color="#059669", width=2.4),
-                hovertemplate="<b>EUR/USD</b>: %{y:.4f} $<extra></extra>"
-            ),
-            secondary_y=True
-        )
-
-    if "eur_gbp" in dframe_daily.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe_daily["date"],
-                y=dframe_daily["eur_gbp"],
-                mode="lines",
-                name="EUR / GBP (pravá osa)",
-                line=dict(color="#D97706", width=2.0, dash="dash"),
-                hovertemplate="<b>EUR/GBP</b>: %{y:.4f} £<extra></extra>"
-            ),
-            secondary_y=True
-        )
-
-    fig.update_layout(
-        height=450,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
-        xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
-        yaxis=dict(title="Kurz EUR/CZK & EUR/PLN", showgrid=True, gridcolor="#f1f5f9"),
-        yaxis2=dict(title="Kurz EUR/USD & EUR/GBP", title_font=dict(color="#059669"), tickfont=dict(color="#059669"), overlaying="y", side="right", showgrid=False),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
-    )
-    return fig
-
-
-def build_fx_daily_chart_us(dframe_daily: pd.DataFrame) -> go.Figure:
-    """Vysokofrekvenční graf světových devizových kurzů a DXY indexu (včetně PLN a GBP)."""
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-
-    if "dxy_index" in dframe_daily.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe_daily["date"],
-                y=dframe_daily["dxy_index"],
-                mode="lines",
-                name="U.S. Dollar Index (DXY - levá osa)",
-                line=dict(color="#1E293B", width=2.6),
-                hovertemplate="<b>DXY Index</b>: %{y:.2f} b.<extra></extra>"
-            ),
-            secondary_y=False
-        )
-
-    if "eur_usd" in dframe_daily.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe_daily["date"],
-                y=dframe_daily["eur_usd"],
-                mode="lines",
-                name="EUR / USD",
-                line=dict(color="#2563EB", width=2.0),
-                hovertemplate="<b>EUR/USD</b>: %{y:.4f} $<extra></extra>"
-            ),
-            secondary_y=True
-        )
-
-    if "gbp_usd" in dframe_daily.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe_daily["date"],
-                y=dframe_daily["gbp_usd"],
-                mode="lines",
-                name="GBP / USD (Cable)",
-                line=dict(color="#D97706", width=2.0),
-                hovertemplate="<b>GBP/USD</b>: %{y:.4f} $<extra></extra>"
-            ),
-            secondary_y=True
-        )
-
-    if "usd_pln" in dframe_daily.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=dframe_daily["date"],
-                y=dframe_daily["usd_pln"],
-                mode="lines",
-                name="USD / PLN",
-                line=dict(color="#DC2626", width=1.8, dash="dot"),
-                hovertemplate="<b>USD/PLN</b>: %{y:.4f} zł<extra></extra>"
-            ),
-            secondary_y=True
-        )
-
-    fig.update_layout(
-        height=450,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
-        xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
-        yaxis=dict(title="Dolarový index DXY (body)", title_font=dict(color="#1E293B"), tickfont=dict(color="#1E293B"), showgrid=True, gridcolor="#f1f5f9"),
-        yaxis2=dict(title="Měnové páry (EUR/USD, GBP/USD, USD/PLN)", title_font=dict(color="#2563EB"), tickfont=dict(color="#2563EB"), overlaying="y", side="right", showgrid=False),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.8)"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
-    )
-    return fig
-
-
-# --- G. VEŘEJNÝ DLUH & FISKÁL ---
+# --- H. VEŘEJNÝ DLUH & FISKÁL ---
 def build_debt_charts(dframe: pd.DataFrame) -> Tuple[go.Figure, go.Figure]:
-    """Grafy pro veřejný dluh ČR (% HDP) a saldo státního rozpočtu."""
+    """Grafy pro veřejný dluh ČR."""
     df_q_plot = dframe.drop_duplicates(subset=["quarter"] if "quarter" in dframe.columns else ["date"]).copy()
-
     fig_debt = go.Figure()
     if "public_debt_gdp_pct" in df_q_plot.columns:
-        fig_debt.add_hrect(
-            y0=0, y1=60.0,
-            fillcolor="rgba(34, 197, 94, 0.08)",
-            line_width=0,
-            annotation_text="Pásmo maastrichtského limitu (< 60 % HDP)",
-            annotation_position="top left",
-            annotation_font=dict(color="#15803d", size=11)
-        )
-        fig_debt.add_hline(
-            y=60.0,
-            line=dict(color="#DC2626", width=2.0, dash="dash"),
-            annotation_text="Maastrichtský limit (60.0 % HDP)",
-            annotation_position="bottom right",
-            annotation_font=dict(color="#DC2626", size=11)
-        )
+        fig_debt.add_hline(y=60.0, line=dict(color="#DC2626", width=2.0, dash="dash"), annotation_text="Maastrichtský limit (60.0 % HDP)", annotation_position="bottom right")
         fig_debt.add_trace(go.Scatter(
-            x=df_q_plot["date"],
-            y=df_q_plot["public_debt_gdp_pct"],
-            mode="lines+markers",
-            name="Veřejný dluh ČR (% HDP)",
-            line=dict(color="#4F46E5", width=3.0),
-            marker=dict(size=6, color="#4F46E5"),
-            hovertemplate="<b>Dluh k HDP</b>: %{y:.1f} %<extra></extra>"
+            x=df_q_plot["date"], y=df_q_plot["public_debt_gdp_pct"], mode="lines+markers",
+            name="Veřejný dluh ČR (% HDP)", line=dict(color="#4F46E5", width=3.0),
+            marker=dict(size=6, color="#4F46E5"), hovertemplate="<b>Dluh k HDP</b>: %{y:.1f} %<extra></extra>"
         ))
-
     fig_debt.update_layout(
-        height=380,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
+        height=380, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Veřejný dluh (% HDP)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9", range=[20, 90]),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
 
     fig_def = go.Figure()
     if "budget_deficit_czk_bn" in df_q_plot.columns:
         bar_colors = ["#16A34A" if v >= 0 else "#DC2626" for v in df_q_plot["budget_deficit_czk_bn"]]
         fig_def.add_trace(go.Bar(
-            x=df_q_plot["date"],
-            y=df_q_plot["budget_deficit_czk_bn"],
-            name="Kvartální saldo rozpočtu",
-            marker=dict(color=bar_colors),
+            x=df_q_plot["date"], y=df_q_plot["budget_deficit_czk_bn"],
+            name="Kvartální saldo rozpočtu", marker=dict(color=bar_colors),
             hovertemplate="<b>Saldo SR</b>: %{y:,.1f} mld. Kč<extra></extra>"
         ))
         fig_def.add_hline(y=0.0, line=dict(color="#334155", width=1.0))
-
     fig_def.update_layout(
-        height=380,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
+        height=380, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Saldo rozpočtu (mld. CZK)", ticksuffix=" mld.", showgrid=True, gridcolor="#f1f5f9"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig_debt, fig_def
 
 
 def build_eu_debt_charts(dframe: pd.DataFrame) -> Tuple[go.Figure, go.Figure]:
-    """Grafy pro veřejný dluh Eurozóny (% HDP) a saldo hospodaření vládních institucí."""
+    """Grafy pro veřejný dluh Eurozóny."""
     df_q_plot = dframe.drop_duplicates(subset=["quarter"] if "quarter" in dframe.columns else ["date"]).copy()
-
     fig_debt = go.Figure()
     if "eu_public_debt_gdp_pct" in df_q_plot.columns:
-        fig_debt.add_hline(
-            y=60.0,
-            line=dict(color="#16A34A", width=1.8, dash="dash"),
-            annotation_text="Maastrichtské kritérium (60.0 % HDP)",
-            annotation_position="bottom right",
-            annotation_font=dict(color="#16A34A", size=11)
-        )
+        fig_debt.add_hline(y=60.0, line=dict(color="#16A34A", width=1.8, dash="dash"), annotation_text="Maastrichtské kritérium (60.0 % HDP)", annotation_position="bottom right")
         fig_debt.add_trace(go.Scatter(
-            x=df_q_plot["date"],
-            y=df_q_plot["eu_public_debt_gdp_pct"],
-            mode="lines+markers",
-            name="Veřejný dluh Eurozóny (% HDP)",
-            line=dict(color="#2563EB", width=3.0),
-            marker=dict(size=6, color="#2563EB"),
-            hovertemplate="<b>Dluh Eurozóny k HDP</b>: %{y:.1f} %<extra></extra>"
+            x=df_q_plot["date"], y=df_q_plot["eu_public_debt_gdp_pct"], mode="lines+markers",
+            name="Veřejný dluh Eurozóny (% HDP)", line=dict(color="#2563EB", width=3.0),
+            marker=dict(size=6, color="#2563EB"), hovertemplate="<b>Dluh Eurozóny k HDP</b>: %{y:.1f} %<extra></extra>"
         ))
-
     fig_debt.update_layout(
-        height=380,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
+        height=380, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Veřejný dluh EU (% HDP)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9", range=[50, 110]),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
 
     fig_def = go.Figure()
     if "eu_budget_deficit_eur_bn" in df_q_plot.columns:
         bar_colors = ["#16A34A" if v >= 0 else "#DC2626" for v in df_q_plot["eu_budget_deficit_eur_bn"]]
         fig_def.add_trace(go.Bar(
-            x=df_q_plot["date"],
-            y=df_q_plot["eu_budget_deficit_eur_bn"],
-            name="Kvartální saldo rozpočtu Eurozóny",
-            marker=dict(color=bar_colors),
+            x=df_q_plot["date"], y=df_q_plot["eu_budget_deficit_eur_bn"],
+            name="Kvartální saldo rozpočtu Eurozóny", marker=dict(color=bar_colors),
             hovertemplate="<b>Saldo EU</b>: %{y:,.0f} mld. EUR<extra></extra>"
         ))
         fig_def.add_hline(y=0.0, line=dict(color="#334155", width=1.0))
-
     fig_def.update_layout(
-        height=380,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
+        height=380, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Saldo rozpočtu (mld. EUR)", ticksuffix=" mld. €", showgrid=True, gridcolor="#f1f5f9"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig_debt, fig_def
 
 
 def build_us_debt_charts(dframe: pd.DataFrame) -> Tuple[go.Figure, go.Figure]:
-    """Grafy pro federální dluh USA (% HDP a objem v mld. USD) a federální deficit."""
+    """Grafy pro dluh USA."""
     df_q_plot = dframe.drop_duplicates(subset=["quarter"] if "quarter" in dframe.columns else ["date"]).copy()
-
     fig_debt = go.Figure()
     if "us_public_debt_gdp_pct" in df_q_plot.columns:
-        fig_debt.add_hline(
-            y=100.0,
-            line=dict(color="#D97706", width=1.8, dash="dash"),
-            annotation_text="Hranice 100 % HDP",
-            annotation_position="bottom right",
-            annotation_font=dict(color="#D97706", size=11)
-        )
+        fig_debt.add_hline(y=100.0, line=dict(color="#D97706", width=1.8, dash="dash"), annotation_text="Hranice 100 % HDP", annotation_position="bottom right")
         fig_debt.add_trace(go.Scatter(
-            x=df_q_plot["date"],
-            y=df_q_plot["us_public_debt_gdp_pct"],
-            mode="lines+markers",
-            name="Federální dluh USA (% HDP)",
-            line=dict(color="#DC2626", width=3.0),
-            marker=dict(size=6, color="#DC2626"),
-            hovertemplate="<b>Dluh USA k HDP</b>: %{y:.1f} %<extra></extra>"
+            x=df_q_plot["date"], y=df_q_plot["us_public_debt_gdp_pct"], mode="lines+markers",
+            name="Federální dluh USA (% HDP)", line=dict(color="#DC2626", width=3.0),
+            marker=dict(size=6, color="#DC2626"), hovertemplate="<b>Dluh USA k HDP</b>: %{y:.1f} %<extra></extra>"
         ))
-
     fig_debt.update_layout(
-        height=380,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
+        height=380, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Dluh USA (% HDP)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9", range=[80, 140]),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
 
     fig_def = go.Figure()
     if "us_budget_deficit_usd_bn" in df_q_plot.columns:
         bar_colors = ["#16A34A" if v >= 0 else "#DC2626" for v in df_q_plot["us_budget_deficit_usd_bn"]]
         fig_def.add_trace(go.Bar(
-            x=df_q_plot["date"],
-            y=df_q_plot["us_budget_deficit_usd_bn"],
-            name="Kvartální federální deficit",
-            marker=dict(color=bar_colors),
+            x=df_q_plot["date"], y=df_q_plot["us_budget_deficit_usd_bn"],
+            name="Kvartální federální deficit", marker=dict(color=bar_colors),
             hovertemplate="<b>Deficit USA</b>: %{y:,.0f} mld. USD<extra></extra>"
         ))
         fig_def.add_hline(y=0.0, line=dict(color="#334155", width=1.0))
-
     fig_def.update_layout(
-        height=380,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
+        height=380, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
-        yaxis=dict(title="Saldo federálního rozpočtu (mld. USD)", ticksuffix=" mld. $", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis=dict(title="Saldo rozpočtu (mld. USD)", ticksuffix=" mld. $", showgrid=True, gridcolor="#f1f5f9"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig_debt, fig_def
 
 
-# --- H. VÝNOSOVÉ KŘIVKY ---
+# --- I. VÝNOSOVÉ KŘIVKY ---
 def build_yield_curve_snapshot(df_row: pd.Series, compare_row: Optional[pd.Series] = None) -> go.Figure:
-    """Časová struktura české výnosové křivky CZGB a úrokových swapů IRS."""
+    """Výnosová křivka ČR (CZGB & IRS)."""
     tenor_labels = ["1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "15Y"]
     tenor_keys = ["1y", "2y", "3y", "5y", "7y", "10y", "15y"]
-
     czgb_vals = [df_row.get(f"czgb_{k}") for k in tenor_keys]
     irs_vals = [df_row.get(f"irs_{k}") for k in tenor_keys]
-
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=tenor_labels,
-        y=czgb_vals,
-        mode="lines+markers+text",
-        name="Státní dluhopisy (CZGB)",
-        line=dict(color="#1D4ED8", width=3.2),
-        marker=dict(size=8, color="#1D4ED8"),
+        x=tenor_labels, y=czgb_vals, mode="lines+markers+text", name="Státní dluhopisy (CZGB)",
+        line=dict(color="#1D4ED8", width=3.2), marker=dict(size=8, color="#1D4ED8"),
         text=[f"{v:.2f} %" if (v is not None and not pd.isna(v)) else "" for v in czgb_vals],
-        textposition="top center",
-        hovertemplate="<b>CZGB %{x}</b>: %{y:.2f} % p.a.<extra></extra>"
+        textposition="top center", hovertemplate="<b>CZGB %{x}</b>: %{y:.2f} % p.a.<extra></extra>"
     ))
     fig.add_trace(go.Scatter(
-        x=tenor_labels,
-        y=irs_vals,
-        mode="lines+markers",
-        name="Úrokové swapy (CZK IRS)",
-        line=dict(color="#0D9488", width=2.5, dash="dash"),
-        marker=dict(size=7, color="#0D9488"),
+        x=tenor_labels, y=irs_vals, mode="lines+markers", name="Úrokové swapy (CZK IRS)",
+        line=dict(color="#0D9488", width=2.5, dash="dash"), marker=dict(size=7, color="#0D9488"),
         hovertemplate="<b>CZK IRS %{x}</b>: %{y:.2f} % p.a.<extra></extra>"
     ))
-
     if compare_row is not None:
         comp_czgb = [compare_row.get(f"czgb_{k}") for k in tenor_keys]
         fig.add_trace(go.Scatter(
-            x=tenor_labels,
-            y=comp_czgb,
-            mode="lines+markers",
-            name="CZGB (Před rokem)",
-            line=dict(color="#94A3B8", width=1.8, dash="dot"),
-            marker=dict(size=6, color="#94A3B8"),
+            x=tenor_labels, y=comp_czgb, mode="lines+markers", name="CZGB (Před rokem)",
+            line=dict(color="#94A3B8", width=1.8, dash="dot"), marker=dict(size=6, color="#94A3B8"),
             hovertemplate="<b>CZGB (historie) %{x}</b>: %{y:.2f} % p.a.<extra></extra>"
         ))
-
     fig.update_layout(
-        height=400,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
+        height=400, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
         xaxis=dict(title="Splatnost", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Výnos do splatnosti (% p.a.)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
 def build_eu_yield_curve_snapshot(df_row: pd.Series, compare_row: Optional[pd.Series] = None) -> go.Figure:
-    """Časová struktura německé výnosové křivky (Bund Benchmark Eurozóny: 2Y–30Y)."""
+    """Německá výnosová křivka Bundů."""
     tenor_labels = ["2Y", "5Y", "10Y", "30Y"]
     tenor_keys = ["2y", "5y", "10y", "30y"]
-
     bund_vals = [df_row.get(f"bund_{k}") for k in tenor_keys]
-
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=tenor_labels,
-        y=bund_vals,
-        mode="lines+markers+text",
-        name="Německý Bund (Aktuální)",
-        line=dict(color="#2563EB", width=3.4),
-        marker=dict(size=8, color="#2563EB"),
+        x=tenor_labels, y=bund_vals, mode="lines+markers+text", name="Německý Bund (Aktuální)",
+        line=dict(color="#2563EB", width=3.4), marker=dict(size=8, color="#2563EB"),
         text=[f"{v:.2f} %" if (v is not None and not pd.isna(v)) else "" for v in bund_vals],
-        textposition="top center",
-        hovertemplate="<b>Bund %{x}</b>: %{y:.2f} % p.a.<extra></extra>"
+        textposition="top center", hovertemplate="<b>Bund %{x}</b>: %{y:.2f} % p.a.<extra></extra>"
     ))
-
     if compare_row is not None:
         comp_vals = [compare_row.get(f"bund_{k}") for k in tenor_keys]
         fig.add_trace(go.Scatter(
-            x=tenor_labels,
-            y=comp_vals,
-            mode="lines+markers",
-            name="Německý Bund (Před rokem)",
-            line=dict(color="#94A3B8", width=2.0, dash="dot"),
-            marker=dict(size=6, color="#94A3B8"),
+            x=tenor_labels, y=comp_vals, mode="lines+markers", name="Německý Bund (Před rokem)",
+            line=dict(color="#94A3B8", width=2.0, dash="dot"), marker=dict(size=6, color="#94A3B8"),
             hovertemplate="<b>Bund (historie) %{x}</b>: %{y:.2f} % p.a.<extra></extra>"
         ))
-
     fig.update_layout(
-        height=400,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
+        height=400, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
         xaxis=dict(title="Splatnost", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Výnos do splatnosti (% p.a.)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
-    )
-    return fig
-
-
-def build_eu_curve_spread_chart(dframe: pd.DataFrame) -> go.Figure:
-    """Graf sklonu německé výnosové křivky Bunds (Spread 10Y − 2Y v bps)."""
-    fig = go.Figure()
-    if "bund_spread_10y_2y" in dframe.columns:
-        spread_bps = dframe["bund_spread_10y_2y"] * 100.0
-        fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=spread_bps,
-            mode="lines",
-            name="Sklon Bund křivky (10Y − 2Y)",
-            line=dict(color="#2563EB", width=2.5),
-            hovertemplate="<b>Bund Sklon (10Y - 2Y)</b>: %{y:+.0f} bps<extra></extra>"
-        ))
-        fig.add_hline(
-            y=0.0,
-            line=dict(color="#DC2626", width=1.8, dash="dash"),
-            annotation_text="Hranice inverze (0 bps)",
-            annotation_position="top left",
-            annotation_font=dict(color="#DC2626", size=10)
-        )
-
-    fig.update_layout(
-        title=dict(text="Sklon německé výnosové křivky (Spread 10Y − 2Y v bps)", font=dict(size=14, color="#1E293B")),
-        height=380,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=45, b=20),
-        xaxis=dict(title="", showgrid=True, gridcolor="#F1F5F9"),
-        yaxis=dict(title="Rozpětí (bps)", ticksuffix=" bps", showgrid=True, gridcolor="#F1F5F9"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
 def build_us_yield_curve_snapshot(df_row: pd.Series, compare_row: Optional[pd.Series] = None) -> go.Figure:
-    """Časová struktura americké výnosové křivky (U.S. Treasury 1M–30Y)."""
+    """Výnosová křivka USA (U.S. Treasury 1M–30Y)."""
     tenor_labels = ["1M", "3M", "6M", "1Y", "2Y", "3Y", "5Y", "7Y", "10Y", "20Y", "30Y"]
     tenor_keys = ["1m", "3m", "6m", "1y", "2y", "3y", "5y", "7y", "10y", "20y", "30y"]
-
     us_vals = [df_row.get(f"us_{k}") for k in tenor_keys]
-
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=tenor_labels,
-        y=us_vals,
-        mode="lines+markers+text",
-        name="U.S. Treasury (Aktuální)",
-        line=dict(color="#2563EB", width=3.4),
-        marker=dict(size=8, color="#2563EB"),
+        x=tenor_labels, y=us_vals, mode="lines+markers+text", name="U.S. Treasury (Aktuální)",
+        line=dict(color="#2563EB", width=3.4), marker=dict(size=8, color="#2563EB"),
         text=[f"{v:.2f} %" if (v is not None and not pd.isna(v)) else "" for v in us_vals],
-        textposition="top center",
-        hovertemplate="<b>US Treasury %{x}</b>: %{y:.2f} % p.a.<extra></extra>"
+        textposition="top center", hovertemplate="<b>US Treasury %{x}</b>: %{y:.2f} % p.a.<extra></extra>"
     ))
-
     if compare_row is not None:
         comp_vals = [compare_row.get(f"us_{k}") for k in tenor_keys]
         fig.add_trace(go.Scatter(
-            x=tenor_labels,
-            y=comp_vals,
-            mode="lines+markers",
-            name="U.S. Treasury (Před rokem)",
-            line=dict(color="#94A3B8", width=2.0, dash="dot"),
-            marker=dict(size=6, color="#94A3B8"),
+            x=tenor_labels, y=comp_vals, mode="lines+markers", name="U.S. Treasury (Před rokem)",
+            line=dict(color="#94A3B8", width=2.0, dash="dot"), marker=dict(size=6, color="#94A3B8"),
             hovertemplate="<b>US Treasury (historie) %{x}</b>: %{y:.2f} % p.a.<extra></extra>"
         ))
-
     fig.update_layout(
-        height=400,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=30, b=20),
+        height=400, hovermode="x unified", margin=dict(l=20, r=20, t=30, b=20),
         xaxis=dict(title="Splatnost", showgrid=True, gridcolor="#f1f5f9"),
         yaxis=dict(title="Výnos do splatnosti (% p.a.)", ticksuffix=" %", showgrid=True, gridcolor="#f1f5f9"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
 
-def build_us_curve_spread_chart(dframe: pd.DataFrame) -> go.Figure:
-    """Graf sklonu výnosové křivky USA (Spread 10Y − 2Y v bps) | Indikátor recese."""
-    fig = go.Figure()
-    if "us_spread_10y_2y" in dframe.columns:
-        spread_bps = dframe["us_spread_10y_2y"] * 100.0
-        fig.add_trace(go.Scatter(
-            x=dframe["date"],
-            y=spread_bps,
-            mode="lines",
-            name="Sklon US křivky (10Y − 2Y)",
-            line=dict(color="#2563EB", width=2.5),
-            hovertemplate="<b>US Sklon (10Y - 2Y)</b>: %{y:+.0f} bps<extra></extra>"
-        ))
-        fig.add_hline(
-            y=0.0,
-            line=dict(color="#DC2626", width=1.8, dash="dash"),
-            annotation_text="Hranice inverze (0 bps) - Indikátor recese",
-            annotation_position="top left",
-            annotation_font=dict(color="#DC2626", size=10)
-        )
-
-    fig.update_layout(
-        title=dict(text="Sklon americké výnosové křivky (Spread 10Y − 2Y v bps) | Indikátor recese", font=dict(size=14, color="#1E293B")),
-        height=380,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=45, b=20),
-        xaxis=dict(title="", showgrid=True, gridcolor="#F1F5F9"),
-        yaxis=dict(title="Rozpětí (bps)", ticksuffix=" bps", showgrid=True, gridcolor="#F1F5F9"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
-    )
-    return fig
-
-
-# --- I. MEZINÁRODNÍ SROVNÁNÍ ---
+# --- J. MEZINÁRODNÍ SROVNÁNÍ ---
 def build_international_spread_chart(dframe: pd.DataFrame, comparison_type: str = "CZ") -> go.Figure:
-    """Graf mezinárodních úrokových a výnosových rozpětí napříč ČR, EU a USA."""
+    """Mezinárodní úroková a výnosová rozpětí."""
     fig = go.Figure()
-
     if comparison_type == "CZ":
-        # Srovnání 10Y výnosů: CZGB vs. US Treasury a CZGB vs. Německý Bund
         if "czgb_10y" in dframe.columns and "bund_10y" in dframe.columns:
             diff_bund_bps = (dframe["czgb_10y"] - dframe["bund_10y"]) * 100.0
             fig.add_trace(go.Scatter(
-                x=dframe["date"],
-                y=diff_bund_bps,
-                mode="lines",
-                name="Spread 10Y (CZGB − Německý Bund)",
-                line=dict(color="#2563EB", width=2.5),
+                x=dframe["date"], y=diff_bund_bps, mode="lines",
+                name="Spread 10Y (CZGB − Německý Bund)", line=dict(color="#2563EB", width=2.5),
                 hovertemplate="<b>Spread CZGB - Bund</b>: %{y:+.0f} bps<extra></extra>"
             ))
         if "czgb_10y" in dframe.columns and "us_10y" in dframe.columns:
             diff_us_bps = (dframe["czgb_10y"] - dframe["us_10y"]) * 100.0
             fig.add_trace(go.Scatter(
-                x=dframe["date"],
-                y=diff_us_bps,
-                mode="lines",
-                name="Spread 10Y (CZGB − US Treasury)",
-                line=dict(color="#D97706", width=2.2, dash="dash"),
+                x=dframe["date"], y=diff_us_bps, mode="lines",
+                name="Spread 10Y (CZGB − US Treasury)", line=dict(color="#D97706", width=2.2, dash="dash"),
                 hovertemplate="<b>Spread CZGB - US 10Y</b>: %{y:+.0f} bps<extra></extra>"
             ))
         title_text = "Mezinárodní sovereign spready ČR (v bps)"
-
     elif comparison_type == "EU":
-        # Srovnání Německý Bund vs. US Treasury
         if "bund_10y" in dframe.columns and "us_10y" in dframe.columns:
             diff_bps = (dframe["bund_10y"] - dframe["us_10y"]) * 100.0
             fig.add_trace(go.Scatter(
-                x=dframe["date"],
-                y=diff_bps,
-                mode="lines",
-                name="Spread 10Y (Německý Bund − US Treasury)",
-                line=dict(color="#2563EB", width=2.5),
+                x=dframe["date"], y=diff_bps, mode="lines",
+                name="Spread 10Y (Německý Bund − US Treasury)", line=dict(color="#2563EB", width=2.5),
                 hovertemplate="<b>Spread Bund - US 10Y</b>: %{y:+.0f} bps<extra></extra>"
             ))
-        if "ecb_deposit_rate" in dframe.columns and "fed_funds_upper" in dframe.columns:
-            diff_rates = (dframe["ecb_deposit_rate"] - dframe["fed_funds_upper"]) * 100.0
-            fig.add_trace(go.Scatter(
-                x=dframe["date"],
-                y=diff_rates,
-                mode="lines",
-                name="Sazbový diferenciál (ECB Depo − Fed Upper)",
-                line=dict(color="#D97706", width=2.0, dash="dash"),
-                hovertemplate="<b>ECB - Fed</b>: %{y:+.0f} bps<extra></extra>"
-            ))
         title_text = "Transatlantické rozpětí: Eurozóna vs. Spojené státy (v bps)"
-
     else:
-        # US srovnání
         if "us_10y" in dframe.columns and "bund_10y" in dframe.columns:
             diff_bps = (dframe["us_10y"] - dframe["bund_10y"]) * 100.0
             fig.add_trace(go.Scatter(
-                x=dframe["date"],
-                y=diff_bps,
-                mode="lines",
-                name="Spread 10Y (US Treasury − Německý Bund)",
-                line=dict(color="#2563EB", width=2.5),
+                x=dframe["date"], y=diff_bps, mode="lines",
+                name="Spread 10Y (US Treasury − Německý Bund)", line=dict(color="#2563EB", width=2.5),
                 hovertemplate="<b>Spread US 10Y - Bund</b>: %{y:+.0f} bps<extra></extra>"
-            ))
-        if "fed_funds_upper" in dframe.columns and "repo_rate" in dframe.columns:
-            diff_rates = (dframe["fed_funds_upper"] - dframe["repo_rate"]) * 100.0
-            fig.add_trace(go.Scatter(
-                x=dframe["date"],
-                y=diff_rates,
-                mode="lines",
-                name="Sazbový diferenciál (Fed − ČNB Repo)",
-                line=dict(color="#0D9488", width=2.0, dash="dash"),
-                hovertemplate="<b>Fed - ČNB</b>: %{y:+.0f} bps<extra></extra>"
             ))
         title_text = "Mezinárodní spread Spojených států (v bps)"
 
-    fig.add_hline(
-        y=0.0,
-        line=dict(color="#64748B", width=1.5, dash="dash"),
-        annotation_text="Parita výnosů (0 bps)",
-        annotation_position="bottom left"
-    )
-
+    fig.add_hline(y=0.0, line=dict(color="#64748B", width=1.5, dash="dash"), annotation_text="Parita výnosů (0 bps)", annotation_position="bottom left")
     fig.update_layout(
         title=dict(text=title_text, font=dict(size=14, color="#1E293B")),
-        height=380,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=45, b=20),
+        height=380, hovermode="x unified", margin=dict(l=20, r=20, t=45, b=20),
         xaxis=dict(title="", showgrid=True, gridcolor="#F1F5F9"),
         yaxis=dict(title="Rozpětí (bps)", ticksuffix=" bps", showgrid=True, gridcolor="#F1F5F9"),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF"
+        plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF"
     )
     return fig
 
@@ -2927,547 +2395,507 @@ df_export_active["Datum"] = df_export_active["Datum"].dt.strftime("%d.%m.%Y")
 
 
 # =============================================================================
-# 10. ZÁLOŽKY DASHBOARDU (PŘESNĚ ODPOVÍDAJÍCÍ STRUKTURA PRO ČR, EU I USA)
+# 10. ZÁLOŽKY DASHBOARDU (AGREGOVANÉ DO 5 KATEGORIÍ DLE POŽADAVKU)
 # =============================================================================
 
-# Definice názvů záložek pro aktivní ekonomiku
-if is_cz:
-    tab_names = [
-        "Sazby (ČNB)",
-        "Inflace (CPI)",
-        "HDP",
-        "Průmysl a spotřeba",
-        "Nezaměstnanost",
-        "Měnové kurzy",
-        "Veřejný dluh",
-        "CZ výnosová křivka",
-        "Mezinárodní srovnání",
-        "Všechny grafy",
-        "Data a export"
-    ]
-elif is_eu:
-    tab_names = [
-        "Sazby (ECB)",
-        "Inflace (HICP)",
-        "HDP (EU)",
-        "Průmysl a spotřeba",
-        "Trh práce (EU)",
-        "Měnové kurzy (EUR)",
-        "Veřejný dluh",
-        "Bund výnosová křivka",
-        "Mezinárodní srovnání",
-        "Všechny grafy",
-        "Data a export"
-    ]
-else:
-    tab_names = [
-        "Sazby (Fed)",
-        "Inflace (CPI)",
-        "HDP (USA)",
-        "Průmysl a spotřeba",
-        "Trh práce (USA)",
-        "Měnové kurzy (DXY)",
-        "Veřejný dluh",
-        "US výnosová křivka",
-        "Mezinárodní srovnání",
-        "Všechny grafy",
-        "Data a export"
-    ]
-
-# Renderování záložek
-(
-    tab_rates,
-    tab_inflation,
-    tab_gdp,
-    tab_activity,
-    tab_une,
-    tab_fx,
-    tab_debt,
-    tab_curve,
-    tab_compare,
-    tab_all,
-    tab_table
-) = st.tabs(tab_names)
+main_tab_markets, main_tab_real, main_tab_stocks, main_tab_public, main_tab_export = st.tabs([
+    "💳 Finanční trhy & Měna",
+    "🏛️ Reálná ekonomika & Práce",
+    "📈 Trhy",
+    "🌐 Veřejné finance & Svět",
+    "📋 Data a export"
+])
 
 
 # =============================================================================
-# STRUKTURA: 1. TAB - SAZBY CENTRÁLNÍCH BANK
+# 1. KATEGORIE: FINANČNÍ TRHY & MĚNA
 # =============================================================================
-with tab_rates:
-    if is_cz:
-        st.markdown('<div class="section-header">Měnová politika ČNB a mezibankovní sazby PRIBOR</div>', unsafe_allow_html=True)
-        st.caption("Úrokový koridor České národní banky: 2T Repo sazba, Diskontní sazba (depozitní facilita) a Lombardní sazba (zápůjční facilita) ve srovnání s tržními sazbami PRIBOR.")
-        col_r1, col_r2, col_r3, col_r4 = st.columns(4)
-        col_r1.metric("2T Repo sazba", f"{repo_curr:.2f} %", delta=f"{repo_delta:+.2f} p.b.", help="Hlavní nástroj stahování likvidity")
-        col_r2.metric("Diskontní sazba", f"{disc_curr:.2f} %", help="Úročení vkladů bank přes noc u ČNB")
-        col_r3.metric("Lombardní sazba", f"{lomb_curr:.2f} %", help="Úročení zápůjček bank přes noc od ČNB")
-        col_r4.metric("PRIBOR 3M", f"{prib3m_curr:.2f} %", help="Referenční tržní sazba mezibankovního trhu")
-        fig_rates = build_rates_chart(df, selected_indicators)
-        render_plotly_chart(fig_rates, key="chart_cz_rates")
+with main_tab_markets:
+    sub_tab_rates, sub_tab_curve, sub_tab_fx = st.tabs([
+        f"Sazby ({'ČNB' if is_cz else ('ECB' if is_eu else 'Fed')})",
+        f"Výnosová křivka ({'CZ' if is_cz else ('Bund' if is_eu else 'US')})",
+        "Měnové kurzy (FX)"
+    ])
 
-    elif is_eu:
-        st.markdown('<div class="section-header">Měnová politika Evropské centrální banky (ECB) a sazby EURIBOR</div>', unsafe_allow_html=True)
-        st.caption("Klíčové úrokové sazby ECB: Depozitní facilita (hlavní kotva měnové politiky), Hlavní refinanční operace (MRO), Mezní zápůjční sazba a tržní referenční sazby EURIBOR / €STR.")
-        col_er1, col_er2, col_er3, col_er4 = st.columns(4)
-        col_er1.metric("Depozitní sazba ECB", f"{ecb_dep_curr:.2f} %", delta=f"{ecb_dep_delta:+.2f} p.b.", help="Klíčová sazba pro přebytečnou likviditu bank")
-        col_er2.metric("Refinanční sazba (MRO)", f"{ecb_refi_curr:.2f} %", help="Týdenní dodávky likvidity do bankovního sektoru")
-        col_er3.metric("Mezní zápůjční sazba", f"{ecb_lend_curr:.2f} %", help="Jednodenní zápůjčky likvidity proti kolaterálu")
-        col_er4.metric("EURIBOR 3M", f"{euribor3m_curr:.2f} %", help="Klíčový mezibankovní benchmark v Eurozóně")
-        fig_eu_rates = build_eu_rates_chart(df, selected_indicators)
-        render_plotly_chart(fig_eu_rates, key="chart_eu_rates")
+    # 1.1 Úrokové sazby
+    with sub_tab_rates:
+        if is_cz:
+            st.markdown('<div class="section-header">Měnová politika ČNB a mezibankovní sazby PRIBOR</div>', unsafe_allow_html=True)
+            col_r1, col_r2, col_r3, col_r4 = st.columns(4)
+            col_r1.metric("2T Repo sazba", f"{repo_curr:.2f} %", delta=f"{repo_delta:+.2f} p.b.", help="Hlavní nástroj stahování likvidity")
+            col_r2.metric("Diskontní sazba", f"{disc_curr:.2f} %", help="Úročení vkladů bank u ČNB")
+            col_r3.metric("Lombardní sazba", f"{lomb_curr:.2f} %", help="Úročení zápůjček likvidity")
+            col_r4.metric("PRIBOR 3M", f"{prib3m_curr:.2f} %", help="Referenční tržní sazba")
+            fig_rates = build_rates_chart(df, selected_indicators)
+            render_plotly_chart(fig_rates, key="chart_cz_rates")
+            st.caption("📌 **Zdroj dat:** Česká národní banka (ČNB) – Otevřená data měnové politiky & FinStat")
 
-    else:
-        st.markdown('<div class="section-header">Měnová politika Federálního rezervního systému (Fed) a peněžní trh USA</div>', unsafe_allow_html=True)
-        st.caption("Cílový koridor sazeb Fedu (Fed Funds Target Upper & Lower limit), efektivní mezibankovní sazba EFFR a referenční sazba SOFR.")
-        col_ur1, col_ur2, col_ur3, col_ur4 = st.columns(4)
-        col_ur1.metric("Fed Funds Target (horní limit)", f"{fed_upper_curr:.2f} %", delta=f"{fed_upper_delta:+.2f} p.b.", help="Horní hranice koridoru Fedu")
-        col_ur2.metric("Fed Funds Target (dolní limit)", f"{fed_lower_curr:.2f} %", help="Dolní hranice koridoru Fedu")
-        col_ur3.metric("SOFR (Secured Rate)", f"{sofr_curr:.2f} %", help="Jednodenní zajištěná sazba krytá státními dluhopisy")
-        col_ur4.metric("3M US Treasury Bill", f"{us3m_curr:.2f} %", help="Tradiční benchmark amerického peněžního trhu")
-        fig_us_rates = build_us_rates_chart(df, selected_indicators)
-        render_plotly_chart(fig_us_rates, key="chart_us_rates")
+        elif is_eu:
+            st.markdown('<div class="section-header">Měnová politika ECB a sazby EURIBOR / €STR</div>', unsafe_allow_html=True)
+            col_er1, col_er2, col_er3, col_er4 = st.columns(4)
+            col_er1.metric("Depozitní sazba ECB", f"{ecb_dep_curr:.2f} %", delta=f"{ecb_dep_delta:+.2f} p.b.")
+            col_er2.metric("Refinanční sazba MRO", f"{ecb_refi_curr:.2f} %")
+            col_er3.metric("Mezní sazba ECB", f"{ecb_lend_curr:.2f} %")
+            col_er4.metric("EURIBOR 3M", f"{euribor3m_curr:.2f} %")
+            fig_eu_rates = build_eu_rates_chart(df, selected_indicators)
+            render_plotly_chart(fig_eu_rates, key="chart_eu_rates")
+            st.caption("📌 **Zdroj dat:** Evropská centrální banka (ECB) & European Money Markets Institute (EMMI)")
 
+        else:
+            st.markdown('<div class="section-header">Měnová politika Federálního rezervního systému (Fed) & SOFR</div>', unsafe_allow_html=True)
+            col_ur1, col_ur2, col_ur3, col_ur4 = st.columns(4)
+            col_ur1.metric("Fed Funds Target Upper", f"{fed_upper_curr:.2f} %", delta=f"{fed_upper_delta:+.2f} p.b.")
+            col_ur2.metric("Fed Funds Target Lower", f"{fed_lower_curr:.2f} %")
+            col_ur3.metric("SOFR Rate", f"{sofr_curr:.2f} %")
+            col_ur4.metric("3M T-Bill", f"{us3m_curr:.2f} %")
+            fig_us_rates = build_us_rates_chart(df, selected_indicators)
+            render_plotly_chart(fig_us_rates, key="chart_us_rates")
+            st.caption("📌 **Zdroj dat:** Federal Reserve Board (EFFR / Target) & Federal Reserve Bank of New York (SOFR)")
 
-# =============================================================================
-# STRUKTURA: 2. TAB - INFLACE (HEADLINE & JÁDROVÁ INFLACE)
-# =============================================================================
-with tab_inflation:
-    if is_cz:
-        st.markdown('<div class="section-header">Meziroční míra inflace (Headline & Core CPI) v České republice</div>', unsafe_allow_html=True)
-        st.caption("Vývoj indexu spotřebitelských cen (CPI), jádrové inflace ČNB (očištěné o regulované ceny, potraviny a pohonné hmoty) a 2% inflačního cíle.")
-        col_i1, col_i2, col_i3, col_i4 = st.columns(4)
-        col_i1.metric("Celková inflace (CPI YoY)", f"{cpi_cz_curr:.1f} %", delta=f"{cpi_cz_delta:+.1f} p.b.", delta_color="inverse")
-        col_i2.metric("Jádrová inflace (Core CPI)", f"{core_cpi_cz_curr:.1f} %", delta="Sledováno ČNB", delta_color="off")
-        real_cz_rate = repo_curr - cpi_cz_curr
-        col_i3.metric("Reálná úroková sazba", f"{real_cz_rate:+.2f} %", delta="Repo − CPI", delta_color="off")
-        col_i4.metric("Inflační cíl ČNB", "2.00 %", delta="Toleranční pásmo 1–3 %", delta_color="off")
-        fig_inf = build_inflation_chart(df)
-        render_plotly_chart(fig_inf, key="chart_cz_inflation")
+    # 1.2 Výnosová křivka
+    with sub_tab_curve:
+        if is_cz:
+            st.markdown('<div class="section-header">Výnosová křivka ČR (Státní dluhopisy CZGB & CZK IRS swapy)</div>', unsafe_allow_html=True)
+            comp_date_target = last_row["date"] - pd.DateOffset(years=1)
+            comp_df = df_raw[df_raw["date"] <= comp_date_target]
+            comp_row = comp_df.iloc[-1] if not comp_df.empty else None
+            fig_curve_cz = build_yield_curve_snapshot(last_row, comp_row)
+            render_plotly_chart(fig_curve_cz, key="chart_cz_yield_curve")
+            st.caption("📌 **Zdroj dat:** Ministerstvo financí ČR (Dluhopisy CZGB) & Mezibankovní úrokové swapy CZK IRS")
 
-    elif is_eu:
-        st.markdown('<div class="section-header">Harmonizovaná a jádrová inflace Eurozóny (HICP & Core HICP)</div>', unsafe_allow_html=True)
-        st.caption("Meziroční harmonizovaný index spotřebitelských cen (Eurostat HICP) a jádrová inflace bez volatilních cen energií, potravin, alkoholu a tabáku.")
-        col_ei1, col_ei2, col_ei3, col_ei4 = st.columns(4)
-        col_ei1.metric("Celková inflace (HICP YoY)", f"{cpi_eu_curr:.1f} %", delta=f"{cpi_eu_delta:+.1f} p.b.", delta_color="inverse")
-        col_ei2.metric("Jádrová inflace (Core HICP)", f"{core_cpi_eu_curr:.1f} %", delta="Bez energií a potravin", delta_color="off")
-        real_eu_rate = ecb_dep_curr - cpi_eu_curr
-        col_ei3.metric("Reálná sazba ECB", f"{real_eu_rate:+.2f} %", delta="Depo − HICP", delta_color="off")
-        col_ei4.metric("Inflační cíl ECB", "2.00 %", delta="Střednědobý cíl", delta_color="off")
-        fig_eu_inf = build_eu_inflation_chart(df)
-        render_plotly_chart(fig_eu_inf, key="chart_eu_inflation")
+        elif is_eu:
+            st.markdown('<div class="section-header">Výnosová křivka Německých Bundů (Benchmark Eurozóny: 2Y–30Y)</div>', unsafe_allow_html=True)
+            comp_date_target_eu = last_row["date"] - pd.DateOffset(years=1)
+            comp_df_eu = df_raw[df_raw["date"] <= comp_date_target_eu]
+            comp_row_eu = comp_df_eu.iloc[-1] if not comp_df_eu.empty else None
+            fig_curve_eu = build_eu_yield_curve_snapshot(last_row, comp_row_eu)
+            render_plotly_chart(fig_curve_eu, key="chart_eu_yield_curve")
+            st.caption("📌 **Zdroj dat:** Deutsche Bundesbank & Eurostat (Government Bond Yields)")
 
-    else:
-        st.markdown('<div class="section-header">Spotřebitelská a jádrová inflace v USA (Headline & Core CPI)</div>', unsafe_allow_html=True)
-        st.caption("Meziroční vývoj celkové spotřebitelské inflace (Headline CPI) a jádrové inflace bez volatilních cen potravin a energií (Core CPI).")
-        col_ui1, col_ui2, col_ui3, col_ui4 = st.columns(4)
-        col_ui1.metric("Headline CPI USA (YoY)", f"{cpi_us_curr:.1f} %", delta=f"{cpi_us_delta:+.1f} p.b.", delta_color="inverse")
-        col_ui2.metric("Jádrová inflace (Core CPI)", f"{core_cpi_us_curr:.1f} %", delta="Bez potravin a energií", delta_color="off")
-        real_us_effr = fed_effr_curr - cpi_us_curr
-        col_ui3.metric("Reálná úroková sazba Fedu", f"{real_us_effr:+.2f} %", delta="EFFR − Headline CPI", delta_color="off")
-        col_ui4.metric("Inflační cíl Fedu", "2.00 %", delta="PCE benchmark", delta_color="off")
-        fig_us_inf = build_us_inflation_chart(df)
-        render_plotly_chart(fig_us_inf, key="chart_us_inflation")
+        else:
+            st.markdown('<div class="section-header">Výnosová křivka USA (U.S. Treasury Par Yield Curve: 1M–30Y)</div>', unsafe_allow_html=True)
+            comp_date_target_us = last_row["date"] - pd.DateOffset(years=1)
+            comp_df_us = df_raw[df_raw["date"] <= comp_date_target_us]
+            comp_row_us = comp_df_us.iloc[-1] if not comp_df_us.empty else None
+            fig_curve_us = build_us_yield_curve_snapshot(last_row, comp_row_us)
+            render_plotly_chart(fig_curve_us, key="chart_us_yield_curve")
+            st.caption("📌 **Zdroj dat:** U.S. Department of the Treasury (Daily Treasury Par Yield Curve Rates)")
 
+    # 1.3 Měnové kurzy (FX) s výběrem měn
+    with sub_tab_fx:
+        st.markdown('<div class="section-header">Devizové trhy a měnové kurzy (Denní & Měsíční data)</div>', unsafe_allow_html=True)
+        st.caption("Filtrujte zobrazené měny v grafu níže, aby byl přehledný a neobsahoval příliš mnoho překrývajících se křivek.")
 
-# =============================================================================
-# STRUKTURA: 3. TAB - HRUBÝ DOMÁCÍ PRODUKT (HDP)
-# =============================================================================
-with tab_gdp:
-    if is_cz:
-        st.markdown('<div class="section-header">Hrubý domácí produkt (HDP) České republiky</div>', unsafe_allow_html=True)
-        st.caption("Čtvrtletní nominální objem HDP v běžných cenách a reálný meziroční růst stálých cen (řetězené objemy).")
-        col_g1, col_g2, col_g3, col_g4 = st.columns(4)
-        col_g1.metric("Reálný růst HDP (YoY)", f"{gdp_cz_curr:+.1f} %", delta=f"{gdp_cz_delta:+.1f} p.b.")
-        col_g2.metric("Kvartální nominální HDP", f"{nom_cz_val:,.1f} mld. Kč")
-        col_g3.metric("Průměrný reálný růst", f"{df['gdp_growth_real'].mean():+.2f} %" if "gdp_growth_real" in df.columns else "N/A")
-        col_g4.metric("Poslední kvartál", str(last_row.get("quarter", "Aktuální")))
-        fig_gdp = build_gdp_chart(df, selected_indicators)
-        render_plotly_chart(fig_gdp, key="chart_cz_gdp")
+        col_fx_ctrl1, col_fx_ctrl2 = st.columns([2.5, 1.5])
+        with col_fx_ctrl1:
+            fx_selected_currencies = st.multiselect(
+                "Zvolte měny ke zobrazení:",
+                options=["CZK", "EUR", "USD", "GBP", "PLN"],
+                default=["EUR", "USD", "CZK"] if is_cz else (["EUR", "USD", "PLN"] if is_eu else ["USD", "EUR", "GBP"]),
+                key="fx_currencies_multiselect",
+                help="Vyberte měny, které se mají vykreslit do grafu."
+            )
+        with col_fx_ctrl2:
+            fx_view_mode = st.radio(
+                "Frekvence řady:",
+                ["📅 Denní data (High-Frequency)", "📊 Měsíční agregace"],
+                horizontal=True,
+                key="fx_freq_view_mode"
+            )
 
-    elif is_eu:
-        st.markdown('<div class="section-header">Hrubý domácí produkt Eurozóny / Evropské unie</div>', unsafe_allow_html=True)
-        st.caption("Kvartální reálný meziroční růst HDP Eurozóny (stálé ceny) a odhad nominálního objemu v miliardách EUR.")
-        col_eg1, col_eg2, col_eg3, col_eg4 = st.columns(4)
-        col_eg1.metric("Reálný růst HDP EU (YoY)", f"{gdp_eu_curr:+.1f} %", delta=f"{gdp_eu_delta:+.1f} p.b.")
-        col_eg2.metric("Kvartální nominální HDP EU", f"{nom_eu_val:,.0f} mld. EUR")
-        col_eg3.metric("Průměrný reálný růst EU", f"{df['eu_gdp_growth_real'].mean():+.2f} %" if "eu_gdp_growth_real" in df.columns else "N/A")
-        col_eg4.metric("Poslední kvartál", str(last_row.get("quarter", "Aktuální")))
-        fig_eu_gdp = build_eu_gdp_chart(df, selected_indicators)
-        render_plotly_chart(fig_eu_gdp, key="chart_eu_gdp")
-
-    else:
-        st.markdown('<div class="section-header">Hrubý domácí produkt Spojených států (U.S. GDP)</div>', unsafe_allow_html=True)
-        st.caption("Reálný meziroční růst hrubého domácího produktu USA (YoY v %) a roční nominální objem v miliardách USD.")
-        col_ug1, col_ug2, col_ug3, col_ug4 = st.columns(4)
-        col_ug1.metric("Reálný růst HDP USA (YoY)", f"{gdp_us_curr:+.1f} %", delta=f"{gdp_us_delta:+.1f} p.b.")
-        col_ug2.metric("Nominální objem HDP USA", f"{nom_us_val:,.0f} mld. $", help="Anualizovaný objem ekonomiky")
-        col_ug3.metric("Průměrný růst v období", f"{df['us_gdp_growth_real'].mean():+.2f} %" if "us_gdp_growth_real" in df.columns else "N/A")
-        col_ug4.metric("Poslední kvartál", str(last_row.get("quarter", "Aktuální")))
-        fig_us_gdp = build_us_gdp_chart(df, selected_indicators)
-        render_plotly_chart(fig_us_gdp, key="chart_us_gdp")
-
-
-# =============================================================================
-# STRUKTURA: 4. TAB - PRŮMYSL A SPOTŘEBA (EKONOMICKÁ AKTIVITA)
-# =============================================================================
-with tab_activity:
-    if is_cz:
-        st.markdown('<div class="section-header">Ekonomická aktivita ČR: Maloobchodní tržby (Spotřeba) & Průmyslová produkce</div>', unsafe_allow_html=True)
-        st.caption("Meziroční reálná změna maloobchodních tržeb (indikátor spotřeby domácností) a index průmyslové produkce ČR očištěný o kalendářní vlivy.")
-        col_a1, col_a2, col_a3, col_a4 = st.columns(4)
-        col_a1.metric("Spotřeba (Maloobchod YoY)", f"{retail_cz_curr:+.1f} %", delta=f"{retail_cz_curr - safe_metric(prev_row, 'retail_sales_yoy', retail_cz_curr):+.1f} p.b.")
-        col_a2.metric("Průmyslová produkce (YoY)", f"{ind_cz_curr:+.1f} %", delta=f"{ind_cz_curr - safe_metric(prev_row, 'industrial_prod_yoy', ind_cz_curr):+.1f} p.b.")
-        col_a3.metric("Průměrná spotřeba v období", f"{df['retail_sales_yoy'].mean():+.2f} %" if "retail_sales_yoy" in df.columns else "N/A")
-        col_a4.metric("Průměrný průmysl v období", f"{df['industrial_prod_yoy'].mean():+.2f} %" if "industrial_prod_yoy" in df.columns else "N/A")
-        fig_act_cz = build_activity_chart(df, region="CZ")
-        render_plotly_chart(fig_act_cz, key="chart_cz_activity")
-
-    elif is_eu:
-        st.markdown('<div class="section-header">Ekonomická aktivita Eurozóny: Maloobchodní prodej & Průmyslová výroba</div>', unsafe_allow_html=True)
-        st.caption("Meziroční změna objemu maloobchodního prodeje v Eurozóně (Eurostat Retail Trade Index) a index průmyslové produkce EU.")
-        col_ea1, col_ea2, col_ea3, col_ea4 = st.columns(4)
-        col_ea1.metric("Spotřeba (Maloobchod EU YoY)", f"{retail_eu_curr:+.1f} %", delta=f"{retail_eu_curr - safe_metric(prev_row, 'eu_retail_sales_yoy', retail_eu_curr):+.1f} p.b.")
-        col_ea2.metric("Průmyslová výroba EU (YoY)", f"{ind_eu_curr:+.1f} %", delta=f"{ind_eu_curr - safe_metric(prev_row, 'eu_industrial_prod_yoy', ind_eu_curr):+.1f} p.b.")
-        col_ea3.metric("Průměrná spotřeba EU", f"{df['eu_retail_sales_yoy'].mean():+.2f} %" if "eu_retail_sales_yoy" in df.columns else "N/A")
-        col_ea4.metric("Průměrný průmysl EU", f"{df['eu_industrial_prod_yoy'].mean():+.2f} %" if "eu_industrial_prod_yoy" in df.columns else "N/A")
-        fig_act_eu = build_activity_chart(df, region="EU")
-        render_plotly_chart(fig_act_eu, key="chart_eu_activity")
-
-    else:
-        st.markdown('<div class="section-header">Ekonomická aktivita USA: Maloobchodní tržby & Průmyslová produkce Fedu</div>', unsafe_allow_html=True)
-        st.caption("Meziroční změna maloobchodních tržeb v USA (U.S. Census Bureau Advance Retail Sales) a index průmyslové produkce Fedu.")
-        col_ua1, col_ua2, col_ua3, col_ua4 = st.columns(4)
-        col_ua1.metric("Spotřeba (Maloobchod USA YoY)", f"{retail_us_curr:+.1f} %", delta=f"{retail_us_curr - safe_metric(prev_row, 'us_retail_sales_yoy', retail_us_curr):+.1f} p.b.")
-        col_ua2.metric("Průmyslová produkce USA (YoY)", f"{ind_us_curr:+.1f} %", delta=f"{ind_us_curr - safe_metric(prev_row, 'us_industrial_prod_yoy', ind_us_curr):+.1f} p.b.")
-        col_ua3.metric("Průměrná spotřeba USA", f"{df['us_retail_sales_yoy'].mean():+.2f} %" if "us_retail_sales_yoy" in df.columns else "N/A")
-        col_ua4.metric("Průměrný průmysl USA", f"{df['us_industrial_prod_yoy'].mean():+.2f} %" if "us_industrial_prod_yoy" in df.columns else "N/A")
-        fig_act_us = build_activity_chart(df, region="US")
-        render_plotly_chart(fig_act_us, key="chart_us_activity")
-
-
-# =============================================================================
-# STRUKTURA: 5. TAB - TRH PRÁCE & NEZAMĚSTNANOST
-# =============================================================================
-with tab_une:
-    if is_cz:
-        st.markdown('<div class="section-header">Trh práce a míra nezaměstnanosti v ČR</div>', unsafe_allow_html=True)
-        st.caption("Obecná míra nezaměstnanosti dle metodiky Eurostatu a ILO pro věkovou skupinu 15–74 let.")
-        col_u1, col_u2, col_u3, col_u4 = st.columns(4)
-        col_u1.metric("Míra nezaměstnanosti ČR", f"{une_cz_curr:.1f} %", delta=f"{une_cz_delta:+.1f} p.b.", delta_color="inverse")
-        col_u2.metric("Průměr EU (srovnání)", f"{une_eu_curr:.1f} %", delta="ČR patří k nejnižším", delta_color="off")
-        col_u3.metric("Historické minimum v období", f"{df['unemployment_rate'].min():.1f} %" if "unemployment_rate" in df.columns else "N/A")
-        col_u4.metric("Historické maximum v období", f"{df['unemployment_rate'].max():.1f} %" if "unemployment_rate" in df.columns else "N/A")
-        fig_une = build_unemployment_chart(df)
-        render_plotly_chart(fig_une, key="chart_cz_unemployment")
-
-    elif is_eu:
-        st.markdown('<div class="section-header">Trh práce a míra nezaměstnanosti v Eurozóně / EU</div>', unsafe_allow_html=True)
-        st.caption("Harmonizovaná míra nezaměstnanosti Eurostatu pro věkovou kategorii 15–74 let v Eurozóně.")
-        col_eu1, col_eu2, col_eu3, col_eu4 = st.columns(4)
-        col_eu1.metric("Míra nezaměstnanosti EU", f"{une_eu_curr:.1f} %", delta=f"{une_eu_delta:+.1f} p.b.", delta_color="inverse")
-        col_eu2.metric("Průměrná míra v období", f"{df['eu_unemployment_rate'].mean():.2f} %" if "eu_unemployment_rate" in df.columns else "N/A")
-        col_eu3.metric("Historické minimum EU", f"{df['eu_unemployment_rate'].min():.1f} %" if "eu_unemployment_rate" in df.columns else "N/A")
-        col_eu4.metric("Historické maximum EU", f"{df['eu_unemployment_rate'].max():.1f} %" if "eu_unemployment_rate" in df.columns else "N/A")
-        fig_eu_une = build_eu_unemployment_chart(df)
-        render_plotly_chart(fig_eu_une, key="chart_eu_unemployment")
-
-    else:
-        st.markdown('<div class="section-header">Trh práce a zaměstnanost v USA (U-3 Rate & Nonfarm Payrolls)</div>', unsafe_allow_html=True)
-        st.caption("Oficiální míra nezaměstnanosti v USA (U.S. Bureau of Labor Statistics U-3 rate) s vyznačením historických maxim a průměrů.")
-        col_uu1, col_uu2, col_uu3, col_uu4 = st.columns(4)
-        col_uu1.metric("Míra nezaměstnanosti (U-3)", f"{une_us_curr:.1f} %", delta=f"{une_us_delta:+.1f} p.b.", delta_color="inverse")
-        nfp_val = safe_metric(last_row, "us_nonfarm_payrolls_k", 180.0)
-        col_uu2.metric("Měsíční změna míst (NFP)", f"{nfp_val:+,.0f} tis.")
-        col_uu3.metric("Historické minimum v období", f"{df['us_unemployment_rate'].min():.1f} %" if "us_unemployment_rate" in df.columns else "N/A")
-        col_uu4.metric("Průměr nezaměstnanosti USA", f"{df['us_unemployment_rate'].mean():.2f} %" if "us_unemployment_rate" in df.columns else "N/A")
-        fig_us_une = build_us_unemployment_chart(df)
-        render_plotly_chart(fig_us_une, key="chart_us_unemployment")
-
-
-# =============================================================================
-# STRUKTURA: 6. TAB - MĚNOVÉ KURZY (DENNÍ DATA VČETNĚ PLN & GBP)
-# =============================================================================
-with tab_fx:
-    if is_cz:
-        st.markdown('<div class="section-header">Měnové kurzy: Denní data ČNB pro EUR, USD, PLN a GBP</div>', unsafe_allow_html=True)
-        st.caption("Oficiální denní fixace devizového trhu České národní banky (ČNB). Zobrazena vysokofrekvenční denní časová řada včetně PLN a GBP.")
-
-        fx_view_mode = st.radio("Frekvence grafu měnových kurzů:", ["📅 Denní data (High-Frequency)", "📊 Měsíční agregace"], horizontal=True, key="cz_fx_freq_radio")
         df_for_fx_plot = df_daily_fx_filtered if "Denní" in fx_view_mode else df
 
+        # Summary metriky pro FX
         col_fx1, col_fx2, col_fx3, col_fx4 = st.columns(4)
-        daily_eur_prev = safe_metric(prev_daily_fx, "eur_czk", daily_eur_czk)
-        daily_usd_prev = safe_metric(prev_daily_fx, "usd_czk", daily_usd_czk)
-        daily_pln_prev = safe_metric(prev_daily_fx, "pln_czk", daily_pln_czk)
-        daily_gbp_prev = safe_metric(prev_daily_fx, "gbp_czk", daily_gbp_czk)
+        if is_cz:
+            col_fx1.metric("EUR / CZK", f"{daily_eur_czk:.2f} Kč")
+            col_fx2.metric("USD / CZK", f"{daily_usd_czk:.2f} Kč")
+            col_fx3.metric("PLN / CZK", f"{daily_pln_czk:.2f} Kč")
+            col_fx4.metric("GBP / CZK", f"{daily_gbp_czk:.2f} Kč")
+            fig_fx = build_dynamic_fx_chart_cz(df_for_fx_plot, fx_selected_currencies)
+            st.caption("📌 **Zdroj dat:** Česká národní banka (ČNB) – Oficiální denní devizový kurzovní lístek")
+        elif is_eu:
+            col_fx1.metric("EUR / USD", f"{daily_eur_usd:.4f} $")
+            col_fx2.metric("EUR / CZK", f"{daily_eur_czk:.2f} Kč")
+            col_fx3.metric("EUR / PLN", f"{daily_eur_pln:.4f} zł")
+            col_fx4.metric("EUR / GBP", f"{daily_eur_gbp:.4f} £")
+            fig_fx = build_dynamic_fx_chart_eu(df_for_fx_plot, fx_selected_currencies)
+            st.caption("📌 **Zdroj dat:** Evropská centrální banka (ECB) – Euro foreign exchange reference rates")
+        else:
+            col_fx1.metric("Dolarový index DXY", f"{daily_dxy:.2f} b.")
+            col_fx2.metric("EUR / USD", f"{daily_eur_usd:.4f} $")
+            col_fx3.metric("GBP / USD", f"{daily_gbp_usd:.4f} $")
+            col_fx4.metric("USD / PLN", f"{daily_usd_pln:.4f} zł")
+            fig_fx = build_dynamic_fx_chart_us(df_for_fx_plot, fx_selected_currencies)
+            st.caption("📌 **Zdroj dat:** Intercontinental Exchange (ICE DXY Index) & Federal Reserve H.10 FX Rates")
 
-        col_fx1.metric("EUR / CZK (Denní)", f"{daily_eur_czk:.4f} Kč", delta=f"{daily_eur_czk - daily_eur_prev:+.4f} Kč", delta_color="off")
-        col_fx2.metric("USD / CZK (Denní)", f"{daily_usd_czk:.4f} Kč", delta=f"{daily_usd_czk - daily_usd_prev:+.4f} Kč", delta_color="off")
-        col_fx3.metric("PLN / CZK (Denní)", f"{daily_pln_czk:.4f} Kč", delta=f"{daily_pln_czk - daily_pln_prev:+.4f} Kč", delta_color="off")
-        col_fx4.metric("GBP / CZK (Denní)", f"{daily_gbp_czk:.4f} Kč", delta=f"{daily_gbp_czk - daily_gbp_prev:+.4f} Kč", delta_color="off")
+        render_plotly_chart(fig_fx, key="chart_dynamic_fx")
 
-        fig_fx_cz = build_fx_daily_chart_cz(df_for_fx_plot)
-        render_plotly_chart(fig_fx_cz, key="chart_cz_fx_daily")
-
-        # Tlačítko pro stažení denních FX dat pro ČR
-        csv_daily_fx = df_daily_fx_filtered[["date", "eur_czk", "usd_czk", "pln_czk", "gbp_czk", "chf_czk"]].rename(columns={
-            "date": "Datum",
-            "eur_czk": "EUR/CZK",
-            "usd_czk": "USD/CZK",
-            "pln_czk": "PLN/CZK",
-            "gbp_czk": "GBP/CZK",
-            "chf_czk": "CHF/CZK"
-        }).to_csv(index=False, sep=";", decimal=",").encode("utf-8-sig")
-
+        # Tlačítko stažení denních dat
+        csv_daily_fx = df_daily_fx_filtered.to_csv(index=False, sep=";", decimal=",").encode("utf-8-sig")
         st.download_button(
-            label="📥 Stáhnout kompletní denní data kurzů ČNB (CSV)",
+            label="📥 Stáhnout kompletní denní data FX kurzů (CSV)",
             data=csv_daily_fx,
-            file_name=f"CNB_denni_kurzy_{datetime.now().strftime('%Y%m%d')}.csv",
+            file_name=f"denni_kurzy_FX_{datetime.now().strftime('%Y%m%d')}.csv",
             mime="text/csv",
-            key="btn_dl_daily_fx_cz"
-        )
-
-    elif is_eu:
-        st.markdown('<div class="section-header">Měnové kurzy eura: Denní data pro EUR/USD, EUR/CZK, EUR/PLN a EUR/GBP</div>', unsafe_allow_html=True)
-        st.caption("Denní kurzy eura vůči světovým měnám a měnám regionu CEE (americký dolar, česká koruna, polský zlotý a britská libra).")
-
-        eu_fx_view_mode = st.radio("Frekvence grafu měnových kurzů:", ["📅 Denní data (High-Frequency)", "📊 Měsíční agregace"], horizontal=True, key="eu_fx_freq_radio")
-        df_for_eu_fx_plot = df_daily_fx_filtered if "Denní" in eu_fx_view_mode else df
-
-        col_ef1, col_ef2, col_ef3, col_ef4 = st.columns(4)
-        prev_eurusd_d = safe_metric(prev_daily_fx, "eur_usd", daily_eur_usd)
-        prev_eurczk_d = safe_metric(prev_daily_fx, "eur_czk", daily_eur_czk)
-        prev_eurpln_d = safe_metric(prev_daily_fx, "eur_pln", daily_eur_pln)
-        prev_eurgbp_d = safe_metric(prev_daily_fx, "eur_gbp", daily_eur_gbp)
-
-        col_ef1.metric("EUR / USD (Denní)", f"{daily_eur_usd:.4f} $", delta=f"{daily_eur_usd - prev_eurusd_d:+.4f} $", delta_color="off")
-        col_ef2.metric("EUR / CZK (Denní)", f"{daily_eur_czk:.2f} Kč", delta=f"{daily_eur_czk - prev_eurczk_d:+.2f} Kč", delta_color="off")
-        col_ef3.metric("EUR / PLN (Denní)", f"{daily_eur_pln:.4f} zł", delta=f"{daily_eur_pln - prev_eurpln_d:+.4f} zł", delta_color="off")
-        col_ef4.metric("EUR / GBP (Denní)", f"{daily_eur_gbp:.4f} £", delta=f"{daily_eur_gbp - prev_eurgbp_d:+.4f} £", delta_color="off")
-
-        fig_eu_fx = build_fx_daily_chart_eu(df_for_eu_fx_plot)
-        render_plotly_chart(fig_eu_fx, key="chart_eu_fx_daily")
-
-        # Tlačítko pro stažení denních dat pro EU
-        csv_daily_eu_fx = df_daily_fx_filtered[["date", "eur_usd", "eur_czk", "eur_pln", "eur_gbp"]].rename(columns={
-            "date": "Datum",
-            "eur_usd": "EUR/USD",
-            "eur_czk": "EUR/CZK",
-            "eur_pln": "EUR/PLN",
-            "eur_gbp": "EUR/GBP"
-        }).to_csv(index=False, sep=";", decimal=",").encode("utf-8-sig")
-
-        st.download_button(
-            label="📥 Stáhnout kompletní denní data kurzů EUR (CSV)",
-            data=csv_daily_eu_fx,
-            file_name=f"EUR_denni_kurzy_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv",
-            key="btn_dl_daily_fx_eu"
-        )
-
-    else:
-        st.markdown('<div class="section-header">Měnové kurzy: Denní data pro Dolarový index (DXY) a měnové páry (včetně PLN a GBP)</div>', unsafe_allow_html=True)
-        st.caption("Globální devizový trh s vysokofrekvenčními denními daty pro U.S. Dollar Index (DXY), EUR/USD, GBP/USD, USD/PLN a USD/JPY.")
-
-        us_fx_view_mode = st.radio("Frekvence grafu měnových kurzů:", ["📅 Denní data (High-Frequency)", "📊 Měsíční agregace"], horizontal=True, key="us_fx_freq_radio")
-        df_for_us_fx_plot = df_daily_fx_filtered if "Denní" in us_fx_view_mode else df
-
-        col_uf1, col_uf2, col_uf3, col_uf4 = st.columns(4)
-        prev_dxy_d = safe_metric(prev_daily_fx, "dxy_index", daily_dxy)
-        dxy_d_delta = daily_dxy - prev_dxy_d
-        prev_gbpusd_d = safe_metric(prev_daily_fx, "gbp_usd", daily_gbp_usd)
-        prev_usdpln_d = safe_metric(prev_daily_fx, "usd_pln", daily_usd_pln)
-
-        col_uf1.metric("Dolarový index (DXY)", f"{daily_dxy:.2f}", delta=f"{dxy_d_delta:+.2f} b.", delta_color="off")
-        col_uf2.metric("EUR / USD (Denní)", f"{daily_eur_usd:.4f} $")
-        col_uf3.metric("GBP / USD (Cable)", f"{daily_gbp_usd:.4f} $", delta=f"{daily_gbp_usd - prev_gbpusd_d:+.4f} $", delta_color="off")
-        col_uf4.metric("USD / PLN (Denní)", f"{daily_usd_pln:.4f} zł", delta=f"{daily_usd_pln - prev_usdpln_d:+.4f} zł", delta_color="off")
-
-        fig_us_fx = build_fx_daily_chart_us(df_for_us_fx_plot)
-        render_plotly_chart(fig_us_fx, key="chart_us_fx_daily")
-
-        # Tlačítko pro export denních dat pro US
-        csv_daily_us_fx = df_daily_fx_filtered[["date", "dxy_index", "eur_usd", "gbp_usd", "usd_pln", "usd_jpy", "usd_chf"]].rename(columns={
-            "date": "Datum",
-            "dxy_index": "DXY_Index",
-            "eur_usd": "EUR/USD",
-            "gbp_usd": "GBP/USD",
-            "usd_pln": "USD/PLN",
-            "usd_jpy": "USD/JPY",
-            "usd_chf": "USD/CHF"
-        }).to_csv(index=False, sep=";", decimal=",").encode("utf-8-sig")
-
-        st.download_button(
-            label="📥 Stáhnout kompletní denní data FX & DXY (CSV)",
-            data=csv_daily_us_fx,
-            file_name=f"US_denni_kurzy_DXY_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv",
-            key="btn_dl_daily_fx_us"
+            key="btn_dl_dynamic_fx_csv"
         )
 
 
 # =============================================================================
-# STRUKTURA: 7. TAB - VEŘEJNÝ DLUH & FISKÁLNÍ POLITIKA
+# 2. KATEGORIE: REÁLNÁ EKONOMIKA & PRÁCE
 # =============================================================================
-with tab_debt:
-    if is_cz:
-        st.markdown('<div class="section-header">Fiskální politika a veřejný dluh ČR</div>', unsafe_allow_html=True)
-        st.caption("Vývoj konsolidovaného hrubého dluhu sektoru vládních institucí k HDP v porovnání s Maastrichtským kritériem (60 % HDP).")
-        col_d1, col_d2, col_d3 = st.columns(3)
-        col_d1.metric("Veřejný dluh k HDP", f"{debt_cz_pct:.1f} %", delta="Limit < 60 % HDP", delta_color="normal")
-        debt_nom_val = safe_metric(last_row, "public_debt_czk_bn", 3300.0)
-        col_d2.metric("Nominální veřejný dluh ČR", f"{debt_nom_val:,.1f} mld. Kč")
-        col_d3.metric("Kvartální saldo rozpočtu", f"{deficit_cz_curr:,.1f} mld. Kč")
-        fig_d1, fig_d2 = build_debt_charts(df)
-        c_da, c_db = st.columns(2)
-        with c_da:
-            render_plotly_chart(fig_d1, key="chart_cz_debt_pct")
-        with c_db:
-            render_plotly_chart(fig_d2, key="chart_cz_deficit")
+with main_tab_real:
+    sub_tab_gdp, sub_tab_inf, sub_tab_act, sub_tab_une = st.tabs([
+        "HDP",
+        f"Inflace ({'CPI' if not is_eu else 'HICP'})",
+        "Průmysl a spotřeba",
+        "Nezaměstnanost"
+    ])
 
-    elif is_eu:
-        st.markdown('<div class="section-header">Fiskální politika a veřejný dluh Eurozóny / EU</div>', unsafe_allow_html=True)
-        st.caption("Vývoj konsolidovaného vládního dluhu Eurozóny k HDP a kvartální saldo rozpočtu vládních institucí Eurozóny.")
-        col_ed1, col_ed2, col_ed3 = st.columns(3)
-        col_ed1.metric("Veřejný dluh Eurozóny k HDP", f"{debt_eu_pct:.1f} %", delta="Maastricht 60 % limit", delta_color="normal")
-        col_ed2.metric("Nominální dluh Eurozóny", f"{debt_eu_nom:,.0f} mld. EUR")
-        col_ed3.metric("Kvartální saldo rozpočtu EU", f"{deficit_eu_curr:,.0f} mld. EUR")
-        fig_ed1, fig_ed2 = build_eu_debt_charts(df)
-        c_eda, c_edb = st.columns(2)
-        with c_eda:
-            render_plotly_chart(fig_ed1, key="chart_eu_debt_pct")
-        with c_edb:
-            render_plotly_chart(fig_ed2, key="chart_eu_deficit")
+    # 2.1 HDP
+    with sub_tab_gdp:
+        if is_cz:
+            st.markdown('<div class="section-header">Hrubý domácí produkt (HDP) České republiky</div>', unsafe_allow_html=True)
+            col_g1, col_g2, col_g3, col_g4 = st.columns(4)
+            col_g1.metric("Reálný růst HDP (YoY)", f"{gdp_cz_curr:+.1f} %", delta=f"{gdp_cz_delta:+.1f} p.b.")
+            col_g2.metric("Kvartální nominální HDP", f"{nom_cz_val:,.1f} mld. Kč")
+            col_g3.metric("Průměrný růst v období", f"{df['gdp_growth_real'].mean():+.2f} %" if "gdp_growth_real" in df.columns else "N/A")
+            col_g4.metric("Poslední kvartál", str(last_row.get("quarter", "Aktuální")))
+            fig_gdp = build_gdp_chart(df, selected_indicators)
+            render_plotly_chart(fig_gdp, key="chart_cz_gdp")
+            st.caption("📌 **Zdroj dat:** Český statistický úřad (ČSÚ) – Čtvrtletní národní účty ČR")
 
-    else:
-        st.markdown('<div class="section-header">Fiskální politika a federální dluh Spojených států</div>', unsafe_allow_html=True)
-        st.caption("Vývoj hrubého federálního dluhu USA k HDP (Debt-to-GDP ratio) a kvartální saldo federálního rozpočtu.")
-        col_ud1, col_ud2, col_ud3 = st.columns(3)
-        col_ud1.metric("Federální dluh USA k HDP", f"{debt_us_pct:.1f} %", delta="Historické maximum", delta_color="inverse")
-        col_ud2.metric("Nominální federální dluh USA", f"{debt_us_nom:,.0f} mld. $", help="Total Public Debt Outstanding")
-        col_ud3.metric("Kvartální federální deficit", f"{deficit_us_curr:,.0f} mld. $")
-        fig_ud1, fig_ud2 = build_us_debt_charts(df)
-        c_uda, c_udb = st.columns(2)
-        with c_uda:
-            render_plotly_chart(fig_ud1, key="chart_us_debt_pct")
-        with c_udb:
-            render_plotly_chart(fig_ud2, key="chart_us_deficit")
+        elif is_eu:
+            st.markdown('<div class="section-header">Hrubý domácí produkt Eurozóny / Evropské unie</div>', unsafe_allow_html=True)
+            col_eg1, col_eg2, col_eg3, col_eg4 = st.columns(4)
+            col_eg1.metric("Reálný růst HDP EU (YoY)", f"{gdp_eu_curr:+.1f} %", delta=f"{gdp_eu_delta:+.1f} p.b.")
+            col_eg2.metric("Nominální HDP Eurozóny", f"{nom_eu_val:,.0f} mld. EUR")
+            col_eg3.metric("Průměrný růst v období", f"{df['eu_gdp_growth_real'].mean():+.2f} %" if "eu_gdp_growth_real" in df.columns else "N/A")
+            col_eg4.metric("Poslední kvartál", str(last_row.get("quarter", "Aktuální")))
+            fig_eu_gdp = build_eu_gdp_chart(df, selected_indicators)
+            render_plotly_chart(fig_eu_gdp, key="chart_eu_gdp")
+            st.caption("📌 **Zdroj dat:** Eurostat – Kvartální národní účty Eurozóny (EA20 / EU27)")
+
+        else:
+            st.markdown('<div class="section-header">Hrubý domácí produkt Spojených států (U.S. GDP)</div>', unsafe_allow_html=True)
+            col_ug1, col_ug2, col_ug3, col_ug4 = st.columns(4)
+            col_ug1.metric("Reálný růst HDP USA (YoY)", f"{gdp_us_curr:+.1f} %", delta=f"{gdp_us_delta:+.1f} p.b.")
+            col_ug2.metric("Nominální objem HDP USA", f"{nom_us_val:,.0f} mld. $")
+            col_ug3.metric("Průměrný růst v období", f"{df['us_gdp_growth_real'].mean():+.2f} %" if "us_gdp_growth_real" in df.columns else "N/A")
+            col_ug4.metric("Poslední kvartál", str(last_row.get("quarter", "Aktuální")))
+            fig_us_gdp = build_us_gdp_chart(df, selected_indicators)
+            render_plotly_chart(fig_us_gdp, key="chart_us_gdp")
+            st.caption("📌 **Zdroj dat:** U.S. Bureau of Economic Analysis (BEA)")
+
+    # 2.2 Inflace
+    with sub_tab_inf:
+        if is_cz:
+            st.markdown('<div class="section-header">Spotřebitelská & jádrová inflace v ČR (CPI & Core CPI)</div>', unsafe_allow_html=True)
+            col_i1, col_i2, col_i3, col_i4 = st.columns(4)
+            col_i1.metric("Celková inflace (CPI YoY)", f"{cpi_cz_curr:.1f} %", delta=f"{cpi_cz_delta:+.1f} p.b.", delta_color="inverse")
+            col_i2.metric("Jádrová inflace (Core CPI)", f"{core_cpi_cz_curr:.1f} %", delta="Sledováno ČNB", delta_color="off")
+            real_cz_rate = repo_curr - cpi_cz_curr
+            col_i3.metric("Reálná úroková sazba", f"{real_cz_rate:+.2f} %", delta="Repo − CPI", delta_color="off")
+            col_i4.metric("Inflační cíl ČNB", "2.00 %", delta="Toleranční pásmo 1–3 %", delta_color="off")
+            fig_inf = build_inflation_chart(df)
+            render_plotly_chart(fig_inf, key="chart_cz_inflation")
+            st.caption("📌 **Zdroj dat:** Český statistický úřad (ČSÚ) & ČNB (Odbor měnové politiky)")
+
+        elif is_eu:
+            st.markdown('<div class="section-header">Harmonizovaná & jádrová inflace Eurozóny (HICP & Core HICP)</div>', unsafe_allow_html=True)
+            col_ei1, col_ei2, col_ei3, col_ei4 = st.columns(4)
+            col_ei1.metric("Harmonizovaná inflace (HICP)", f"{cpi_eu_curr:.1f} %", delta=f"{cpi_eu_delta:+.1f} p.b.", delta_color="inverse")
+            col_ei2.metric("Jádrová inflace EU (Core HICP)", f"{core_cpi_eu_curr:.1f} %", delta="Bez energií a potravin", delta_color="off")
+            real_eu_rate = ecb_dep_curr - cpi_eu_curr
+            col_ei3.metric("Reálná sazba ECB", f"{real_eu_rate:+.2f} %", delta="Depo − HICP", delta_color="off")
+            col_ei4.metric("Inflační cíl ECB", "2.00 %", delta="Střednědobý cíl", delta_color="off")
+            fig_eu_inf = build_eu_inflation_chart(df)
+            render_plotly_chart(fig_eu_inf, key="chart_eu_inflation")
+            st.caption("📌 **Zdroj dat:** Eurostat (Harmonised Index of Consumer Prices - HICP)")
+
+        else:
+            st.markdown('<div class="section-header">Spotřebitelská & jádrová inflace v USA (Headline & Core CPI)</div>', unsafe_allow_html=True)
+            col_ui1, col_ui2, col_ui3, col_ui4 = st.columns(4)
+            col_ui1.metric("Headline CPI USA (YoY)", f"{cpi_us_curr:.1f} %", delta=f"{cpi_us_delta:+.1f} p.b.", delta_color="inverse")
+            col_ui2.metric("Jádrová inflace (Core CPI)", f"{core_cpi_us_curr:.1f} %", delta="Bez potravin a energií", delta_color="off")
+            real_us_effr = fed_effr_curr - cpi_us_curr
+            col_ui3.metric("Reálná úroková sazba Fedu", f"{real_us_effr:+.2f} %", delta="EFFR − CPI", delta_color="off")
+            col_ui4.metric("Inflační cíl Fedu", "2.00 %", delta="PCE benchmark", delta_color="off")
+            fig_us_inf = build_us_inflation_chart(df)
+            render_plotly_chart(fig_us_inf, key="chart_us_inflation")
+            st.caption("📌 **Zdroj dat:** U.S. Bureau of Labor Statistics (BLS)")
+
+    # 2.3 Průmysl a spotřeba
+    with sub_tab_act:
+        reg_code = "CZ" if is_cz else ("EU" if is_eu else "US")
+        reg_title = "České republiky" if is_cz else ("Eurozóny / EU" if is_eu else "Spojených států")
+        st.markdown(f'<div class="section-header">Ekonomická aktivita: Maloobchodní tržby (Spotřeba) & Průmyslová produkce ({reg_title})</div>', unsafe_allow_html=True)
+        col_a1, col_a2, col_a3, col_a4 = st.columns(4)
+        if is_cz:
+            col_a1.metric("Maloobchod ČR (Spotřeba YoY)", f"{retail_cz_curr:+.1f} %")
+            col_a2.metric("Průmyslová produkce ČR (YoY)", f"{ind_cz_curr:+.1f} %")
+            col_a3.metric("Průměrná spotřeba", f"{df['retail_sales_yoy'].mean():+.2f} %")
+            col_a4.metric("Průměrný průmysl", f"{df['industrial_prod_yoy'].mean():+.2f} %")
+            st_source = "Český statistický úřad (ČSÚ) – Statistika maloobchodu a průmyslu"
+        elif is_eu:
+            col_a1.metric("Maloobchod EU (Spotřeba YoY)", f"{retail_eu_curr:+.1f} %")
+            col_a2.metric("Průmyslová výroba EU (YoY)", f"{ind_eu_curr:+.1f} %")
+            col_a3.metric("Průměrná spotřeba EU", f"{df['eu_retail_sales_yoy'].mean():+.2f} %")
+            col_a4.metric("Průměrný průmysl EU", f"{df['eu_industrial_prod_yoy'].mean():+.2f} %")
+            st_source = "Eurostat – Short-term business statistics (Retail Trade & Industry)"
+        else:
+            col_a1.metric("Maloobchod USA (Spotřeba YoY)", f"{retail_us_curr:+.1f} %")
+            col_a2.metric("Průmyslová produkce USA (YoY)", f"{ind_us_curr:+.1f} %")
+            col_a3.metric("Průměrná spotřeba USA", f"{df['us_retail_sales_yoy'].mean():+.2f} %")
+            col_a4.metric("Průměrný průmysl USA", f"{df['us_industrial_prod_yoy'].mean():+.2f} %")
+            st_source = "U.S. Census Bureau (Retail Sales) & Federal Reserve Board (Industrial Production)"
+
+        fig_act = build_activity_chart(df, region=reg_code)
+        render_plotly_chart(fig_act, key="chart_activity_panel")
+        st.caption(f"📌 **Zdroj dat:** {st_source}")
+
+    # 2.4 Nezaměstnanost
+    with sub_tab_une:
+        if is_cz:
+            st.markdown('<div class="section-header">Trh práce a míra nezaměstnanosti v ČR</div>', unsafe_allow_html=True)
+            col_u1, col_u2, col_u3, col_u4 = st.columns(4)
+            col_u1.metric("Míra nezaměstnanosti ČR", f"{une_cz_curr:.1f} %", delta=f"{une_cz_delta:+.1f} p.b.", delta_color="inverse")
+            col_u2.metric("Průměr EU (srovnání)", f"{une_eu_curr:.1f} %", delta="Nejnižší v EU", delta_color="off")
+            col_u3.metric("Minimum v období", f"{df['unemployment_rate'].min():.1f} %")
+            col_u4.metric("Maximum v období", f"{df['unemployment_rate'].max():.1f} %")
+            fig_une = build_unemployment_chart(df)
+            render_plotly_chart(fig_une, key="chart_cz_unemployment")
+            st.caption("📌 **Zdroj dat:** Český statistický úřad (ČSÚ) & Eurostat (metodika ILO)")
+
+        elif is_eu:
+            st.markdown('<div class="section-header">Trh práce a míra nezaměstnanosti v Eurozóně / EU</div>', unsafe_allow_html=True)
+            col_eu1, col_eu2, col_eu3, col_eu4 = st.columns(4)
+            col_eu1.metric("Nezaměstnanost v EU", f"{une_eu_curr:.1f} %", delta=f"{une_eu_delta:+.1f} p.b.", delta_color="inverse")
+            col_eu2.metric("Průměr v období", f"{df['eu_unemployment_rate'].mean():.2f} %")
+            col_eu3.metric("Minimum v období", f"{df['eu_unemployment_rate'].min():.1f} %")
+            col_eu4.metric("Maximum v období", f"{df['eu_unemployment_rate'].max():.1f} %")
+            fig_eu_une = build_eu_unemployment_chart(df)
+            render_plotly_chart(fig_eu_une, key="chart_eu_unemployment")
+            st.caption("📌 **Zdroj dat:** Eurostat (Harmonised Unemployment Rate)")
+
+        else:
+            st.markdown('<div class="section-header">Trh práce a zaměstnanost v USA (U-3 Rate & Nonfarm Payrolls)</div>', unsafe_allow_html=True)
+            col_uu1, col_uu2, col_uu3, col_uu4 = st.columns(4)
+            col_uu1.metric("Míra nezaměstnanosti U-3", f"{une_us_curr:.1f} %", delta=f"{une_us_delta:+.1f} p.b.", delta_color="inverse")
+            nfp_val = safe_metric(last_row, "us_nonfarm_payrolls_k", 180.0)
+            col_uu2.metric("Nová pracovní místa (NFP)", f"{nfp_val:+,.0f} tis.")
+            col_uu3.metric("Minimum v období", f"{df['us_unemployment_rate'].min():.1f} %")
+            col_uu4.metric("Průměr USA", f"{df['us_unemployment_rate'].mean():.2f} %")
+            fig_us_une = build_us_unemployment_chart(df)
+            render_plotly_chart(fig_us_une, key="chart_us_unemployment")
+            st.caption("📌 **Zdroj dat:** U.S. Bureau of Labor Statistics (BLS Employment Situation)")
 
 
 # =============================================================================
-# STRUKTURA: 8. TAB - VÝNOSOVÉ KŘIVKY
+# 3. KATEGORIE: TRHY (AKCIOVÉ INDEXY & VZÁJEMNÉ SROVNÁNÍ)
 # =============================================================================
-with tab_curve:
-    if is_cz:
-        st.markdown('<div class="section-header">Výnosová křivka ČR (Státní dluhopisy CZGB & Úrokové swapy IRS)</div>', unsafe_allow_html=True)
-        st.caption("Časová struktura výnosů státních dluhopisů ČR (1Y–15Y) a mezibankovních úrokových swapů (CZK IRS).")
-        comp_date_target = last_row["date"] - pd.DateOffset(years=1)
-        comp_df = df_raw[df_raw["date"] <= comp_date_target]
-        comp_row = comp_df.iloc[-1] if not comp_df.empty else None
-        fig_curve_cz = build_yield_curve_snapshot(last_row, comp_row)
-        render_plotly_chart(fig_curve_cz, key="chart_cz_yield_curve")
+with main_tab_stocks:
+    sub_tab_stock_cmp, sub_tab_px, sub_tab_stoxx, sub_tab_sp500, sub_tab_nasdaq = st.tabs([
+        "📊 Vzájemné srovnání indexů",
+        "🇨🇿 Index PX (Pražská burza)",
+        "🇪🇺 Euro Stoxx 50",
+        "🇺🇸 S&P 500",
+        "🇺🇸 NASDAQ Composite"
+    ])
 
-    elif is_eu:
-        st.markdown('<div class="section-header">Výnosová křivka Německých Bundů (Benchmark Eurozóny: 2Y–30Y)</div>', unsafe_allow_html=True)
-        st.caption("Časová struktura výnosů německých státních dluhopisů (bezrizikový benchmark pro celou Eurozónu) a sklon křivky (10Y − 2Y).")
-        comp_date_target_eu = last_row["date"] - pd.DateOffset(years=1)
-        comp_df_eu = df_raw[df_raw["date"] <= comp_date_target_eu]
-        comp_row_eu = comp_df_eu.iloc[-1] if not comp_df_eu.empty else None
-        fig_curve_eu = build_eu_yield_curve_snapshot(last_row, comp_row_eu)
-        render_plotly_chart(fig_curve_eu, key="chart_eu_yield_curve")
-        fig_spread_eu = build_eu_curve_spread_chart(df)
-        render_plotly_chart(fig_spread_eu, key="chart_eu_spread_curve")
+    # 3.1 Vzájemné srovnání indexů
+    with sub_tab_stock_cmp:
+        st.markdown('<div class="section-header">Srovnání výkonnosti hlavních světových a lokálních akciových indexů</div>', unsafe_allow_html=True)
+        st.caption("Porovnejte relativní kumulativní výnos nebo normalizovanou bázi pro S&P 500, NASDAQ, Euro Stoxx 50 a Index PX Pražské burzy.")
 
-    else:
-        st.markdown('<div class="section-header">Výnosová křivka USA (U.S. Treasury Par Yield Curve: 1M–30Y)</div>', unsafe_allow_html=True)
-        st.caption("Oficiální Par Yield Curve amerického ministerstva financí (home.treasury.gov) a analýza sklonu křivky (10Y − 2Y).")
-        comp_date_target_us = last_row["date"] - pd.DateOffset(years=1)
-        comp_df_us = df_raw[df_raw["date"] <= comp_date_target_us]
-        comp_row_us = comp_df_us.iloc[-1] if not comp_df_us.empty else None
-        fig_curve_us = build_us_yield_curve_snapshot(last_row, comp_row_us)
-        render_plotly_chart(fig_curve_us, key="chart_us_yield_curve")
-        fig_spread_us = build_us_curve_spread_chart(df)
-        render_plotly_chart(fig_spread_us, key="chart_us_spread_curve")
+        # Souhrnné metriky pro všechny 4 indexy
+        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+        sp_first = df["sp500_index"].iloc[0] if ("sp500_index" in df.columns and not df.empty) else 1.0
+        sp_chg = ((sp500_curr / sp_first) - 1.0) * 100.0 if sp_first > 0 else 0.0
+
+        nq_first = df["nasdaq_index"].iloc[0] if ("nasdaq_index" in df.columns and not df.empty) else 1.0
+        nq_chg = ((nasdaq_curr / nq_first) - 1.0) * 100.0 if nq_first > 0 else 0.0
+
+        sx_first = df["stoxx50_index"].iloc[0] if ("stoxx50_index" in df.columns and not df.empty) else 1.0
+        sx_chg = ((stoxx50_curr / sx_first) - 1.0) * 100.0 if sx_first > 0 else 0.0
+
+        px_first = df["px_index"].iloc[0] if ("px_index" in df.columns and not df.empty) else 1.0
+        px_chg = ((px_curr / px_first) - 1.0) * 100.0 if px_first > 0 else 0.0
+
+        col_m1.metric("🇺🇸 S&P 500", f"{sp500_curr:,.0f} b.", delta=f"{sp_chg:+.1f} % (za období)")
+        col_m2.metric("🇺🇸 NASDAQ Composite", f"{nasdaq_curr:,.0f} b.", delta=f"{nq_chg:+.1f} % (za období)")
+        col_m3.metric("🇪🇺 Euro Stoxx 50", f"{stoxx50_curr:,.0f} b.", delta=f"{sx_chg:+.1f} % (za období)")
+        col_m4.metric("🇨🇿 Index PX (Praha)", f"{px_curr:,.0f} b.", delta=f"{px_chg:+.1f} % (za období)")
+
+        col_sc1, col_sc2 = st.columns([2.5, 1.5])
+        with col_sc1:
+            indices_to_compare = st.multiselect(
+                "Vyberte indexy ke srovnání v grafu:",
+                options=["Index PX (Praha)", "Euro Stoxx 50 (EU)", "S&P 500 (USA)", "NASDAQ (USA)"],
+                default=["Index PX (Praha)", "Euro Stoxx 50 (EU)", "S&P 500 (USA)", "NASDAQ (USA)"],
+                key="indices_to_compare_multiselect"
+            )
+        with col_sc2:
+            cmp_mode_choice = st.radio(
+                "Metrika normalizace:",
+                ["📈 Relativní výkonnost (% od počátku období)", "🔢 Rebase na bázi 100"],
+                horizontal=True,
+                key="stock_cmp_mode_radio"
+            )
+
+        cmp_mode = "pct" if "Relativní" in cmp_mode_choice else "rebase"
+        fig_stock_cmp = build_stock_comparison_chart(df, indices_to_compare, mode=cmp_mode)
+        render_plotly_chart(fig_stock_cmp, key="chart_stock_comparison")
+        st.caption("📌 **Zdroj dat:** Burza cenných papírů Praha (PSE / Index PX), STOXX Ltd. (Euro Stoxx 50), S&P Dow Jones Indices (S&P 500) & NASDAQ OMX (NASDAQ Composite) / Yahoo Finance API")
+
+    # 3.2 Index PX
+    with sub_tab_px:
+        st.markdown('<div class="section-header">Index PX – Burza cenných papírů Praha (BCPP)</div>', unsafe_allow_html=True)
+        st.caption("Oficiální cenový index pražské burzy zahrnující klíčové české emise (ČEZ, Komerční banka, Erste Group, Moneta Money Bank, Colt CZ).")
+        col_px1, col_px2, col_px3, col_px4 = st.columns(4)
+        col_px1.metric("Aktuální hodnota", f"{px_curr:,.1f} bodů")
+        col_px2.metric("Výkonnost za vybrané období", f"{px_chg:+.1f} %")
+        col_px3.metric("Minimum v období", f"{df['px_index'].min():,.1f} b." if "px_index" in df.columns else "N/A")
+        col_px4.metric("Maximum v období", f"{df['px_index'].max():,.1f} b." if "px_index" in df.columns else "N/A")
+        fig_single_px = build_single_stock_chart(df, "px_index", "Index PX (Praha)", color="#DC2626")
+        render_plotly_chart(fig_single_px, key="chart_single_px")
+        st.caption("📌 **Zdroj dat:** Burza cenných papírů Praha (PSE / BCPP) – Oficiální kalkulace indexu PX")
+
+    # 3.3 Euro Stoxx 50
+    with sub_tab_stoxx:
+        st.markdown('<div class="section-header">Euro Stoxx 50 – Benchmark předních akcií Eurozóny</div>', unsafe_allow_html=True)
+        st.caption("Index nejvýznamnějších 50 korporátních lídrů Eurozóny napříč 8 zeměmi (např. ASML, LVMH, SAP, TotalEnergies, Siemens, Allianz, Sanofi).")
+        col_sx1, col_sx2, col_sx3, col_sx4 = st.columns(4)
+        col_sx1.metric("Aktuální hodnota", f"{stoxx50_curr:,.1f} bodů")
+        col_sx2.metric("Výkonnost za vybrané období", f"{sx_chg:+.1f} %")
+        col_sx3.metric("Minimum v období", f"{df['stoxx50_index'].min():,.1f} b." if "stoxx50_index" in df.columns else "N/A")
+        col_sx4.metric("Maximum v období", f"{df['stoxx50_index'].max():,.1f} b." if "stoxx50_index" in df.columns else "N/A")
+        fig_single_stoxx = build_single_stock_chart(df, "stoxx50_index", "Euro Stoxx 50", color="#059669")
+        render_plotly_chart(fig_single_stoxx, key="chart_single_stoxx")
+        st.caption("📌 **Zdroj dat:** STOXX Ltd. (Deutsche Börse Group) & Yahoo Finance")
+
+    # 3.4 S&P 500
+    with sub_tab_sp500:
+        st.markdown('<div class="section-header">S&P 500 – Globální měřítko amerického akciového trhu</div>', unsafe_allow_html=True)
+        st.caption("Index 500 největších veřejně obchodovaných společností v USA pokrývající přibližně 80 % tržní kapitalizace celého amerického trhu.")
+        col_sp1, col_sp2, col_sp3, col_sp4 = st.columns(4)
+        col_sp1.metric("Aktuální hodnota", f"{sp500_curr:,.1f} bodů")
+        col_sp1_delta = sp500_curr - safe_metric(prev_row, "sp500_index", sp500_curr)
+        col_sp2.metric("Výkonnost za vybrané období", f"{sp_chg:+.1f} %", delta=f"{col_sp1_delta:+.1f} b.")
+        col_sp3.metric("Minimum v období", f"{df['sp500_index'].min():,.1f} b." if "sp500_index" in df.columns else "N/A")
+        col_sp4.metric("Maximum v období", f"{df['sp500_index'].max():,.1f} b." if "sp500_index" in df.columns else "N/A")
+        fig_single_sp = build_single_stock_chart(df, "sp500_index", "S&P 500", color="#2563EB")
+        render_plotly_chart(fig_single_sp, key="chart_single_sp")
+        st.caption("📌 **Zdroj dat:** S&P Dow Jones Indices & Yahoo Finance")
+
+    # 3.5 NASDAQ Composite
+    with sub_tab_nasdaq:
+        st.markdown('<div class="section-header">NASDAQ Composite – Světový technologický a inovační lídr</div>', unsafe_allow_html=True)
+        st.caption("Index zahrnující přes 3 000 akcií kótovaných na burze NASDAQ s vysokým zastoupením technologického sektoru (Apple, Microsoft, Nvidia, Amazon, Alphabet, Meta).")
+        col_nq1, col_nq2, col_nq3, col_nq4 = st.columns(4)
+        col_nq1.metric("Aktuální hodnota", f"{nasdaq_curr:,.1f} bodů")
+        col_nq1_delta = nasdaq_curr - safe_metric(prev_row, "nasdaq_index", nasdaq_curr)
+        col_nq2.metric("Výkonnost za vybrané období", f"{nq_chg:+.1f} %", delta=f"{col_nq1_delta:+.1f} b.")
+        col_nq3.metric("Minimum v období", f"{df['nasdaq_index'].min():,.1f} b." if "nasdaq_index" in df.columns else "N/A")
+        col_nq4.metric("Maximum v období", f"{df['nasdaq_index'].max():,.1f} b." if "nasdaq_index" in df.columns else "N/A")
+        fig_single_nq = build_single_stock_chart(df, "nasdaq_index", "NASDAQ Composite", color="#7C3AED")
+        render_plotly_chart(fig_single_nq, key="chart_single_nasdaq")
+        st.caption("📌 **Zdroj dat:** NASDAQ OMX Group & Yahoo Finance")
 
 
 # =============================================================================
-# STRUKTURA: 9. TAB - MEZINÁRODNÍ SROVNÁNÍ
+# 4. KATEGORIE: VEŘEJNÉ FINANCE & SVĚT
 # =============================================================================
-with tab_compare:
-    if is_cz:
-        st.markdown('<div class="section-header">Mezinárodní srovnání: Česká republika vs. Eurozóna vs. USA</div>', unsafe_allow_html=True)
-        st.caption("Analýza úrokového diferenciálu centrálních bank (ČNB vs. Fed vs. ECB) a sovereign spreadu (10Y CZGB − Bund & CZGB − US Treasury).")
+with main_tab_public:
+    sub_tab_debt, sub_tab_intl = st.tabs([
+        "Veřejný dluh",
+        "Mezinárodní srovnání"
+    ])
+
+    # 4.1 Veřejný dluh & Saldo rozpočtu
+    with sub_tab_debt:
+        if is_cz:
+            st.markdown('<div class="section-header">Fiskální politika a veřejný dluh České republiky</div>', unsafe_allow_html=True)
+            col_d1, col_d2, col_d3 = st.columns(3)
+            col_d1.metric("Veřejný dluh k HDP", f"{debt_cz_pct:.1f} %", delta="Limit < 60 % HDP", delta_color="normal")
+            debt_nom_val = safe_metric(last_row, "public_debt_czk_bn", 3300.0)
+            col_d2.metric("Nominální veřejný dluh", f"{debt_nom_val:,.1f} mld. Kč")
+            col_d3.metric("Kvartální saldo rozpočtu", f"{deficit_cz_curr:,.1f} mld. Kč")
+            fig_d1, fig_d2 = build_debt_charts(df)
+            c_da, c_db = st.columns(2)
+            with c_da:
+                render_plotly_chart(fig_d1, key="chart_cz_debt_pct")
+            with c_db:
+                render_plotly_chart(fig_d2, key="chart_cz_deficit")
+            st.caption("📌 **Zdroj dat:** Ministerstvo financí ČR (MF ČR) & Eurostat (Maastrichtská notifikace dluhu)")
+
+        elif is_eu:
+            st.markdown('<div class="section-header">Fiskální politika a veřejný dluh Eurozóny / EU</div>', unsafe_allow_html=True)
+            col_ed1, col_ed2, col_ed3 = st.columns(3)
+            col_ed1.metric("Veřejný dluh Eurozóny k HDP", f"{debt_eu_pct:.1f} %", delta="Maastricht 60 % limit", delta_color="normal")
+            col_ed2.metric("Nominální dluh Eurozóny", f"{debt_eu_nom:,.0f} mld. EUR")
+            col_ed3.metric("Kvartální saldo rozpočtu EU", f"{deficit_eu_curr:,.0f} mld. EUR")
+            fig_ed1, fig_ed2 = build_eu_debt_charts(df)
+            c_eda, c_edb = st.columns(2)
+            with c_eda:
+                render_plotly_chart(fig_ed1, key="chart_eu_debt_pct")
+            with c_edb:
+                render_plotly_chart(fig_ed2, key="chart_eu_deficit")
+            st.caption("📌 **Zdroj dat:** Eurostat – Vládní finanční statistika (Government Finance Statistics - EDP)")
+
+        else:
+            st.markdown('<div class="section-header">Fiskální politika a federální dluh Spojených států</div>', unsafe_allow_html=True)
+            col_ud1, col_ud2, col_ud3 = st.columns(3)
+            col_ud1.metric("Federální dluh USA k HDP", f"{debt_us_pct:.1f} %", delta="Historické maximum", delta_color="inverse")
+            col_ud2.metric("Nominální federální dluh", f"{debt_us_nom:,.0f} mld. $")
+            col_ud3.metric("Kvartální federální deficit", f"{deficit_us_curr:,.0f} mld. $")
+            fig_ud1, fig_ud2 = build_us_debt_charts(df)
+            c_uda, c_udb = st.columns(2)
+            with c_uda:
+                render_plotly_chart(fig_ud1, key="chart_us_debt_pct")
+            with c_udb:
+                render_plotly_chart(fig_ud2, key="chart_us_deficit")
+            st.caption("📌 **Zdroj dat:** U.S. Department of the Treasury (Fiscal Service - Debt to the Penny)")
+
+    # 4.2 Mezinárodní srovnání
+    with sub_tab_intl:
+        st.markdown('<div class="section-header">Mezinárodní srovnání sazeb a výnosových spreadů</div>', unsafe_allow_html=True)
+        comp_type = "CZ" if is_cz else ("EU" if is_eu else "US")
         col_cp1, col_cp2, col_cp3 = st.columns(3)
-        rate_diff_us = repo_curr - fed_upper_curr
-        rate_diff_ecb = repo_curr - ecb_dep_curr
-        col_cp1.metric("Úrokový diferenciál (ČNB vs. Fed)", f"{rate_diff_us:+.2f} p.b.")
-        col_cp2.metric("Úrokový diferenciál (ČNB vs. ECB)", f"{rate_diff_ecb:+.2f} p.b.")
-        spread_10y_bund = (czgb10_curr - bund10_curr) * 100.0
-        col_cp3.metric("Sovereign spread 10Y (CZGB − Bund)", f"{spread_10y_bund:+.0f} bps")
-        fig_cz_comp = build_international_spread_chart(df, comparison_type="CZ")
-        render_plotly_chart(fig_cz_comp, key="chart_cz_intl_compare")
+        if is_cz:
+            rate_diff_us = repo_curr - fed_upper_curr
+            rate_diff_ecb = repo_curr - ecb_dep_curr
+            col_cp1.metric("Sazbový diferenciál (ČNB vs. Fed)", f"{rate_diff_us:+.2f} p.b.")
+            col_cp2.metric("Sazbový diferenciál (ČNB vs. ECB)", f"{rate_diff_ecb:+.2f} p.b.")
+            spread_10y_bund = (czgb10_curr - bund10_curr) * 100.0
+            col_cp3.metric("Sovereign spread 10Y (CZGB − Bund)", f"{spread_10y_bund:+.0f} bps")
+        elif is_eu:
+            diff_ecb_fed = ecb_dep_curr - fed_upper_curr
+            col_ecp1 = col_cp1.metric("Sazbový diferenciál (ECB vs. Fed)", f"{diff_ecb_fed:+.2f} p.b.")
+            spread_bund_us = (bund10_curr - us10_curr) * 100.0
+            col_ecp2 = col_cp2.metric("Spread 10Y (Bund − US Treasury)", f"{spread_bund_us:+.0f} bps")
+            diff_inf_eu_us = cpi_eu_curr - cpi_us_curr
+            col_ecp3 = col_cp3.metric("Inflační diferenciál (EU − USA)", f"{diff_inf_eu_us:+.1f} p.b.")
+        else:
+            diff_fed_ecb = fed_upper_curr - ecb_dep_curr
+            col_ucp1 = col_cp1.metric("Sazbový diferenciál (Fed vs. ECB)", f"{diff_fed_ecb:+.2f} p.b.")
+            spread_us_bund_bps = (us10_curr - bund10_curr) * 100.0
+            col_ucp2 = col_cp2.metric("Spread 10Y (US Treasury − Bund)", f"{spread_us_bund_bps:+.0f} bps")
+            inf_diff_us = cpi_us_curr - cpi_eu_curr
+            col_ucp3 = col_cp3.metric("Inflační diferenciál (USA − EU)", f"{inf_diff_us:+.1f} p.b.")
 
-    elif is_eu:
-        st.markdown('<div class="section-header">Mezinárodní srovnání: Eurozóna vs. Spojené státy vs. Česká republika</div>', unsafe_allow_html=True)
-        st.caption("Porovnání úrokových politik (ECB vs. Fed vs. ČNB) a transatlantického výnosového spreadu (Německý Bund vs. US Treasury).")
-        col_ecp1, col_ecp2, col_ecp3 = st.columns(3)
-        diff_ecb_fed = ecb_dep_curr - fed_upper_curr
-        col_ecp1.metric("Sazbový diferenciál (ECB vs. Fed)", f"{diff_ecb_fed:+.2f} p.b.")
-        spread_bund_us = (bund10_curr - us10_curr) * 100.0
-        col_ecp2.metric("Transatlantický spread 10Y (Bund − US)", f"{spread_bund_us:+.0f} bps")
-        diff_inf_eu_us = cpi_eu_curr - cpi_us_curr
-        col_ecp3.metric("Inflační diferenciál (EU − USA)", f"{diff_inf_eu_us:+.1f} p.b.")
-        fig_eu_comp = build_international_spread_chart(df, comparison_type="EU")
-        render_plotly_chart(fig_eu_comp, key="chart_eu_intl_compare")
-
-    else:
-        st.markdown('<div class="section-header">Mezinárodní srovnání: Spojené státy vs. Eurozóna vs. ČR</div>', unsafe_allow_html=True)
-        st.caption("Porovnání úrokových sazeb centrálních bank (Fed vs. ECB vs. ČNB) a mezinárodního výnosového spreadu.")
-        col_ucp1, col_ucp2, col_ucp3 = st.columns(3)
-        diff_fed_ecb = fed_upper_curr - ecb_dep_curr
-        col_ucp1.metric("Úrokový diferenciál (Fed vs. ECB)", f"{diff_fed_ecb:+.2f} p.b.")
-        spread_us_bund_bps = (us10_curr - bund10_curr) * 100.0
-        col_ucp2.metric("Výnosový spread 10Y (US Treasury − Bund)", f"{spread_us_bund_bps:+.0f} bps")
-        inf_diff_us = cpi_us_curr - cpi_eu_curr
-        col_ucp3.metric("Inflační diferenciál (USA − EU)", f"{inf_diff_us:+.1f} p.b.")
-        fig_us_comp = build_international_spread_chart(df, comparison_type="US")
-        render_plotly_chart(fig_us_comp, key="chart_us_intl_compare")
+        fig_comp = build_international_spread_chart(df, comparison_type=comp_type)
+        render_plotly_chart(fig_comp, key="chart_intl_comparison_tab")
+        st.caption("📌 **Zdroj dat:** ČNB, Evropská centrální banka (ECB), Federal Reserve, Eurostat a U.S. Department of the Treasury")
 
 
 # =============================================================================
-# STRUKTURA: 10. TAB - VŠECHNY GRAFY
+# 5. KATEGORIE: DATA A EXPORT
 # =============================================================================
-with tab_all:
-    if is_cz:
-        st.markdown('<div class="section-header">Souhrnný přehled všech klíčových grafů České republiky</div>', unsafe_allow_html=True)
-        render_plotly_chart(fig_rates, key="all_cz_rates")
-        render_plotly_chart(fig_inf, key="all_cz_inf")
-        render_plotly_chart(fig_gdp, key="all_cz_gdp")
-        render_plotly_chart(fig_act_cz, key="all_cz_activity")
-        render_plotly_chart(fig_une, key="all_cz_une")
-
-    elif is_eu:
-        st.markdown('<div class="section-header">Souhrnný přehled všech klíčových grafů Evropské unie / Eurozóny</div>', unsafe_allow_html=True)
-        render_plotly_chart(fig_eu_rates, key="all_eu_rates")
-        render_plotly_chart(fig_eu_inf, key="all_eu_inf")
-        render_plotly_chart(fig_eu_gdp, key="all_eu_gdp")
-        render_plotly_chart(fig_act_eu, key="all_eu_activity")
-        render_plotly_chart(fig_eu_une, key="all_eu_une")
-
-    else:
-        st.markdown('<div class="section-header">Souhrnný přehled všech klíčových grafů Spojených států amerických</div>', unsafe_allow_html=True)
-        render_plotly_chart(fig_us_rates, key="all_us_rates")
-        render_plotly_chart(fig_us_inf, key="all_us_inf")
-        render_plotly_chart(fig_us_gdp, key="all_us_gdp")
-        render_plotly_chart(fig_act_us, key="all_us_activity")
-        render_plotly_chart(fig_us_une, key="all_us_une")
-
-
-# =============================================================================
-# STRUKTURA: 11. TAB - DATA A EXPORT
-# =============================================================================
-with tab_table:
+with main_tab_export:
     st.markdown(f'<div class="section-header">Datový průzkumník a export ({region_label})</div>', unsafe_allow_html=True)
+    st.caption("Interaktivní tabulkový přehled všech vybraných časových řad připravený pro export do formátu CSV.")
     render_dataframe(df_export_active)
     csv_bytes_active = df_export_active.to_csv(index=False, sep=";", decimal=",").encode("utf-8-sig")
     st.download_button(
@@ -3475,5 +2903,6 @@ with tab_table:
         data=csv_bytes_active,
         file_name=f"makro_data_{region_label}_{datetime.now().strftime('%Y%m%d')}.csv",
         mime="text/csv",
-        key=f"btn_dl_macro_{region_label.lower()}"
+        key=f"btn_dl_macro_{region_label.lower()}_active"
     )
+    st.caption("📌 **Zdroj dat:** ČNB, Eurostat, U.S. Treasury, Federal Reserve a Burza cenných papírů Praha")

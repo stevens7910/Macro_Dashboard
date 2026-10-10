@@ -1,8 +1,8 @@
-# 🇨🇿🇪🇺🇺🇸 Makroekonomický Monitor: ČR & Evropská unie & USA (Streamlit)
+# 🇨🇿🇪🇺🇺🇸 Makroekonomický & Tržní Monitor: ČR & Evropská unie & USA (Streamlit)
 
-Moderní, minimalistická a responzivní webová aplikace ve **Streamlit** inspirovaná designem finančních portálů (**Stock Analysis**). Slouží pro komplexní vizualizaci a analýzu klíčových makroekonomických ukazatelů České republiky, Evropské unie (Eurozóny) a Spojených států amerických v čase (období 2015–současnost).
+Moderní, minimalistická a responzivní webová aplikace ve **Streamlit** inspirovaná designem finančních portálů (**Stock Analysis**). Slouží pro komplexní vizualizaci a analýzu klíčových makroekonomických ukazatelů České republiky, Evropské unie (Eurozóny), Spojených států amerických a světových akciových trhů v čase (období 2015–současnost).
 
-Aplikace disponuje **okamžitým přepínačem mezi ČR, EU a USA** v pravém horním rohu, přičemž všechny tři ekonomiky mají **zrcadlově identickou strukturu dat**, ukazatele **jádrové inflace**, **spotřeby** a **průmyslové výroby**, vysokofrekvenční **denní devizové kurzy (FX)** včetně **PLN a GBP** a optimalizaci pro mobilní zařízení (PWA).
+Aplikace disponuje **okamžitým přepínačem mezi ČR, EU a USA** v pravém horním rohu, přičemž všechny tři ekonomiky mají **zrcadlově identickou strukturu dat**, ukazatele **jádrové inflace**, **spotřeby** a **průmyslové výroby**, vysokofrekvenční **denní devizové kurzy (FX)** včetně **PLN a GBP**, novou hlavní kategorii **Trhy** pro srovnání akciových indexů a optimalizaci pro mobilní zařízení (PWA).
 
 ---
 
@@ -15,30 +15,40 @@ Uživatel může v pravém horním rohu stránky jediným kliknutím přepínat 
 
 ---
 
-## 📊 Sledované ukazatele a shodná struktura (11 Záložek)
+## 📑 Agregované kategorie záložek (5 Hlavních bloků)
 
-Pro každou z ekonomik je k dispozici 11 logicky provázaných záložek:
+Původní široká nabídka záložek je nově přehledně zagregována do 5 tematických celků s tmavším podbarvením a podkategoriemi:
 
-1. **Sazby (ČNB / ECB / Fed)**: Klíčový měnověpolitický koridor centrální banky a referenční tržní sazby (PRIBOR, EURIBOR, SOFR).
-2. **Inflace (Headline & Jádrová inflace)**:
-   - Celková spotřebitelská inflace (CPI / HICP).
-   - **Jádrová inflace (Core CPI / Core HICP)** očištěná o volatilní položky (energie, potraviny).
-   - Reálná úroková míra a inflační cíl 2,0 %.
-3. **HDP**: Čtvrtletní reálný meziroční růst (%) a nominální objem (mld. CZK / EUR / USD).
-4. **Průmysl a spotřeba (Ekonomická aktivita)**:
-   - **Maloobchodní tržby (Spotřeba YoY %)**.
-   - **Index průmyslové produkce (YoY %)**.
-5. **Trh práce / Nezaměstnanost**: Obecná míra nezaměstnanosti (ILO / Eurostat / U-3 BLS) a tvorba pracovních míst.
-6. **Měnové kurzy (FX - Denní data)**:
-   - ČR: EUR/CZK, USD/CZK, **PLN/CZK**, **GBP/CZK**.
-   - EU: EUR/USD, EUR/CZK, **EUR/PLN**, **EUR/GBP**.
-   - USA: **Dolarový index (DXY)**, EUR/USD, **GBP/USD**, **USD/PLN**, USD/JPY.
-   - Možnost přepnutí mezi denními daty a měsíční agregací + okamžitý download CSV.
-7. **Veřejný dluh & Fiskální politika**: Konsolidovaný veřejný dluh k HDP (% HDP, maastrichtský limit 60 %) a kvartální saldo rozpočtu.
-8. **Výnosová křivka**: Časová struktura výnosů státních dluhopisů (ČR CZGB & IRS, EU Německé Bundy 2Y–30Y, USA Treasury 1M–30Y) a sklon křivky (10Y − 2Y).
-9. **Mezinárodní srovnání**: Sazbové diferenciály a mezinárodní sovereign výnosové spready (v bps).
-10. **Všechny grafy**: Konsolidovaný pohled na všechny klíčové grafy na jedné ploše.
-11. **Data a export**: Interaktivní tabulka s filtrovanými daty v českých názvech a jednoklikový CSV export.
+1. **💳 Finanční trhy & Měna**:
+   - **Měnověpolitické sazby**: ČNB (2T Repo, Lombard, Diskont, 3M PRIBOR) / ECB (Depozitní, MRO, Mezní zápůjční, 3M EURIBOR, €STR) / Fed (Fed Funds Upper/Lower, SOFR, 3M T-Bill).
+   - **Výnosová křivka**: Křivky státních dluhopisů (ČR CZGB & IRS 1Y–15Y, EU Německé Bundy 2Y–30Y, USA Treasury 1M–30Y) s meziročním srovnáním posunu křivky.
+   - **Měnové kurzy (FX)**: Interaktivní výběr měn (**CZK, EUR, USD, GBP, PLN**) pro čistý a přehledný graf, denní data vs. měsíční agregace, okamžitý download CSV.
+2. **🏛️ Reálná ekonomika & Práce**:
+   - **HDP**: Čtvrtletní reálný růst (YoY %) a nominální objem (mld. CZK / EUR / USD).
+   - **Inflace**: Celková inflace (Headline CPI / HICP) vs. **Jádrová inflace (Core CPI / Core HICP)**, reálná repo/depo sazba a inflační cíl 2,0 %.
+   - **Průmysl a spotřeba**: Maloobchodní tržby (spotřeba domácností YoY %) vs. Index průmyslové produkce (YoY %).
+   - **Trh práce**: Míra nezaměstnanosti (ČR / EU / USA U-3 & Nonfarm Payrolls).
+3. **📈 Trhy (Nová kategorie)**:
+   - **Vzájemné srovnání indexů**: Normalizovaná kumulativní výkonnost v % (od počátku vybraného období) nebo rebase na bázi 100 pro:
+     - 🇨🇿 **Index PX** (Burza cenných papírů Praha / BCPP)
+     - 🇪🇺 **Euro Stoxx 50** (Přední korporátní lídři Eurozóny)
+     - 🇺🇸 **S&P 500** (Široký benchmark amerického akciového trhu)
+     - 🇺🇸 **NASDAQ Composite** (Globální technologický a inovační lídr)
+   - **Detailní pohledy na jednotlivé indexy**: Samostatné cenové grafy, 12měsíční klouzavý průměr, rozpětí minima/maxima a statistiky zhodnocení.
+4. **🌐 Veřejné finance & Svět**:
+   - **Veřejný dluh & Saldo**: Konsolidovaný veřejný dluh k HDP (% HDP, maastrichtské pravidlo 60 %) a kvartální schodky/přebytky rozpočtu.
+   - **Mezinárodní srovnání**: Sovereign výnosové spready 10Y dluhopisů (ČR vs. Německo, ČR vs. USA, Německo vs. USA) v bazických bodech (bps).
+5. **📋 Data a export**:
+   - Datový průzkumník s českými popisky, filtrováním a okamžitým stažením kompletního datového setu ve formátu CSV.
+
+---
+
+## 🎨 Vylepšení uživatelského rozhraní (UI & UX)
+
+- **Podbarvené Summary KPI Boxy**: Metrické karty nad grafy mají výraznější a tmavší podklad (`#f1f5f9`), jemný rámeček (`#cbd5e1`) a stínování, díky čemuž lépe vystupují ze stránky.
+- **Skrytá detailní tabulka indikátorů**: Původní rozsáhlá tabulka metrik je ve výchozím stavu elegantně sbalena (`st.expander("📊 Zobrazit detailní přehled indikátorů a metrik", expanded=False)`) a nezabírá místo nad grafy.
+- **Filtrování měn na FX grafu**: Uživatel si může v multiselectu zvolit pouze ty měny, které ho zajímají (`CZK`, `USD`, `GBP`, `EUR`, `PLN`), což eliminuje přeplněnost grafu.
+- **Zdroje dat u každého grafu**: Každý graf obsahuje přesnou citaci primárního zdroje dat (např. *ČNB, Eurostat, ECB, U.S. Treasury, Fed, BCPP, STOXX Ltd., S&P Dow Jones, NASDAQ*).
 
 ---
 
@@ -48,7 +58,8 @@ Pro každou z ekonomik je k dispozici 11 logicky provázaných záložek:
   - **Česká národní banka (ČNB)**: Otevřená REST API pro denní devizové kurzy (EUR, USD, PLN, GBP, JPY, CHF) a časové řady měnových sazeb.
   - **Eurostat REST API**: JSON API pro celkovou i **jádrovou inflaci (Core HICP)**, HDP, míru nezaměstnanosti, veřejný dluh a 10Y referenční výnosy.
   - **U.S. Department of the Treasury (`home.treasury.gov`)**: Oficiální XML API pro denní výnosové křivky USA (1M až 30Y).
-  - **FRED API (St. Louis Fed)**: Volitelná integrace pro přímé ověřování amerických časových řad.
+  - **Yahoo Finance API**: Měsíční a denní kotace akciových indexů (^GSPC, ^IXIC, ^STOXX50E, ^PX).
+  - **FRED API (St. Louis Fed)**: Volitelná integrace pro americké časové řady.
 - **Odolný Fallback model**:
   - Při výpadku konektivity nebo nedostupnosti externích serverů se automaticky bez přerušení chodu aktivuje interní model 2015–2026 pro všechny ukazatele.
 
@@ -60,12 +71,11 @@ Pro každou z ekonomik je k dispozici 11 logicky provázaných záložek:
   - Automatické sbalení postranního panelu na mobilních telefonech (`initial_sidebar_state="auto"`).
   - Dotykové ovládání grafů Plotly bez nechtěného zasekávání posunu stránky (`scrollZoom: False`, `responsive: True`).
   - Flexibilní horizontální posun záložek (`overflow-x: auto`, dotykový kinetický scroll).
-  - Media queries pro malé displeje (360–420 px).
 - **Instalace na Android**:
   1. Otevřete aplikaci v mobilním Google Chrome.
   2. Klepněte na tři tečky vpravo nahoře.
   3. Zvolte **„Přidat na plochu“** (nebo *„Nainstalovat aplikaci“*).
-  4. Aplikace se spouští v celoobrazovkovém nativním režimu s vlastní ikonou.
+  4. Aplikace se spouští v celoobrazovkovém režimu s vlastní ikonou.
 
 ---
 

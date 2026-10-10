@@ -674,6 +674,42 @@ INDICATORS: Dict[str, IndicatorInfo] = {
         category="US Dluhopisový trh",
         description="Rozdíl mezi 10Y a 2Y americkým vládním výnosem (hlavní globální indikátor recese při inverzi).",
         region="US"
+    ),
+
+    # =========================================================================
+    # 📈 AKCIOVÉ TRHY & HLAVNÍ INDEXY (ČR, EU, USA)
+    # =========================================================================
+    "px_index": IndicatorInfo(
+        code="px_index",
+        name_cz="Index PX (Pražská burza)",
+        unit="bodů",
+        category="Akciové trhy",
+        description="Oficiální index Burzy cenných papírů Praha (BCPP / Prague Stock Exchange) zahrnující přední české blue-chip emise (ČEZ, Komerční banka, Erste, Moneta).",
+        region="CZ"
+    ),
+    "stoxx50_index": IndicatorInfo(
+        code="stoxx50_index",
+        name_cz="Euro Stoxx 50",
+        unit="bodů",
+        category="Akciové trhy",
+        description="Přední evropský akciový index 50 nejvýznamnějších korporací z 8 zemí Eurozóny (STOXX Ltd.).",
+        region="EU"
+    ),
+    "sp500_index": IndicatorInfo(
+        code="sp500_index",
+        name_cz="Index S&P 500",
+        unit="bodů",
+        category="Akciové trhy",
+        description="Standard & Poor's 500 – referenční index amerického akciového trhu reprezentující 500 největších veřejně obchodovaných společností v USA.",
+        region="US"
+    ),
+    "nasdaq_index": IndicatorInfo(
+        code="nasdaq_index",
+        name_cz="NASDAQ Composite",
+        unit="bodů",
+        category="Akciové trhy",
+        description="Vlajkový technologický index burzy NASDAQ zahrnující více než 3 000 amerických i mezinárodních společností.",
+        region="US"
     )
 }
 
@@ -681,6 +717,7 @@ INDICATORS: Dict[str, IndicatorInfo] = {
 CZ_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.region == "CZ"}
 EU_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.region == "EU"}
 US_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.region == "US"}
+MARKET_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.category == "Akciové trhy"}
 
 
 class DataLoader:
@@ -1129,7 +1166,42 @@ class DataLoader:
         return pd.DataFrame(records)
 
     # =========================================================================
-    # 5. HISTORICKÝ FALLBACK MODEL (2015–2026: ČR, EU a USA)
+    # 5. LIVE API: YAHOO FINANCE (Akciové indexy S&P 500, NASDAQ, Euro Stoxx 50)
+    # =========================================================================
+
+    def fetch_stock_indices(self) -> pd.DataFrame:
+        """Stáhne historické kurzy hlavních světových akciových indexů z Yahoo Finance."""
+        tickers = {
+            "sp500_index": "%5EGSPC",
+            "nasdaq_index": "%5EIXIC",
+            "stoxx50_index": "%5ESTOXX50E"
+        }
+        dfs = []
+        for col_name, sym in tickers.items():
+            try:
+                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=12y&interval=1mo"
+                r = requests.get(url, headers=self.headers, timeout=self.timeout)
+                if r.status_code == 200:
+                    res = r.json().get("chart", {}).get("result")
+                    if res and "timestamp" in res[0]:
+                        ts = pd.to_datetime(res[0]["timestamp"], unit="s").tz_localize(None).floor("D")
+                        quotes = res[0]["indicators"]["quote"][0].get("close", [])
+                        if quotes and len(quotes) == len(ts):
+                            sdf = pd.DataFrame({"date": ts, col_name: quotes}).dropna().drop_duplicates("date")
+                            dfs.append(sdf)
+            except Exception as e:
+                logger.warning("Chyba při stahování indexu %s (%s): %s", col_name, sym, e)
+
+        if not dfs:
+            raise ValueError("Nepodařilo se stáhnout žádné akciové indexy z Yahoo Finance.")
+
+        res_df = dfs[0]
+        for d in dfs[1:]:
+            res_df = pd.merge(res_df, d, on="date", how="outer")
+        return res_df.sort_values("date").reset_index(drop=True)
+
+    # =========================================================================
+    # 6. HISTORICKÝ FALLBACK MODEL (2015–2026: ČR, EU a USA)
     # =========================================================================
 
     def generate_fallback_daily_fx(self) -> pd.DataFrame:
@@ -1537,7 +1609,78 @@ class DataLoader:
         df_us_curve_m = pd.DataFrame(us_curve_records)
 
         # ---------------------------------------------------------------------
-        # D. DENNÍ DEVÍZOVÝ DATASET A MĚSÍČNÍ ALIGNMENT
+        # D. AKCIOVÉ INDEXY (S&P 500, NASDAQ, Euro Stoxx 50, Index PX 2015–2026)
+        # ---------------------------------------------------------------------
+        px_series = []
+        stoxx50_series = []
+        sp500_series = []
+        nasdaq_series = []
+
+        for d in dates_m:
+            yr, mo = d.year, d.month
+
+            # S&P 500
+            if yr == 2015: sp = 2050 + (mo - 6) * 15
+            elif yr == 2016: sp = 2000 + (mo / 12) * 240
+            elif yr == 2017: sp = 2270 + (mo / 12) * 400
+            elif yr == 2018: sp = 2750 - (250 if mo >= 10 else 0)
+            elif yr == 2019: sp = 2600 + (mo / 12) * 630
+            elif yr == 2020: sp = 3250 if mo < 3 else (2580 if mo == 3 else 2900 + (mo - 4) * 110)
+            elif yr == 2021: sp = 3800 + (mo / 12) * 960
+            elif yr == 2022: sp = 4500 - (mo / 12) * 700
+            elif yr == 2023: sp = 3900 + (mo / 12) * 870
+            elif yr == 2024: sp = 4850 + (mo / 12) * 1050
+            elif yr == 2025: sp = 5900 + (mo / 12) * 250
+            else: sp = 6150 + (mo / 12) * 100
+            sp500_series.append(round(sp, 1))
+
+            # NASDAQ Composite
+            if yr == 2015: nq = 4750 + (mo - 6) * 40
+            elif yr == 2016: nq = 4800 + (mo / 12) * 600
+            elif yr == 2017: nq = 5500 + (mo / 12) * 1400
+            elif yr == 2018: nq = 7200 - (600 if mo >= 10 else 0)
+            elif yr == 2019: nq = 7000 + (mo / 12) * 2000
+            elif yr == 2020: nq = 9100 if mo < 3 else (7600 if mo == 3 else 8800 + (mo - 4) * 450)
+            elif yr == 2021: nq = 13200 + (mo / 12) * 2450
+            elif yr == 2022: nq = 15000 - (mo / 12) * 4500
+            elif yr == 2023: nq = 11000 + (mo / 12) * 4000
+            elif yr == 2024: nq = 15200 + (mo / 12) * 3600
+            elif yr == 2025: nq = 19000 + (mo / 12) * 1000
+            else: nq = 20200 + (mo / 12) * 400
+            nasdaq_series.append(round(nq, 1))
+
+            # Euro Stoxx 50
+            if yr == 2015: sx = 3300 + (mo - 6) * 20
+            elif yr == 2016: sx = 3050 + (mo / 12) * 240
+            elif yr == 2017: sx = 3350 + (mo / 12) * 160
+            elif yr == 2018: sx = 3400 - (mo / 12) * 400
+            elif yr == 2019: sx = 3100 + (mo / 12) * 650
+            elif yr == 2020: sx = 3700 if mo < 3 else (2800 if mo == 3 else 3200 + (mo - 4) * 70)
+            elif yr == 2021: sx = 3600 + (mo / 12) * 700
+            elif yr == 2022: sx = 4200 - (mo / 12) * 400
+            elif yr == 2023: sx = 3900 + (mo / 12) * 620
+            elif yr == 2024: sx = 4500 + (mo / 12) * 550
+            elif yr == 2025: sx = 5050 + (mo / 12) * 120
+            else: sx = 5180 + (mo / 12) * 50
+            stoxx50_series.append(round(sx, 1))
+
+            # PX Index (Pražská burza)
+            if yr == 2015: px = 950 + (mo - 6) * 10
+            elif yr == 2016: px = 900 + (mo / 12) * 30
+            elif yr == 2017: px = 940 + (mo / 12) * 140
+            elif yr == 2018: px = 1080 - (mo / 12) * 60
+            elif yr == 2019: px = 1020 + (mo / 12) * 100
+            elif yr == 2020: px = 1100 if mo < 3 else (790 if mo == 3 else 900 + (mo - 4) * 25)
+            elif yr == 2021: px = 1050 + (mo / 12) * 370
+            elif yr == 2022: px = 1420 - (mo / 12) * 220
+            elif yr == 2023: px = 1220 + (mo / 12) * 190
+            elif yr == 2024: px = 1430 + (mo / 12) * 180
+            elif yr == 2025: px = 1620 + (mo / 12) * 70
+            else: px = 1690 + (mo / 12) * 30
+            px_series.append(round(px, 1))
+
+        # ---------------------------------------------------------------------
+        # E. DENNÍ DEVÍZOVÝ DATASET A MĚSÍČNÍ ALIGNMENT
         # ---------------------------------------------------------------------
         df_daily_fx = self.generate_fallback_daily_fx()
         df_fx_m = pd.merge_asof(
@@ -1627,7 +1770,12 @@ class DataLoader:
             "gbp_usd": df_fx_m["gbp_usd"],
             "usd_jpy": df_fx_m["usd_jpy"],
             "usd_pln": df_fx_m["usd_pln"],
-            "usd_chf": df_fx_m["usd_chf"]
+            "usd_chf": df_fx_m["usd_chf"],
+            # Akciové trhy
+            "px_index": px_series,
+            "stoxx50_index": stoxx50_series,
+            "sp500_index": sp500_series,
+            "nasdaq_index": nasdaq_series
         }
         df_monthly = pd.DataFrame(df_monthly_data)
 
@@ -1714,7 +1862,12 @@ class DataLoader:
         )
 
         agg_rules: Dict[str, str] = {c: "mean" for c in df_monthly.columns if c not in ("date", "quarter")}
-        for col_last in ["repo_rate", "discount_rate", "lombard_rate", "ecb_deposit_rate", "fed_funds_upper", "fed_funds_lower", "eur_czk", "usd_czk", "pln_czk", "gbp_czk", "eur_usd", "dxy_index"]:
+        for col_last in [
+            "repo_rate", "discount_rate", "lombard_rate", "ecb_deposit_rate",
+            "fed_funds_upper", "fed_funds_lower", "eur_czk", "usd_czk",
+            "pln_czk", "gbp_czk", "eur_usd", "dxy_index",
+            "px_index", "stoxx50_index", "sp500_index", "nasdaq_index"
+        ]:
             if col_last in agg_rules:
                 agg_rules[col_last] = "last"
 
@@ -1841,6 +1994,14 @@ class DataLoader:
             logger.warning("Chyba US Treasury: %s", e)
             status_info["endpoints"]["U.S. Treasury"] = f"⚠️ Fallback ({type(e).__name__})"
 
+        # Yahoo Finance Akciové indexy (S&P 500, NASDAQ, Euro Stoxx 50)
+        try:
+            live_components["stocks"] = self.fetch_stock_indices()
+            status_info["endpoints"]["Akciové trhy (S&P 500, NASDAQ, Euro Stoxx 50)"] = "🟢 OK (Live Yahoo Finance)"
+        except Exception as e:
+            logger.warning("Chyba Akciové indexy: %s", e)
+            status_info["endpoints"]["Akciové trhy"] = f"⚠️ Fallback ({type(e).__name__})"
+
         # Sloučení komponent do finální matice
         final_df = base_df.copy()
 
@@ -1913,6 +2074,18 @@ class DataLoader:
                 final_df[col] = final_df[col].ffill().bfill()
             if "us_10y" in final_df.columns and "us_2y" in final_df.columns:
                 final_df["us_spread_10y_2y"] = np.round(final_df["us_10y"] - final_df["us_2y"], 2)
+
+        if "stocks" in live_components:
+            df_st = live_components["stocks"]
+            st_cols = [c for c in df_st.columns if c != "date"]
+            df_st_agg = df_st.set_index("date").resample(OFFSET_MONTH_END if frequency == "M" else OFFSET_QUARTER_END).last().reset_index()
+            final_df = pd.merge(final_df, df_st_agg, on="date", how="left", suffixes=("", "_live"))
+            for col in st_cols:
+                live_c = f"{col}_live"
+                if live_c in final_df.columns:
+                    final_df[col] = final_df[live_c].combine_first(final_df[col])
+                    final_df = final_df.drop(columns=[live_c])
+                final_df[col] = final_df[col].ffill().bfill()
 
         # Kontrola integrity všech definovaných indikátorů
         for ind_key in INDICATORS.keys():
