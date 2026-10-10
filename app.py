@@ -59,6 +59,18 @@ except (ImportError, ModuleNotFoundError):
 render_glossary_view = getattr(glossary_module, "render_glossary_view", None)
 GLOSSARY_ITEMS = getattr(glossary_module, "GLOSSARY_ITEMS", [])
 
+try:
+    import search_component
+except (ImportError, ModuleNotFoundError):
+    try:
+        import macro_dashboard.search_component as search_component
+    except (ImportError, ModuleNotFoundError):
+        import Macro_Dashboard.search_component as search_component
+
+handle_indicator_search_navigation = getattr(search_component, "handle_indicator_search_navigation", lambda: None)
+render_indicator_search_bar = getattr(search_component, "render_indicator_search_bar", lambda: None)
+render_scroll_anchor_effect = getattr(search_component, "render_scroll_anchor_effect", lambda: None)
+
 # =============================================================================
 # 1. KONFIGURACE STRÁNKY A STYLING
 # =============================================================================
@@ -69,6 +81,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="auto",  # Mobilně přívětivé: automatické sbalení na telefonu
 )
+
+# Zpracování vyhledávání z URL parametrů před jakýmkoliv vykreslením widgetů
+handle_indicator_search_navigation()
 
 CUSTOM_CSS = """
 <style>
@@ -579,6 +594,8 @@ def render_plotly_chart(fig: go.Figure, key: Optional[str] = None) -> None:
         "displayModeBar": False,
         "responsive": True
     }
+    if key:
+        st.markdown(f'<div id="{key}"></div>', unsafe_allow_html=True)
     try:
         st.plotly_chart(fig, width="stretch", key=key, config=chart_config)
     except (TypeError, ValueError):
@@ -611,21 +628,24 @@ st.markdown(
 )
 
 economy_options = ["🇨🇿 Česká republika", "🇪🇺 Evropská unie", "🇺🇸 Spojené státy"]
+if "macro_region_top_switch" not in st.session_state:
+    st.session_state["macro_region_top_switch"] = "🇨🇿 Česká republika"
+
 if hasattr(st, "segmented_control"):
     selected_economy = st.segmented_control(
         "Zvolte ekonomiku:",
         options=economy_options,
-        default="🇨🇿 Česká republika",
         key="macro_region_top_switch",
         label_visibility="collapsed"
     )
     if not selected_economy:
-        selected_economy = "🇨🇿 Česká republika"
+        selected_economy = st.session_state.get("macro_region_top_switch", "🇨🇿 Česká republika")
 else:
+    def_idx = economy_options.index(st.session_state["macro_region_top_switch"]) if st.session_state.get("macro_region_top_switch") in economy_options else 0
     selected_economy = st.radio(
         "Zvolte ekonomiku:",
         options=economy_options,
-        index=0,
+        index=def_idx,
         key="macro_region_top_switch",
         horizontal=True,
         label_visibility="collapsed"
@@ -688,6 +708,9 @@ if col_sb_nav1.button("📊 Monitor", use_container_width=True, type="secondary"
 if col_sb_nav2.button("📖 Glosář pojmů", use_container_width=True, type="primary" if is_in_glossary else "secondary", help="Otevře srozumitelný výkladový glosář všech makroekonomických pojmů a ukazatelů pro laiky i investory.", key="sb_nav_btn_glossary"):
     st.session_state["current_view"] = "glossary"
     st.rerun()
+
+# Vyhledávací pole pro indikátory s interaktivním našeptávačem (Command Palette / Search Drawer)
+render_indicator_search_bar()
 
 # 1. Výběr časového horizontu
 st.sidebar.markdown(
@@ -3292,26 +3315,44 @@ def get_indicators_catalog_df() -> pd.DataFrame:
 # 10. ZÁLOŽKY DASHBOARDU (6 KATEGORIÍ VČETNĚ METODICKÉHO KATALOGU)
 # =============================================================================
 
-main_tab_markets, main_tab_real, main_tab_stocks, main_tab_public, main_tab_export, main_tab_catalog = st.tabs([
+main_dashboard_tabs_list = [
     "💳 Finanční trhy & Měna",
     "🏛️ Reálná ekonomika & Práce",
     "📈 Trhy",
     "🌐 Veřejné finance & Svět",
     "📋 Data a export",
     "📖 Seznam ukazatelů & Zdroje"
-])
+]
+main_tabs_default = st.session_state.get("main_dashboard_tabs_selected")
+if main_tabs_default not in main_dashboard_tabs_list:
+    main_tabs_default = None
+
+main_tab_markets, main_tab_real, main_tab_stocks, main_tab_public, main_tab_export, main_tab_catalog = st.tabs(
+    main_dashboard_tabs_list,
+    default=main_tabs_default,
+    key="main_dashboard_tabs_widget"
+)
 
 
 # =============================================================================
 # 1. KATEGORIE: FINANČNÍ TRHY & MĚNA
 # =============================================================================
 with main_tab_markets:
-    sub_tab_rates, sub_tab_curve, sub_tab_fx, sub_tab_banking = st.tabs([
+    markets_subtabs_list = [
         f"Sazby ({'ČNB' if is_cz else ('ECB' if is_eu else 'Fed')})",
         f"Výnosová křivka & Spready ({'CZ' if is_cz else ('Bund' if is_eu else 'US')})",
         "Měnové kurzy (FX)",
         f"Bankovní sektor & Úvěry ({'ČR' if is_cz else ('Eurozóna' if is_eu else 'USA')})"
-    ])
+    ]
+    markets_subtab_default = st.session_state.get("sub_tab_markets_selected")
+    if markets_subtab_default not in markets_subtabs_list:
+        markets_subtab_default = None
+
+    sub_tab_rates, sub_tab_curve, sub_tab_fx, sub_tab_banking = st.tabs(
+        markets_subtabs_list,
+        default=markets_subtab_default,
+        key="sub_tab_markets_widget"
+    )
 
     # 1.1 Úrokové sazby
     with sub_tab_rates:
@@ -3508,13 +3549,22 @@ with main_tab_markets:
 # 2. KATEGORIE: REÁLNÁ EKONOMIKA & PRÁCE
 # =============================================================================
 with main_tab_real:
-    sub_tab_leading, sub_tab_gdp, sub_tab_inf, sub_tab_act, sub_tab_labor = st.tabs([
+    real_subtabs_list = [
         "Předstihové ukazatele & Sentiment",
         "HDP",
         f"Inflace ({'CPI' if not is_eu else 'HICP'})",
         "Průmysl a spotřeba",
         "Trh práce & Mzdy"
-    ])
+    ]
+    real_subtab_default = st.session_state.get("sub_tab_real_selected")
+    if real_subtab_default not in real_subtabs_list:
+        real_subtab_default = None
+
+    sub_tab_leading, sub_tab_gdp, sub_tab_inf, sub_tab_act, sub_tab_labor = st.tabs(
+        real_subtabs_list,
+        default=real_subtab_default,
+        key="sub_tab_real_widget"
+    )
 
     # 2.1 Předstihové ukazatele & Sentiment
     with sub_tab_leading:
@@ -3705,14 +3755,23 @@ with main_tab_real:
 # 3. KATEGORIE: TRHY (AKCIOVÉ INDEXY & VZÁJEMNÉ SROVNÁNÍ)
 # =============================================================================
 with main_tab_stocks:
-    sub_tab_stock_cmp, sub_tab_px, sub_tab_stoxx, sub_tab_sp500, sub_tab_nasdaq, sub_tab_vix = st.tabs([
+    stocks_subtabs_list = [
         "📊 Vzájemné srovnání indexů",
         "🇨🇿 Index PX (Pražská burza)",
         "🇪🇺 Euro Stoxx 50",
         "🇺🇸 S&P 500",
         "🇺🇸 NASDAQ Composite",
         "⚡ Index volatility VIX (Tržní riziko)"
-    ])
+    ]
+    stocks_subtab_default = st.session_state.get("sub_tab_stocks_selected")
+    if stocks_subtab_default not in stocks_subtabs_list:
+        stocks_subtab_default = None
+
+    sub_tab_stock_cmp, sub_tab_px, sub_tab_stoxx, sub_tab_sp500, sub_tab_nasdaq, sub_tab_vix = st.tabs(
+        stocks_subtabs_list,
+        default=stocks_subtab_default,
+        key="sub_tab_stocks_widget"
+    )
 
     # 3.1 Vzájemné srovnání indexů
     with sub_tab_stock_cmp:
@@ -3856,11 +3915,20 @@ with main_tab_stocks:
 # 4. KATEGORIE: VEŘEJNÉ FINANCE & SVĚT
 # =============================================================================
 with main_tab_public:
-    sub_tab_debt, sub_tab_external, sub_tab_intl = st.tabs([
+    public_subtabs_list = [
         "Veřejný dluh",
         f"Vnější rovnováha & Zahraniční obchod ({'ČR' if is_cz else ('Eurozóna' if is_eu else 'USA')})",
         "Mezinárodní srovnání"
-    ])
+    ]
+    public_subtab_default = st.session_state.get("sub_tab_public_selected")
+    if public_subtab_default not in public_subtabs_list:
+        public_subtab_default = None
+
+    sub_tab_debt, sub_tab_external, sub_tab_intl = st.tabs(
+        public_subtabs_list,
+        default=public_subtab_default,
+        key="sub_tab_public_widget"
+    )
 
     # 4.1 Veřejný dluh & Saldo rozpočtu
     with sub_tab_debt:
@@ -4147,3 +4215,6 @@ with main_tab_catalog:
     with st.expander("📖 Prohlédnout kompletní Výkladový glosář makroekonomických pojmů přímo zde", expanded=False):
         if render_glossary_view:
             render_glossary_view()
+
+# Efekt plynulého odrolování ke grafu/kartě po vyhledání ukazatele
+render_scroll_anchor_effect()

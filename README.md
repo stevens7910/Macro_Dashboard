@@ -26,6 +26,21 @@ V levém postranním panelu se nachází dedikované tlačítko **📖 Glosář 
 
 ---
 
+## 🔍 Rychlé vyhledávání ukazatelů & Autocomplete Drawer (Ctrl + K / Cmd + K)
+
+Přímo v levém menu pod hlavní navigací je k dispozici vyhledávací pole s **interaktivním našeptávačem (Command Palette / Search Drawer)**:
+- **Okamžité vyvolání klávesovou zkratkou:** Stiskem `Ctrl + K` (na macOS `Cmd + K`) nebo kliknutím na vyhledávací pole se z jakéhokoliv místa aplikace otevře moderní vyhledávací drawer.
+- **Okamžité filtrování od 1. znaku:** Výsledky reagují v reálném čase bez nutnosti potvrzování formuláře či zbytečného prodlení.
+- **Fuzzy hledání bez ohledu na diakritiku a velikost písmen:** Inteligentní vyhledávač odstraňuje českou i cizí diakritiku (`cpi`, `repo`, `bund`, `pribor`, `uvery`, `spready`, `hdp`, `duvera` apod.).
+- **Prohledávání všech atributů a odborných synonym:** Hledá napříč názvy ukazatelů, kategoriemi, regiony i širokým rejstříkem finančních aliasů (např. *hypo*, *vix*, *s&p*, *bcpp*, *dxy*).
+- **Vizuální seskupení podle regionu:** Nalezené ukazatele jsou přehledně členěny do bloků **🇨🇿 Česká republika**, **🇪🇺 Evropská unie** a **🇺🇸 Spojené státy**.
+- **Informativní položky:** Každý výsledek zobrazuje tučný název se zvýrazněním shodujícího se textu, barevný badge regionu (`CZ`, `EU`, `USA`), název nadřazené kategorie a cestu v navigaci.
+- **Plná klávesnicová navigace:** Šipkami `Nahoru` / `Dolů` lze procházet výsledky s automatickým odrolováním, `Enter` potvrdí výběr a `Escape` drawer okamžitě zavře.
+- **Přejití na detail & Smooth scroll:** Po výběru indikátoru aplikace okamžitě přepne ekonomiku (ČR / EU / USA), aktivuje odpovídající hlavní záložku i podzáložku a plynule odroluje přímo ke grafu či kartě daného ukazatele.
+- **Prázdný stav:** Pokud dotazu neodpovídá žádný ukazatel, zobrazí se přehledná zpráva: *„Žádný indikátor nebyl nalezen.“*
+
+---
+
 ## 📑 Hlavní kategorie záložek (6 Tematických bloků)
 
 Všechny ukazatele (celkem **101 metrik**) jsou **trvale aktivovány a zobrazeny**:
