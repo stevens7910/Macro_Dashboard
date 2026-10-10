@@ -28,31 +28,40 @@ V levém postranním panelu se nachází dedikované tlačítko **📖 Glosář 
 
 ## 📑 Hlavní kategorie záložek (6 Tematických bloků)
 
-Všechny ukazatele jsou **trvale aktivovány a zobrazeny** (bez nutnosti jejich ruční aktivace v postranním panelu):
+Všechny ukazatele (celkem **101 metrik**) jsou **trvale aktivovány a zobrazeny**:
 
 1. **💳 Finanční trhy & Měna**:
    - **Měnověpolitické sazby**: ČNB (2T Repo, Lombard, Diskont, 3M PRIBOR) / ECB (Depozitní, MRO, Mezní zápůjční, 3M EURIBOR, €STR) / Fed (Fed Funds Upper/Lower, SOFR, 3M T-Bill).
-   - **Výnosová křivka**: Křivky státních dluhopisů (ČR CZGB & IRS 1Y–15Y, EU Německé Bundy 2Y–30Y, USA Treasury 1M–30Y) s meziročním srovnáním posunu křivky.
-   - **Měnové kurzy (FX)**: Interaktivní výběr měn (**CZK, EUR, USD, GBP, PLN**) pro čistý a přehledný graf, denní data vs. měsíční agregace, okamžitý download CSV.
+   - **Výnosová křivka & Spready**: Křivky státních dluhopisů (ČR CZGB & IRS 1Y–15Y, EU Německé Bundy 2Y–30Y, USA Treasury 1M–30Y) s meziročním posunem. Doplňkově **Kreditní spread 10Y CZGB vs. 10Y Bund**, **Asset Swap Spread (ASW 10Y CZK)** a periferní **Rizikový spread Itálie vs. Německo (10Y BTP − Bund)**.
+   - **Měnové kurzy (FX)**: Interaktivní výběr měn (**CZK, EUR, USD, GBP, PLN**) pro čistý graf, denní data vs. měsíční agregace, okamžitý download CSV.
+   - **Bankovní sektor & Úvěry**: Průměrná úroková sazba nových hypoték (% p.a.), měsíční objem nových hypoték (mld. Kč), meziroční růst korporátních úvěrů (YoY %) a měnový agregát M2 (YoY %).
+
 2. **🏛️ Reálná ekonomika & Práce**:
+   - **Předstihové ukazatele & Sentiment**: S&P Global PMI v průmyslu ČR, souhrnný konjunkturální indikátor ČSÚ (důvěra podnikatelů a spotřebitelů), Composite PMI Eurozóny, německý Ifo index podnikatelského klimatu, americké ISM Manufacturing PMI, ISM Services PMI a University of Michigan Index spotřebitelského sentimentu.
    - **HDP**: Čtvrtletní reálný růst (YoY %) a nominální objem (mld. CZK / EUR / USD).
    - **Inflace**: Celková inflace (Headline CPI / HICP) vs. **Jádrová inflace (Core CPI / Core HICP)**, reálná repo/depo sazba a inflační cíl 2,0 %.
    - **Průmysl a spotřeba**: Maloobchodní tržby (spotřeba domácností YoY %) vs. Index průmyslové produkce (YoY %).
-   - **Trh práce**: Míra nezaměstnanosti (ČR / EU / USA U-3 & Nonfarm Payrolls).
-3. **📈 Trhy (Akciové indexy)**:
+   - **Trh práce & Mzdy**: Míra nezaměstnanosti (ČR / EU / USA U-3 & NFP) doplněná o **průměrnou nominální hrubou mzdu ČR (YoY)**, **průměrnou reálnou mzdu ČR (YoY)**, **sjednané mzdy v Eurozóně (ECB Negotiated Wages YoY)** a **průměrnou hodinovou mzdu v USA (Average Hourly Earnings YoY)**.
+
+3. **📈 Trhy (Akciové indexy & Riziko)**:
    - **Vzájemné srovnání indexů**: Normalizovaná kumulativní výkonnost v % (od počátku vybraného období) nebo rebase na bázi 100 pro:
      - 🇨🇿 **Index PX** (Burza cenných papírů Praha / BCPP)
      - 🇪🇺 **Euro Stoxx 50** (Přední korporátní lídři Eurozóny)
      - 🇺🇸 **S&P 500** (Široký benchmark amerického akciového trhu)
      - 🇺🇸 **NASDAQ Composite** (Globální technologický a inovační lídr)
-   - **Detailní pohledy na jednotlivé indexy**: Samostatné cenové grafy, 12měsíční klouzavý průměr, rozpětí minima/maxima a statistiky zhodnocení.
+   - **Detailní pohledy na jednotlivé indexy**: Samostatné cenové grafy, 12měsíční klouzavý průměr, minima/maxima a statistiky zhodnocení.
+   - **⚡ Index volatility VIX (Tržní sentiment a riziko)**: Cboe Volatility Index („Index strachu“) s barevnými zónami sentimentu (< 15 klid/sebeuspokojení, 15–20 normální rozmezí, 20–30 zvýšená nervozita, > 30 tržní panika/stres).
+
 4. **🌐 Veřejné finance & Svět**:
    - **Veřejný dluh & Saldo**: Konsolidovaný veřejný dluh k HDP (% HDP, maastrichtské pravidlo 60 %) a kvartální schodky/přebytky rozpočtu.
-   - **Mezinárodní srovnání**: Sovereign výnosové spready 10Y dluhopisů (ČR vs. Německo, ČR vs. USA, Německo vs. USA) v bazických bodech (bps).
+   - **Vnější rovnováha & Zahraniční obchod**: Měsíční saldo zahraničního obchodu ČSÚ (mld. Kč) v kombinaci s podílem běžného účtu platební bilance k HDP (Current Account % HDP).
+   - **Mezinárodní srovnání**: Sovereign výnosové spready 10Y dluhopisů (ČR vs. Německo, ČR vs. USA, Německo vs. USA) a sazbové diferenciály v bazických bodech (bps).
+
 5. **📋 Data a export**:
    - Datový průzkumník s českými popisky, filtrováním a okamžitým stažením kompletního datového setu ve formátu CSV.
+
 6. **📖 Seznam ukazatelů & Zdroje (Katalog metadat)**:
-   - Strukturovaný katalog všech 80+ makroekonomických ukazatelů s filtry podle země, kategorie a fulltextovým vyhledáváním.
+   - Strukturovaný katalog všech **101 makroekonomických a tržních ukazatelů** s filtry podle země, kategorie a fulltextovým vyhledáváním.
    - U každého indikátoru je uveden kód, jednotka, periodicita, oficiální primární datový zdroj a metodická definice.
    - Možnost stažení kompletního katalogu metadat do CSV.
 

@@ -801,6 +801,368 @@ GLOSSARY_ITEMS: List[GlossaryItem] = [
         ),
         primary_source="Ministerstvo financí ČR (Zpráva o řízení státního dluhu)",
         frequency="Kvartální a roční zprávy MF ČR"
+    ),
+
+    # =========================================================================
+    # 6. PŘEDSTIHOVÉ UKAZATELE, MZDY, BANKOVNÍ SEKTOR & TRŽNÍ SENTIMENT
+    # =========================================================================
+    GlossaryItem(
+        term="PMI v průmyslu ČR (S&P Global)",
+        category="Předstihové ukazatele & Sentiment",
+        region="ČR",
+        simple_explanation=(
+            "Měsíční index nákupních manažerů v českém zpracovatelském průmyslu. Funguje jako nejrychlejší seismograf: manažeři velkých továren "
+            "odpovídají, zda jim přibývají zakázky, jak vyrábí a zda nabírají lidi. Hranice 50 bodů je zlomová: nad 50 značí růst a optimismus, "
+            "pod 50 útlum a pokles výroby."
+        ),
+        economic_meaning=(
+            "Purchasing Managers' Index (PMI) je difúzní index vypočítávaný společností S&P Global na základě váženého průměru nových objednávek (30 %), "
+            "produkce (25 %), zaměstnanosti (20 %), dodacích lhůt (15 %) a zásob nákupu (10 %). Vykazuje vysokou korelaci s budoucím HDP a průmyslovou výrobou s předstihem 1 až 2 měsíců."
+        ),
+        practical_impact=(
+            "Varuje investory a firmy před blížícím se ochlazením ekonomiky dříve než oficiální data ČSÚ. Pomáhá podnikům plánovat nákup zásob a rozpočty."
+        ),
+        primary_source="S&P Global Czech Republic Manufacturing PMI",
+        frequency="Měsíčně (vždy první pracovní den v měsíci)"
+    ),
+    GlossaryItem(
+        term="Důvěra podnikatelů a spotřebitelů (ČSÚ)",
+        category="Předstihové ukazatele & Sentiment",
+        region="ČR",
+        simple_explanation=(
+            "Oficiální průzkum ČSÚ mezi tisíci českými firmami a domácnostmi. Zjišťuje, jak podnikatelé vidí poptávku po svých výrobcích a jak se rodiny "
+            "dívají na svou finanční situaci – zda se bojí zdražování, ztráty práce a zda plánují velké nákupy."
+        ),
+        economic_meaning=(
+            "Souhrnný indikátor důvěry (Economic Sentiment Indicator) harmonizovaný s metodikou Evropské komise. Skládá se z podnikatelského sentimentu "
+            "(průmysl, stavebnictví, obchod, služby s vahou 80 %) a spotřebitelské důvěry (váha 20 %). Dlouhodobý průměr je normalizován na bázi 100 bodů."
+        ),
+        practical_impact=(
+            "Růst spotřebitelské důvěry předznamenává vyšší ochotu lidí utrácet a oživení tržeb v obchodech; propad důvěry vede k preventivnímu spoření a odkládání investic."
+        ),
+        primary_source="Český statistický úřad (ČSÚ – Konjunkturální průzkum)",
+        frequency="Měsíčně (kolem 24. dne v měsíci)"
+    ),
+    GlossaryItem(
+        term="Průměrná hrubá mzda nominálně (YoY)",
+        category="Trh práce & Mzdy",
+        region="ČR",
+        simple_explanation=(
+            "O kolik procent vzrostla průměrná hrubá výplata zaměstnanců v Česku oproti stejnému období minulého roku, před odečtením inflace a daní. "
+            "Udává, kolik peněz navíc lidé dostali na svých výplatních páskách."
+        ),
+        economic_meaning=(
+            "Meziroční nominální tempo růstu průměrné hrubé měsíční mzdy přepočtené na plně zaměstnané osoby v národním hospodářství ČR. "
+            "Klíčový ukazatel mzdových nákladů firem a agregátní kupní síly."
+        ),
+        practical_impact=(
+            "Mzdový růst tlačí na růst cen služeb a spotřebitelskou inflaci (mzdově-inflační spirála), proto jej bedlivě sleduje ČNB při rozhodování o úrokových sazbách."
+        ),
+        primary_source="Český statistický úřad (ČSÚ – Vývoj mezd a zaměstnanosti)",
+        frequency="Čtvrtletně (počátkem března, června, září a prosince)"
+    ),
+    GlossaryItem(
+        term="Průměrná reálná mzda (YoY)",
+        category="Trh práce & Mzdy",
+        region="ČR",
+        simple_explanation=(
+            "Růst mzdy očištěný o inflaci. Ukazuje skutečnou změnu životní úrovně – tedy zda si za svou výplatu můžete reálně koupit více rohlíků, benzínu "
+            "a služeb než loni. Pokud mzdy vzrostou o 7 %, ale inflace je 10 %, reálná mzda klesla o 3 % a vy jste zchudli."
+        ),
+        economic_meaning=(
+            "Poměr indexu nominální mzdy k indexu spotřebitelských cen (CPI). Kladná hodnota znamená růst reálného disponibilního důchodu a blahobytu, "
+            "záporná hodnota eroduje kupní sílu obyvatelstva."
+        ),
+        practical_impact=(
+            "V letech 2022–2023 zažilo Česko historický propad reálných mezd o více než 8 %, což vedlo k propadu maloobchodních tržeb; návrat do plusu v roce 2024 obnovil růst spotřeby."
+        ),
+        primary_source="Český statistický úřad (ČSÚ)",
+        frequency="Čtvrtletně"
+    ),
+    GlossaryItem(
+        term="Nové hypotéky – objem a průměrná sazba",
+        category="Bankovní sektor & Úvěry",
+        region="ČR",
+        simple_explanation=(
+            "Kolik miliard korun banky v Česku za daný měsíc skutečně nově napůjčovaly lidem na nákup nemovitostí a za jaký průměrný úrok. "
+            "Nezahrnuje refinancování starých úvěrů, takže ukazuje čerstvou poptávku po vlastním bydlení."
+        ),
+        economic_meaning=(
+            "Statistika nových obchodů hypotečních úvěrů na bydlení fyzickým osobám sledovaná ČNB a ČBA. Odráží transmisní mechanismus sazeb ČNB do retailového "
+            "úvěrování, marže komerčních bank a aktivitu na realitním trhu."
+        ),
+        practical_impact=(
+            "Přímo ukazuje dostupnost bydlení a oživení či zamrznutí realitního trhu. Při sazbách přes 6 % v roce 2022 objemy spadly na třetinu, při poklesu k 4,5 % se trh znovu probouzí."
+        ),
+        primary_source="Česká bankovní asociace (ČBA Hypomonitor) & ČNB",
+        frequency="Měsíčně"
+    ),
+    GlossaryItem(
+        term="Korporátní úvěry – meziroční růst",
+        category="Bankovní sektor & Úvěry",
+        region="ČR",
+        simple_explanation=(
+            "Meziroční procentuální změna celkového objemu úvěrů, které banky půjčily podnikům a firmám v ČR. Zahrnuje jak korunové půjčky, tak úvěry v eurech."
+        ),
+        economic_meaning=(
+            "Tempo úvěrové expanze nefinančním podnikům z měnové statistiky ČNB. Ukazuje ochotu bank nést úvěrové riziko a apetit firem investovat "
+            "do nových technologií, hal a provozního kapitálu."
+        ),
+        practical_impact=(
+            "Vysoké úroky v CZK donutily české exportní firmy přejít na levnější eurové úvěry (euroizace firemního sektoru), což oslabilo účinnost zvyšování úrokových sazeb ČNB."
+        ),
+        primary_source="Česká národní banka (ARAD – Měnová statistika)",
+        frequency="Měsíčně"
+    ),
+    GlossaryItem(
+        term="Měnový agregát M2 (YoY)",
+        category="Měnová politika & Měnová zásoba",
+        region="ČR",
+        simple_explanation=(
+            "Růst celkového množství peněz v oběhu v české ekonomice. Zahrnuje hotovost v peněženkách, peníze na běžných účtech i termínované vklady "
+            "a spořicí účty se splatností do 2 let. Pokud množství peněz roste příliš rychle oproti tomu, kolik ekonomika vyrobí, hrozí inflace."
+        ),
+        economic_meaning=(
+            "Široká peněžní zásoba definovaná ČNB a ECB. Skládá se z úzkých peněz M1 (oběživo + jednodenní vklady) plus vkladů s dohodnutou splatností do 2 let "
+            "a s výpovědní lhůtou do 3 měsíců. Dle kvantitativní teorie peněz dlouhodobě determinuje cenovou hladinu."
+        ),
+        practical_impact=(
+            "Masivní nárůst M2 v letech 2020–2021 (přes 10 % ročně) v důsledku covidových stimulů a vládních deficitů položil základy pro následnou vysokou inflaci."
+        ),
+        primary_source="Česká národní banka (Statistika peněžního oběhu)",
+        frequency="Měsíčně"
+    ),
+    GlossaryItem(
+        term="Běžný účet platební bilance (k HDP)",
+        category="Vnější rovnováha & Mezinárodní obchod",
+        region="ČR",
+        simple_explanation=(
+            "Celkové účetní vysvědčení České republiky vůči zbytku světa vyjádřené v procentech HDP. Zahrnuje export a import zboží, služeb (např. IT, turismus), "
+            "ale i toky dividend zahraničním vlastníkům a dotace z EU. Kladná hodnota znamená, že Česko více vydělává v zahraničí než utrácí."
+        ),
+        economic_meaning=(
+            "Current Account Balance k HDP. Vyjadřuje národní úspory minus investice (S − I). Deficit znamená, že země je čistým dlužníkem vůči zahraničí "
+            "a musí jej profinancovat přílivem kapitálu na finančním účtu."
+        ),
+        practical_impact=(
+            "Hluboký schodek (např. -5,4 % HDP v roce 2022 vlivem drahého dovozu plynu a ropy) vytváří silný oslabující tlak na kurz české koruny; přebytek naopak korunu zpevňuje."
+        ),
+        primary_source="Česká národní banka (Platební bilance) & ČSÚ",
+        frequency="Kvartálně a měsíčně"
+    ),
+    GlossaryItem(
+        term="Bilance zahraničního obchodu ČSÚ",
+        category="Vnější rovnováha & Mezinárodní obchod",
+        region="ČR",
+        simple_explanation=(
+            "Rozdíl mezi hodnotou zboží vyvezeného z Česka do světa (např. auta Škoda, stroje, chemie) a hodnotou zboží dovezeného do Česka (ropa, plyn, elektronika, spotřební zboží). "
+            "Kladné číslo značí přebytek (vývoz > dovoz), záporné schodek."
+        ),
+        economic_meaning=(
+            "Měsíční saldo zahraničního obchodu se zbožím podle národního pojetí v miliardách Kč. Jako silně proexportní otevřená ekonomika Česko dlouhodobě "
+            "dosahuje vysokých přebytků v řádu 10–25 mld. Kč měsíčně."
+        ),
+        practical_impact=(
+            "Klíčový pilíř stability české koruny a motor HDP. Při energetické krizi v roce 2022 se bilance propadla do rekordního deficitu, v letech 2023–2024 se však vrátila k masivním přebytkům."
+        ),
+        primary_source="Český statistický úřad (ČSÚ – Přeshraniční statistika obchodu)",
+        frequency="Měsíčně (kolem 6. dne v měsíci)"
+    ),
+    GlossaryItem(
+        term="Kreditní spread 10Y CZGB vs. 10Y Bund",
+        category="Dluhopisový trh & Spready",
+        region="ČR & EU",
+        simple_explanation=(
+            "Rozdíl ve výnosu (úroku) mezi 10letým českým státním dluhopisem a nejbezpečnějším evropským německým dluhopisem (Bundem) měřený v bazických bodech "
+            "(100 bps = 1,00 %). Ukazuje, o kolik vyšší úrok musí Česko platit investorům oproti Německu."
+        ),
+        economic_meaning=(
+            "Sovereign yield spread. Reflektuje úrokový diferenciál mezi měnovými politikami ČNB a ECB, inflační prémii koruny a kreditní/zeměpisné riziko České republiky mimo eurozónu."
+        ),
+        practical_impact=(
+            "Vyšší spread zdražuje financování schodku českého státního rozpočtu na mezinárodním trhu, ale nabízí vyšší výnos konzervativním dluhopisovým investorům a penzijním fondům."
+        ),
+        primary_source="Ministerstvo financí ČR / Deutsche Bundesbank / Eurostat",
+        frequency="Denně (tržní kotace) a měsíčně"
+    ),
+    GlossaryItem(
+        term="Asset Swap Spread (ASW 10Y CZK)",
+        category="Dluhopisový trh & Spready",
+        region="ČR",
+        simple_explanation=(
+            "Rozdíl mezi výnosem 10letého českého státního dluhopisu a sazbou úrokového swapu (IRS) na mezibankovním trhu. Vyjadřuje, zda jsou státní dluhopisy "
+            "v porovnání s čistým bankovním trhem levné nebo drahé."
+        ),
+        economic_meaning=(
+            "Asset Swap (ASW) spread v bazických bodech měří prémii státního dluhopisu nad bezrizikovou křivkou úrokových swapů. Kladný ASW spread značí, "
+            "že dluhopis nese vyšší výnos než swap (přebytek nabídky dluhopisů státu), záporný značí vysokou poptávku po státním kolaterálu."
+        ),
+        practical_impact=(
+            "Standardní ukazatel pro správce dluhopisových portfolií, treasury oddělení bank a primární dealery při řízení rizika a arbitráži."
+        ),
+        primary_source="Mezibankovní trh úrokových swapů & MF ČR",
+        frequency="Denně a měsíčně"
+    ),
+    GlossaryItem(
+        term="Německý Ifo index podnikatelského klimatu",
+        category="Předstihové ukazatele & Sentiment",
+        region="EU",
+        simple_explanation=(
+            "Nejdůležitější barometr největší evropské ekonomiky – Německa. Každý měsíc mnichovský institut Ifo zpovídá 9 000 šéfů německých firem ze všech oborů. "
+            "Protože Německo je pro ČR klíčový obchodní partner (odebírá třetinu českého exportu), vývoj Ifo indexu přímo předpovídá, jak se bude dařit českému průmyslu."
+        ),
+        economic_meaning=(
+            "Ifo Geschäftsklimaindex vychází ze souběžného hodnocení aktuální obchodní situace firem a jejich očekávání na příštích 6 měsíců. Vykazuje mimořádně "
+            "vysokou spolehlivost při detekci recese a oživení v celém prostoru Eurozóny."
+        ),
+        practical_impact=(
+            "Při propadu německého Ifo indexu české exportní fabriky brzy pociťují úbytek zakázek na autodíly, ocel a stroje; růst Ifo je předzvěstí hospodářské expanze."
+        ),
+        primary_source="Ifo Institut Mnichov (ifo Geschäftsklimaindex)",
+        frequency="Měsíčně (kolem 25. dne v měsíci)"
+    ),
+    GlossaryItem(
+        term="Composite PMI Eurozóny",
+        category="Předstihové ukazatele & Sentiment",
+        region="EU",
+        simple_explanation=(
+            "Souhrnný index nákupních manažerů pro celou dvacítku zemí platících eurem (Eurozónu). Kombinuje data z průmyslových továren i firem poskytujících služby "
+            "(hotely, IT, doprava). Hodnota nad 50 bodů signalizuje expanzi, pod 50 hospodářský pokles Eurozóny."
+        ),
+        economic_meaning=(
+            "HCOB / S&P Global Flash Eurozone Composite PMI sestavovaný na bázi dotazníků z více než 5 000 podniků. Slouží jako bezprostřední 'nowcast' "
+            "kvartálního růstu HDP Eurozóny."
+        ),
+        practical_impact=(
+            "Rozhodující vodítko pro Radu guvernérů ECB při stanovení úrokových sazeb a pro devizové obchodníky s eurem (EUR/USD)."
+        ),
+        primary_source="S&P Global & Hamburg Commercial Bank (HCOB)",
+        frequency="Měsíčně (předběžný flash odhad kolem 22. dne, finální začátkem měsíce)"
+    ),
+    GlossaryItem(
+        term="Sjednané mzdy v Eurozóně (ECB YoY)",
+        category="Trh práce & Mzdy",
+        region="EU",
+        simple_explanation=(
+            "Oficiální ukazatel ECB sledující, jaký meziroční růst platů si zaměstnanci a odbory vyjednali v kolektivních smlouvách napříč zeměmi Eurozóny. "
+            "Ukazuje, jak silně tlačí rostoucí výplaty na náklady evropských firem."
+        ),
+        economic_meaning=(
+            "Euro Area Negotiated Wage Growth je vážený index smluvně dohodnutých mezd sledovaný Evropskou centrální bankou. Představuje hlavní indikátor "
+            "setrvačnosti jádrové inflace a inflace ve službách."
+        ),
+        practical_impact=(
+            "Pokud růst sjednaných mezd překračuje 3,5–4,0 % ročně, ECB se zdráhá snižovat úrokové sazby ze strachu před sekundárními inflačními dopady."
+        ),
+        primary_source="Evropská centrální banka (ECB Statistical Data Warehouse)",
+        frequency="Čtvrtletně"
+    ),
+    GlossaryItem(
+        term="Rizikový spread Itálie vs. Německo (10Y BTP - Bund)",
+        category="Dluhopisový trh & Spready",
+        region="EU",
+        simple_explanation=(
+            "Rozdíl mezi úrokem, který platí za půjčku na 10 let italská vláda (dluhopisy BTP) a německá vláda (Bund). Je to slavný 'teploměr finančního napětí v Evropě': "
+            "když roste, investoři se bojí vysokého italského dluhu a hrozby rozpadu eurozóny; když klesá, vládne klid."
+        ),
+        economic_meaning=(
+            "BTP-Bund yield spread v bazických bodech (bps). Ztělesňuje kreditní a fiskální riziko jihoevropské periferie Eurozóny a důvěru v transmisi jednotné měnové "
+            "politiky ECB. V krizi 2011–2012 dosáhl až 550 bps, v klidových časech se pohybuje kolem 110–140 bps."
+        ),
+        practical_impact=(
+            "Při prudkém rozšíření spreadu nad 200–250 bps je ECB připravena zasáhnout nákupem italských dluhopisů prostřednictvím nástroje TPI (Transmission Protection Instrument)."
+        ),
+        primary_source="MTS / Bloomberg / Deutsche Bundesbank & Banca d'Italia",
+        frequency="Denně a měsíčně"
+    ),
+    GlossaryItem(
+        term="ISM Index ve výrobě (Manufacturing PMI)",
+        category="Předstihové ukazatele & Sentiment",
+        region="USA",
+        simple_explanation=(
+            "Americký index nákupních manažerů ve zpracovatelském průmyslu od Institute for Supply Management. Jeden z celosvětově nejuznávanějších a nejdéle měřených "
+            "makroindikátorů na světě. Hranice 50 bodů odděluje expanzi od útlumu americké průmyslové mašinérie."
+        ),
+        economic_meaning=(
+            "ISM Manufacturing Index je difúzní index založený na měsíčním šetření nákupních manažerů více než 300 výrobních firem v USA. Sleduje nové zakázky, "
+            "produkci, zaměstnanost, dodávky od dodavatelů a zásoby."
+        ),
+        practical_impact=(
+            "Okamžitě po zveřejnění hýbe kurzem dolaru, akciemi na Wall Street a výnosy státních dluhopisů po celém světě. Hodnota pod 45 bodů v historii takřka vždy znamenala recesi amerického hospodářství."
+        ),
+        primary_source="Institute for Supply Management (ISM)",
+        frequency="Měsíčně (vždy první pracovní den v měsíci)"
+    ),
+    GlossaryItem(
+        term="ISM Index ve službách (Services PMI)",
+        category="Předstihové ukazatele & Sentiment",
+        region="USA",
+        simple_explanation=(
+            "Měsíční index nákupních manažerů v americkém sektoru služeb (banky, zdravotnictví, IT, maloobchod, logistika). Protože služby tvoří více než 75 % celé "
+            "ekonomiky USA, je tento index ještě důležitější pro celkový růst než výrobní index."
+        ),
+        economic_meaning=(
+            "ISM Services PMI (dříve Non-Manufacturing index). Měří aktivitu, zaměstnanost a cenové tlaky v nevýrobním sektoru americké ekonomiky. Hodnota nad 50 bodů značí růst."
+        ),
+        practical_impact=(
+            "Ukazuje odolnost amerického spotřebitele. Dokud se index služeb drží nad 50 body, americká ekonomika obvykle neupadá do recese ani při ochlazení těžkého průmyslu."
+        ),
+        primary_source="Institute for Supply Management (ISM)",
+        frequency="Měsíčně (třetí pracovní den v měsíci)"
+    ),
+    GlossaryItem(
+        term="Spotřebitelský sentiment (Univ. of Michigan)",
+        category="Předstihové ukazatele & Sentiment",
+        region="USA",
+        simple_explanation=(
+            "Legendární průzkum Michiganské univerzity měřící náladu a optimismus amerických rodin. Zjišťuje, jak lidé hodnotí své rodinné finance, zda očekávají zdražování "
+            "a zda považují současnost za vhodnou dobu pro nákup auta, domu či nábytku."
+        ),
+        economic_meaning=(
+            "University of Michigan Consumer Sentiment Index (MCSI) založený na 500 telefonických rozhovorech měsíčně. Součástí jsou také klíčová data o 1letých "
+            "a 5letých inflačních očekáváních spotřebitelů, která přímo sleduje americký Fed."
+        ),
+        practical_impact=(
+            "Americká spotřeba tvoří téměř 70 % HDP Spojených států. Propad sentimentu (např. v létě 2022 na historické dno 50 bodů vlivem benzínu za 5 USD/galon) spolehlivě tlumí budoucí útraty domácností."
+        ),
+        primary_source="University of Michigan (Surveys of Consumers)",
+        frequency="Měsíčně (předběžný odhad v polovině měsíce, finální na konci měsíce)"
+    ),
+    GlossaryItem(
+        term="Průměrná hodinová mzda USA (Average Hourly Earnings YoY)",
+        category="Trh práce & Mzdy",
+        region="USA",
+        simple_explanation=(
+            "O kolik procent vzrostla průměrná hodinová odměna amerických zaměstnanců v soukromém sektoru oproti stejnému měsíci minulého roku. Vychází každý měsíc "
+            "v ostře sledované zprávě spolu s počtem nových pracovních míst (NFP)."
+        ),
+        economic_meaning=(
+            "Average Hourly Earnings Total Private YoY od U.S. Bureau of Labor Statistics. Představuje primární indikátor mzdového tlaku a napětí na americkém trhu práce."
+        ),
+        practical_impact=(
+            "Když hodinové výdělky rostou rychleji než 4 % ročně, Fed se obává zakořenění inflace a drží úrokové sazby na vysokých úrovních déle; ochlazení k 3–3,5 % naopak otevírá dveře ke snižování sazeb."
+        ),
+        primary_source="U.S. Bureau of Labor Statistics (BLS – Employment Situation)",
+        frequency="Měsíčně (první pátek v měsíci)"
+    ),
+    GlossaryItem(
+        term="Index volatility VIX",
+        category="Tržní sentiment & Riziko",
+        region="USA & Globální",
+        simple_explanation=(
+            "Světově proslulý 'index strachu' na Wall Street. Měří očekávané kolísání (volatilitu) amerického akciového indexu S&P 500 v příštích 30 dnech, vypočítané z cen opcí. "
+            "Když na trzích panuje klid a růst, VIX je nízký (pod 15 bodů). Když přijde krach, válka nebo panika, VIX prudce vystřelí nahoru (nad 30 až 80 bodů)."
+        ),
+        economic_meaning=(
+            "Cboe Volatility Index (VIX) kalkulovaný Chicago Board Options Exchange. Je odvozen z cen nákupních (call) a prodejních (put) opcí na index S&P 500 "
+            "a reprezentuje roční směrodatnou odchylku očekávaného tržního pohybu pro 30denní horizont. Pásma: <15 (nízká volatilita/optimismus), 15–20 (normální stav), "
+            "20–30 (zvýšené riziko), >30 (tržní panika a likvidační výprodeje)."
+        ),
+        practical_impact=(
+            "Slouží jako pojistka a indikátor tržního stresu pro globální institucionální fondy. Známé investorské přísloví praví: 'Když je VIX vysoký, je čas nakupovat; když je VIX nízký, je čas dávat si pozor.'"
+        ),
+        primary_source="Chicago Board Options Exchange (Cboe) & Yahoo Finance",
+        frequency="Denně v reálném čase (intradenní kalkulace)"
     )
 ]
 

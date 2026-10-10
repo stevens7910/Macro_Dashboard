@@ -270,6 +270,94 @@ INDICATORS: Dict[str, IndicatorInfo] = {
         description="Sklon výnosové křivky (rozdíl mezi 10Y a 2Y výnosem). Záporná hodnota představuje inverzi křivky.",
         region="CZ"
     ),
+    "cz_pmi_manufacturing": IndicatorInfo(
+        code="cz_pmi_manufacturing",
+        name_cz="PMI v průmyslu ČR (S&P Global)",
+        unit="bodů",
+        category="Předstihové ukazatele",
+        description="Index nákupních manažerů v českém zpracovatelském průmyslu od S&P Global. Hodnota nad 50 bodů značí expanzi, pod 50 kontrakci odvětví.",
+        region="CZ"
+    ),
+    "cz_confidence_composite": IndicatorInfo(
+        code="cz_confidence_composite",
+        name_cz="Důvěra podnikatelů a spotřebitelů (ČSÚ)",
+        unit="body",
+        category="Předstihové ukazatele",
+        description="Souhrnný indikátor důvěry (konjunkturální průzkum ČSÚ) kombinující sentiment podnikatelů (průmysl, stavebnictví, obchod, služby) a spotřebitelů.",
+        region="CZ"
+    ),
+    "cz_nominal_wage_yoy": IndicatorInfo(
+        code="cz_nominal_wage_yoy",
+        name_cz="Průměrná hrubá mzda nominálně (YoY)",
+        unit="%",
+        category="Trh práce",
+        description="Meziroční nominální růst průměrné hrubé měsíční mzdy na přepočtené počty zaměstnanců v národním hospodářství ČR (ČSÚ).",
+        region="CZ"
+    ),
+    "cz_real_wage_yoy": IndicatorInfo(
+        code="cz_real_wage_yoy",
+        name_cz="Průměrná reálná mzda (YoY)",
+        unit="%",
+        category="Trh práce",
+        description="Meziroční reálná změna průměrné hrubé mzdy v ČR očištěná o inflaci měřenou indexem spotřebitelských cen (ČSÚ).",
+        region="CZ"
+    ),
+    "cz_mortgage_rate": IndicatorInfo(
+        code="cz_mortgage_rate",
+        name_cz="Nové hypotéky – objem a průměrná sazba",
+        unit="% / mld. Kč",
+        category="Bankovní sektor a úvěry",
+        description="Průměrná úroková sazba a celkový objem skutečně nově poskytnutých hypotečních úvěrů na bydlení bez refinancování (ČBA Hypomonitor / ČNB).",
+        region="CZ"
+    ),
+    "cz_corporate_loans_yoy": IndicatorInfo(
+        code="cz_corporate_loans_yoy",
+        name_cz="Korporátní úvěry – meziroční růst",
+        unit="%",
+        category="Bankovní sektor a úvěry",
+        description="Meziroční tempo růstu stavu bankovních úvěrů poskytnutých nefinančním podnikům v České republice (Měnová a finanční statistika ČNB).",
+        region="CZ"
+    ),
+    "cz_m2_growth_yoy": IndicatorInfo(
+        code="cz_m2_growth_yoy",
+        name_cz="Měnový agregát M2 (YoY)",
+        unit="%",
+        category="Měnová zásoba",
+        description="Meziroční růst peněžní zásoby M2 v ČR (oběživo, jednodenní vklady, vklady se splatností do 2 let a s výpovědní lhůtou do 3 měsíců – ČNB).",
+        region="CZ"
+    ),
+    "cz_current_account_gdp_pct": IndicatorInfo(
+        code="cz_current_account_gdp_pct",
+        name_cz="Běžný účet platební bilance (k HDP)",
+        unit="% HDP",
+        category="Vnější rovnováha",
+        description="Saldo běžného účtu platební bilance ČR v poměru k HDP vyjadřující vnější rovnováhu a mezinárodní toky zboží, služeb a výnosů (ČNB / ČSÚ).",
+        region="CZ"
+    ),
+    "cz_trade_balance_czk_bn": IndicatorInfo(
+        code="cz_trade_balance_czk_bn",
+        name_cz="Bilance zahraničního obchodu ČSÚ",
+        unit="mld. CZK",
+        category="Vnější rovnováha",
+        description="Měsíční saldo zahraničního obchodu se zbožím podle národního pojetí v miliardách Kč (Český statistický úřad).",
+        region="CZ"
+    ),
+    "czgb_bund_spread_10y": IndicatorInfo(
+        code="czgb_bund_spread_10y",
+        name_cz="Kreditní spread 10Y CZGB vs. 10Y Bund",
+        unit="bps",
+        category="Dluhopisový trh",
+        description="Výnosové rozpětí mezi 10letým českým vládním dluhopisem a německým referenčním Bundem v bazických bodech (bps).",
+        region="CZ"
+    ),
+    "cz_asw_10y_spread": IndicatorInfo(
+        code="cz_asw_10y_spread",
+        name_cz="Asset Swap Spread (ASW 10Y CZK)",
+        unit="bps",
+        category="Dluhopisový trh",
+        description="Asset swap spread 10letého státního dluhopisu CZGB vůči křivce úrokových swapů CZK IRS v bazických bodech (indikátor relativní hodnoty).",
+        region="CZ"
+    ),
 
     # =========================================================================
     # 🇪🇺 EVROPSKÁ UNIE / EUROZÓNA (EU)
@@ -448,6 +536,38 @@ INDICATORS: Dict[str, IndicatorInfo] = {
         unit="p.b.",
         category="EU Dluhopisový trh",
         description="Rozpětí mezi 10Y a 2Y německým státním výnosem (indikátor inverze v Eurozóně).",
+        region="EU"
+    ),
+    "eu_ifo_business_climate": IndicatorInfo(
+        code="eu_ifo_business_climate",
+        name_cz="Německý Ifo index podnikatelského klimatu",
+        unit="body",
+        category="EU Předstihové ukazatele",
+        description="Ifo Geschäftsklimaindex – přední barometr německé ekonomiky založený na měsíčním průzkumu mezi 9 000 podniky (Ifo Institut Mnichov).",
+        region="EU"
+    ),
+    "eu_composite_pmi": IndicatorInfo(
+        code="eu_composite_pmi",
+        name_cz="Composite PMI Eurozóny",
+        unit="body",
+        category="EU Předstihové ukazatele",
+        description="Souhrnný index nákupních manažerů Eurozóny kombinující výrobní sektor a služby (S&P Global / HCOB Flash Eurozone PMI).",
+        region="EU"
+    ),
+    "eu_negotiated_wages_yoy": IndicatorInfo(
+        code="eu_negotiated_wages_yoy",
+        name_cz="Sjednané mzdy v Eurozóně (ECB YoY)",
+        unit="%",
+        category="EU Trh práce",
+        description="Meziroční růst smluvně sjednaných mezd v Eurozóně sledovaný ECB jako klíčový signál pro mzdově-inflační dynamiku a rozhodování o sazbách.",
+        region="EU"
+    ),
+    "eu_btp_bund_spread": IndicatorInfo(
+        code="eu_btp_bund_spread",
+        name_cz="Rizikový spread Itálie vs. Německo (10Y BTP - Bund)",
+        unit="bps",
+        category="EU Dluhopisový trh",
+        description="Výnosový spread mezi 10letým italským státním dluhopisem (BTP) a německým Bundem v bazických bodech (barometr periferního rizika Eurozóny).",
         region="EU"
     ),
 
@@ -678,6 +798,46 @@ INDICATORS: Dict[str, IndicatorInfo] = {
         description="Rozdíl mezi 10Y a 2Y americkým vládním výnosem (hlavní globální indikátor recese při inverzi).",
         region="US"
     ),
+    "us_ism_manufacturing": IndicatorInfo(
+        code="us_ism_manufacturing",
+        name_cz="ISM Index ve výrobě (Manufacturing PMI)",
+        unit="body",
+        category="US Předstihové ukazatele",
+        description="Index nákupních manažerů v americkém výrobním sektoru od Institute for Supply Management (ISM). Hranice 50 bodů odděluje expanzi od útlumu.",
+        region="US"
+    ),
+    "us_ism_services": IndicatorInfo(
+        code="us_ism_services",
+        name_cz="ISM Index ve službách (Services PMI)",
+        unit="body",
+        category="US Předstihové ukazatele",
+        description="Index nákupních manažerů v sektoru služeb USA od Institute for Supply Management (ISM Non-Manufacturing PMI).",
+        region="US"
+    ),
+    "us_michigan_sentiment": IndicatorInfo(
+        code="us_michigan_sentiment",
+        name_cz="Spotřebitelský sentiment (Univ. of Michigan)",
+        unit="body",
+        category="US Předstihové ukazatele",
+        description="Index spotřebitelského sentimentu Michiganské univerzity (University of Michigan Consumer Sentiment Index) měřící náladu a očekávání amerických domácností.",
+        region="US"
+    ),
+    "us_hourly_earnings_yoy": IndicatorInfo(
+        code="us_hourly_earnings_yoy",
+        name_cz="Průměrná hodinová mzda USA (Average Hourly Earnings YoY)",
+        unit="%",
+        category="US Trh práce",
+        description="Meziroční růst průměrného hodinového výdělku zaměstnanců v soukromém nezemědělském sektoru USA (U.S. Bureau of Labor Statistics).",
+        region="US"
+    ),
+    "vix_index": IndicatorInfo(
+        code="vix_index",
+        name_cz="Index volatility VIX",
+        unit="body",
+        category="Tržní sentiment a riziko",
+        description="Cboe Volatility Index ('index strachu') měřící tržní očekávání 30denní volatility amerického akciového indexu S&P 500 implikované z cen opcí.",
+        region="US"
+    ),
 
     # =========================================================================
     # 📈 AKCIOVÉ TRHY & HLAVNÍ INDEXY (ČR, EU, USA)
@@ -720,7 +880,7 @@ INDICATORS: Dict[str, IndicatorInfo] = {
 CZ_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.region == "CZ"}
 EU_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.region == "EU"}
 US_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.region == "US"}
-MARKET_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.category == "Akciové trhy"}
+MARKET_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.category in ("Akciové trhy", "Tržní sentiment a riziko")}
 
 
 class DataLoader:
@@ -1180,7 +1340,8 @@ class DataLoader:
         tickers = {
             "sp500_index": "%5EGSPC",
             "nasdaq_index": "%5EIXIC",
-            "stoxx50_index": "%5ESTOXX50E"
+            "stoxx50_index": "%5ESTOXX50E",
+            "vix_index": "%5EVIX"
         }
         dfs = []
         for col_name, sym in tickers.items():
@@ -1277,6 +1438,18 @@ class DataLoader:
         ret_cz_series = []
         ind_cz_series = []
 
+        # Předstihové, mzdové, bankovní a vnější ukazatele ČR
+        cz_pmi_series = []
+        cz_conf_series = []
+        cz_nom_wage_series = []
+        cz_real_wage_series = []
+        cz_mort_rate_series = []
+        cz_mort_vol_series = []
+        cz_corp_loans_series = []
+        cz_m2_series = []
+        cz_ca_series = []
+        cz_trade_bal_series = []
+
         for d in dates_m:
             yr, mo = d.year, d.month
 
@@ -1365,6 +1538,140 @@ class DataLoader:
             ret_cz_series.append(round(ret_cz, 1))
             ind_cz_series.append(round(ind_cz, 1))
 
+            # Předstihové ukazatele ČR: PMI a Důvěra ČSÚ
+            if yr in (2015, 2016, 2017):
+                cz_pmi = 55.5 + 1.5 * np.sin(mo)
+                cz_conf = 99.0 + 2.0 * np.cos(mo)
+            elif yr in (2018, 2019):
+                cz_pmi = 51.0 - (mo / 12) * 5.0
+                cz_conf = 97.5 - (mo / 12) * 3.0
+            elif yr == 2020:
+                cz_pmi = 35.1 if mo == 4 else (42.0 if mo < 6 else 48.5)
+                cz_conf = 74.5 if mo == 4 else 86.0
+            elif yr == 2021:
+                cz_pmi = 57.0 + 3.0 * np.sin(mo)
+                cz_conf = 96.5 + 1.5 * np.sin(mo)
+            elif yr == 2022:
+                cz_pmi = 48.0 - (mo / 12) * 6.0
+                cz_conf = 91.0 - (mo / 12) * 3.5
+            elif yr == 2023:
+                cz_pmi = 42.5 + 0.5 * np.cos(mo)
+                cz_conf = 89.5 + 1.0 * np.sin(mo)
+            elif yr == 2024:
+                cz_pmi = 43.5 + (mo / 12) * 2.5
+                cz_conf = 93.0 + (mo / 12) * 3.0
+            elif yr == 2025:
+                cz_pmi = 47.5 + (mo / 12) * 2.0
+                cz_conf = 96.0 + (mo / 12) * 1.5
+            else:
+                cz_pmi = 50.2
+                cz_conf = 98.0
+            cz_pmi_series.append(round(cz_pmi, 1))
+            cz_conf_series.append(round(cz_conf, 1))
+
+            # Trh práce ČR: Nominální a reálná mzda YoY
+            if yr in (2015, 2016):
+                nom_w = 4.2
+            elif yr in (2017, 2018, 2019):
+                nom_w = 7.5 + 0.5 * np.sin(mo)
+            elif yr == 2020:
+                nom_w = 3.6
+            elif yr == 2021:
+                nom_w = 5.8
+            elif yr == 2022:
+                nom_w = 6.8 + (mo / 12) * 1.2
+            elif yr == 2023:
+                nom_w = 7.8
+            elif yr == 2024:
+                nom_w = 7.2
+            elif yr == 2025:
+                nom_w = 6.4
+            else:
+                nom_w = 5.8
+            real_w = round(nom_w - cpi, 1)
+            cz_nom_wage_series.append(round(nom_w, 1))
+            cz_real_wage_series.append(real_w)
+
+            # Bankovní sektor ČR: Hypotéky (sazba a objem) & Korporátní úvěry YoY
+            if yr <= 2017:
+                m_rate, m_vol, c_loans = 2.15, 18.5, 6.2
+            elif yr in (2018, 2019):
+                m_rate, m_vol, c_loans = 2.85, 17.0, 5.5
+            elif yr == 2020:
+                m_rate, m_vol, c_loans = 2.30, 21.0, 2.5
+            elif yr == 2021:
+                m_rate, m_vol, c_loans = 2.50 + (mo / 12) * 1.1, 35.0 + (mo / 12) * 8.0, 5.0
+            elif yr == 2022:
+                m_rate = 4.50 + (mo / 12) * 1.4
+                m_vol = 22.0 - (mo / 12) * 14.0
+                c_loans = 7.5 + (mo / 12) * 1.8
+            elif yr == 2023:
+                m_rate = 5.85 - (mo / 12) * 0.3
+                m_vol = 9.5 + (mo / 12) * 2.5
+                c_loans = 6.2
+            elif yr == 2024:
+                m_rate = 5.40 - (mo / 12) * 0.7
+                m_vol = 14.5 + (mo / 12) * 7.5
+                c_loans = 6.9
+            elif yr == 2025:
+                m_rate = 4.40 - (mo / 12) * 0.5
+                m_vol = 23.0
+                c_loans = 6.3
+            else:
+                m_rate = 3.85
+                m_vol = 25.0
+                c_loans = 5.9
+            cz_mort_rate_series.append(round(m_rate, 2))
+            cz_mort_vol_series.append(round(m_vol, 1))
+            cz_corp_loans_series.append(round(c_loans, 1))
+
+            # Měnová zásoba ČR: M2 YoY
+            if yr in (2015, 2016, 2017, 2018, 2019):
+                m2_val = 7.2 + 0.6 * np.cos(mo)
+            elif yr == 2020:
+                m2_val = 10.4
+            elif yr == 2021:
+                m2_val = 8.5
+            elif yr == 2022:
+                m2_val = 6.2
+            elif yr == 2023:
+                m2_val = 7.6
+            elif yr == 2024:
+                m2_val = 6.8
+            elif yr == 2025:
+                m2_val = 6.1
+            else:
+                m2_val = 5.8
+            cz_m2_series.append(round(m2_val, 1))
+
+            # Vnější rovnováha ČR: Běžný účet k HDP a Bilance zahraničního obchodu ČSÚ
+            if yr <= 2019:
+                ca_pct = 0.8
+                tr_bal = 14.0 + 3.0 * np.sin(mo)
+            elif yr == 2020:
+                ca_pct = 1.6
+                tr_bal = 12.0
+            elif yr == 2021:
+                ca_pct = -2.8
+                tr_bal = -1.5
+            elif yr == 2022:
+                ca_pct = -5.4
+                tr_bal = -18.0 + 4.0 * np.sin(mo)
+            elif yr == 2023:
+                ca_pct = 0.5
+                tr_bal = 10.5 + 3.0 * np.cos(mo)
+            elif yr == 2024:
+                ca_pct = 1.5
+                tr_bal = 17.5 + 2.5 * np.cos(mo)
+            elif yr == 2025:
+                ca_pct = 1.3
+                tr_bal = 16.0
+            else:
+                ca_pct = 1.1
+                tr_bal = 15.0
+            cz_ca_series.append(round(ca_pct, 1))
+            cz_trade_bal_series.append(round(tr_bal, 1))
+
         repo_arr = np.array(repo_series)
         discount_arr = np.maximum(0.05, repo_arr - 1.0)
         lombard_arr = repo_arr + 1.0
@@ -1395,6 +1702,10 @@ class DataLoader:
         eu_ind_series = []
         bund_10_series = []
         bund_2_series = []
+        eu_ifo_series = []
+        eu_pmi_series = []
+        eu_wages_series = []
+        eu_btp_spread_series = []
 
         for d in dates_m:
             yr, mo = d.year, d.month
@@ -1473,6 +1784,73 @@ class DataLoader:
             bund_10_series.append(round(b10, 2))
             bund_2_series.append(round(b2, 2))
 
+            # EU Předstihové: Ifo a Composite PMI
+            if yr <= 2018:
+                ifo_v = 102.5 + 2.0 * np.sin(mo)
+                pmi_v = 55.0 + 1.5 * np.cos(mo)
+            elif yr == 2019:
+                ifo_v = 96.0 - (mo / 12) * 2.0
+                pmi_v = 51.5
+            elif yr == 2020:
+                ifo_v = 74.3 if mo == 4 else (85.0 if mo < 6 else 90.0)
+                pmi_v = 31.4 if mo == 4 else (42.0 if mo < 6 else 48.0)
+            elif yr == 2021:
+                ifo_v = 98.5 + 2.0 * np.sin(mo)
+                pmi_v = 56.5 + 2.5 * np.sin(mo)
+            elif yr == 2022:
+                ifo_v = 91.0 - (mo / 12) * 5.5
+                pmi_v = 52.0 - (mo / 12) * 4.5
+            elif yr == 2023:
+                ifo_v = 86.5 + 0.8 * np.cos(mo)
+                pmi_v = 47.8 + 0.6 * np.cos(mo)
+            elif yr == 2024:
+                ifo_v = 87.2 + (mo / 12) * 1.6
+                pmi_v = 49.6 + (mo / 12) * 1.4
+            elif yr == 2025:
+                ifo_v = 89.8
+                pmi_v = 51.2
+            else:
+                ifo_v = 91.5
+                pmi_v = 51.8
+            eu_ifo_series.append(round(ifo_v, 1))
+            eu_pmi_series.append(round(pmi_v, 1))
+
+            # EU Trh práce: Sjednané mzdy ECB YoY
+            if yr <= 2020:
+                w_eu = 1.8 + 0.2 * np.sin(mo)
+            elif yr == 2021:
+                w_eu = 1.5
+            elif yr == 2022:
+                w_eu = 2.8 + (mo / 12) * 0.9
+            elif yr == 2023:
+                w_eu = 4.5
+            elif yr == 2024:
+                w_eu = 4.7 if mo < 6 else 3.8
+            elif yr == 2025:
+                w_eu = 3.3
+            else:
+                w_eu = 2.8
+            eu_wages_series.append(round(w_eu, 1))
+
+            # EU Dluhopisy: Rizikový spread BTP - Bund (bps)
+            if yr <= 2019:
+                btp_sp = 160.0 + 25.0 * np.sin(mo)
+            elif yr == 2020:
+                btp_sp = 190.0 if mo < 6 else 140.0
+            elif yr == 2021:
+                btp_sp = 108.0 + 8.0 * np.sin(mo)
+            elif yr == 2022:
+                btp_sp = 215.0 + 15.0 * np.cos(mo)
+            elif yr == 2023:
+                btp_sp = 185.0 - (mo / 12) * 15.0
+            elif yr == 2024:
+                btp_sp = 138.0 - (mo / 12) * 10.0
+            elif yr == 2025:
+                btp_sp = 122.0
+            else:
+                btp_sp = 118.0
+            eu_btp_spread_series.append(round(btp_sp, 1))
+
         depo_arr = np.array(ecb_depo_series)
         mro_arr = depo_arr + 0.25
         lend_arr = mro_arr + 0.25
@@ -1492,6 +1870,11 @@ class DataLoader:
         us_10y_series = []
         us_2y_series = []
         us_3m_series = []
+        us_ism_mfg_series = []
+        us_ism_srv_series = []
+        us_mich_series = []
+        us_earn_series = []
+        vix_series = []
 
         for d in dates_m:
             yr, mo = d.year, d.month
@@ -1589,6 +1972,85 @@ class DataLoader:
             us_10y_series.append(round(y10, 2))
             us_2y_series.append(round(y2, 2))
             us_3m_series.append(round(y3m, 2))
+
+            # US Předstihové ukazatele: ISM Výroba, ISM Služby a Univ. of Michigan Sentiment
+            if yr <= 2018:
+                mfg_v = 55.0 + 2.5 * np.sin(mo)
+                srv_v = 56.0 + 1.8 * np.cos(mo)
+                mich_v = 95.0 + 3.0 * np.sin(mo)
+            elif yr == 2019:
+                mfg_v = 50.5 - (mo / 12) * 2.5
+                srv_v = 54.5
+                mich_v = 95.5 - (mo / 12) * 1.5
+            elif yr == 2020:
+                mfg_v = 41.5 if mo == 4 else (53.0 if mo >= 6 else 49.0)
+                srv_v = 41.8 if mo == 4 else (56.0 if mo >= 6 else 52.0)
+                mich_v = 71.8 if mo == 4 else (76.0 if mo >= 6 else 89.0)
+            elif yr == 2021:
+                mfg_v = 60.5 + 1.5 * np.sin(mo)
+                srv_v = 62.0 + 2.5 * np.sin(mo)
+                mich_v = 79.0 - (mo / 12) * 8.0
+            elif yr == 2022:
+                mfg_v = 54.0 - (mo / 12) * 5.5
+                srv_v = 55.5 - (mo / 12) * 2.5
+                mich_v = 58.0 - (8.0 if mo in (5, 6) else 0.0)  # dno červen 2022
+            elif yr == 2023:
+                mfg_v = 46.8 + 0.8 * np.cos(mo)
+                srv_v = 52.5 + 0.8 * np.sin(mo)
+                mich_v = 64.5 + (mo / 12) * 5.0
+            elif yr == 2024:
+                mfg_v = 48.0 + (mo / 12) * 1.6
+                srv_v = 52.8 + (mo / 12) * 1.4
+                mich_v = 73.0 + (mo / 12) * 4.0
+            elif yr == 2025:
+                mfg_v = 50.5
+                srv_v = 53.6
+                mich_v = 78.5
+            else:
+                mfg_v = 51.5
+                srv_v = 54.0
+                mich_v = 81.0
+            us_ism_mfg_series.append(round(mfg_v, 1))
+            us_ism_srv_series.append(round(srv_v, 1))
+            us_mich_series.append(round(mich_v, 1))
+
+            # US Trh práce: Průměrná hodinová mzda (YoY)
+            if yr <= 2019:
+                he_v = 2.8 + 0.3 * np.sin(mo)
+            elif yr == 2020:
+                he_v = 5.4
+            elif yr == 2021:
+                he_v = 4.8
+            elif yr == 2022:
+                he_v = 5.2 - (mo / 12) * 0.4
+            elif yr == 2023:
+                he_v = 4.4 - (mo / 12) * 0.3
+            elif yr == 2024:
+                he_v = 3.9
+            elif yr == 2025:
+                he_v = 3.6
+            else:
+                he_v = 3.4
+            us_earn_series.append(round(he_v, 1))
+
+            # Tržní sentiment a riziko: Cboe VIX Index (Index strachu)
+            if yr <= 2019:
+                vix_v = 14.5 + 2.5 * np.sin(mo)
+            elif yr == 2020:
+                vix_v = 53.5 if mo == 3 else (35.0 if mo == 4 else 26.0)
+            elif yr == 2021:
+                vix_v = 18.2 + 2.0 * np.cos(mo)
+            elif yr == 2022:
+                vix_v = 25.8 + 3.0 * np.sin(mo)
+            elif yr == 2023:
+                vix_v = 16.5 - (mo / 12) * 2.5
+            elif yr == 2024:
+                vix_v = 15.2 + (4.5 if mo == 8 else 0.0)  # mini-spike v srpnu 2024
+            elif yr == 2025:
+                vix_v = 14.8
+            else:
+                vix_v = 14.2
+            vix_series.append(round(vix_v, 1))
 
         fu_arr = np.array(fed_upper_series)
         fl_arr = np.maximum(0.0, fu_arr - 0.25)
@@ -1730,6 +2192,19 @@ class DataLoader:
             "irs_10y": df_irs_m["irs_10y"],
             "irs_15y": df_irs_m["irs_15y"],
             "czgb_spread_10y_2y": np.round(df_czgb_m["czgb_10y"] - df_czgb_m["czgb_2y"], 2),
+            # Předstihové, trh práce, banky, M2 a vnější ukazatele ČR
+            "cz_pmi_manufacturing": np.array(cz_pmi_series),
+            "cz_confidence_composite": np.array(cz_conf_series),
+            "cz_nominal_wage_yoy": np.array(cz_nom_wage_series),
+            "cz_real_wage_yoy": np.array(cz_real_wage_series),
+            "cz_mortgage_rate": np.array(cz_mort_rate_series),
+            "cz_mortgage_volume_czk_bn": np.array(cz_mort_vol_series),
+            "cz_corporate_loans_yoy": np.array(cz_corp_loans_series),
+            "cz_m2_growth_yoy": np.array(cz_m2_series),
+            "cz_current_account_gdp_pct": np.array(cz_ca_series),
+            "cz_trade_balance_czk_bn": np.array(cz_trade_bal_series),
+            "czgb_bund_spread_10y": np.round((df_czgb_m["czgb_10y"] - np.array(bund_10_series)) * 100.0, 1),
+            "cz_asw_10y_spread": np.round((df_czgb_m["czgb_10y"] - df_irs_m["irs_10y"]) * 100.0, 1),
             # EU
             "ecb_deposit_rate": np.round(depo_arr, 2),
             "ecb_refi_rate": np.round(mro_arr, 2),
@@ -1749,6 +2224,11 @@ class DataLoader:
             "eur_usd": df_fx_m["eur_usd"],
             "eur_pln": df_fx_m["eur_pln"],
             "eur_gbp": df_fx_m["eur_gbp"],
+            # Předstihové, mzdy a dluhopisy EU
+            "eu_ifo_business_climate": np.array(eu_ifo_series),
+            "eu_composite_pmi": np.array(eu_pmi_series),
+            "eu_negotiated_wages_yoy": np.array(eu_wages_series),
+            "eu_btp_bund_spread": np.array(eu_btp_spread_series),
             # USA
             "fed_funds_upper": np.round(fu_arr, 2),
             "fed_funds_lower": np.round(fl_arr, 2),
@@ -1772,6 +2252,12 @@ class DataLoader:
             "us_nonfarm_payrolls_k": us_nfp_series,
             "us_retail_sales_yoy": us_ret_series,
             "us_industrial_prod_yoy": us_ind_series,
+            # Předstihové a trh práce USA & Tržní sentiment
+            "us_ism_manufacturing": np.array(us_ism_mfg_series),
+            "us_ism_services": np.array(us_ism_srv_series),
+            "us_michigan_sentiment": np.array(us_mich_series),
+            "us_hourly_earnings_yoy": np.array(us_earn_series),
+            "vix_index": np.array(vix_series),
             "dxy_index": df_fx_m["dxy_index"],
             "gbp_usd": df_fx_m["gbp_usd"],
             "usd_jpy": df_fx_m["usd_jpy"],
@@ -1872,7 +2358,7 @@ class DataLoader:
             "repo_rate", "discount_rate", "lombard_rate", "ecb_deposit_rate",
             "fed_funds_upper", "fed_funds_lower", "eur_czk", "usd_czk",
             "pln_czk", "gbp_czk", "eur_usd", "dxy_index",
-            "px_index", "stoxx50_index", "sp500_index", "nasdaq_index"
+            "px_index", "stoxx50_index", "sp500_index", "nasdaq_index", "vix_index"
         ]:
             if col_last in agg_rules:
                 agg_rules[col_last] = "last"
