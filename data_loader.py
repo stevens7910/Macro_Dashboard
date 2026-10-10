@@ -24,7 +24,10 @@ from typing import Dict, List, Optional, Tuple, Any
 import numpy as np
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
+try:
+    from bs4 import BeautifulSoup
+except (ImportError, ModuleNotFoundError):
+    BeautifulSoup = None
 
 # Konfigurace logování
 logging.basicConfig(level=logging.INFO)
@@ -985,6 +988,9 @@ class DataLoader:
             url = f"https://www.cnb.cz/cs/casto-kladene-dotazy/{slug}/"
             resp = requests.get(url, headers=self.headers, timeout=self.timeout)
             resp.raise_for_status()
+
+            if BeautifulSoup is None:
+                raise ImportError("Knihovna beautifulsoup4 není nainstalována.")
 
             soup = BeautifulSoup(resp.text, "html.parser")
             table = soup.find("table")

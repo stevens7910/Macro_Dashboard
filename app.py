@@ -10,8 +10,20 @@ a Spojených států amerických a světových akciových trhů (PX, Euro Stoxx 
 from __future__ import annotations
 
 import io
+import os
+import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
+
+# Zajištění přítomnosti kořenového adresáře v sys.path pro Streamlit Cloud / Linux
+ROOT_DIR = Path(__file__).resolve().parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+PARENT_DIR = ROOT_DIR.parent
+if str(PARENT_DIR) not in sys.path:
+    sys.path.insert(0, str(PARENT_DIR))
 
 import numpy as np
 import pandas as pd
@@ -20,15 +32,21 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
-from data_loader import (
-    DataLoader,
-    INDICATORS,
-    CZ_INDICATORS,
-    EU_INDICATORS,
-    US_INDICATORS,
-    MARKET_INDICATORS,
-    get_cached_macro_data
-)
+try:
+    import data_loader as dl_module
+except (ImportError, ModuleNotFoundError):
+    try:
+        import macro_dashboard.data_loader as dl_module
+    except (ImportError, ModuleNotFoundError):
+        import Macro_Dashboard.data_loader as dl_module
+
+DataLoader = getattr(dl_module, "DataLoader")
+INDICATORS = getattr(dl_module, "INDICATORS")
+CZ_INDICATORS = getattr(dl_module, "CZ_INDICATORS", {k: v for k, v in INDICATORS.items() if v.region == "CZ"})
+EU_INDICATORS = getattr(dl_module, "EU_INDICATORS", {k: v for k, v in INDICATORS.items() if v.region == "EU"})
+US_INDICATORS = getattr(dl_module, "US_INDICATORS", {k: v for k, v in INDICATORS.items() if v.region == "US"})
+MARKET_INDICATORS = getattr(dl_module, "MARKET_INDICATORS", {k: v for k, v in INDICATORS.items() if v.category == "Akciové trhy"})
+get_cached_macro_data = getattr(dl_module, "get_cached_macro_data")
 
 # =============================================================================
 # 1. KONFIGURACE STRÁNKY A STYLING
