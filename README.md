@@ -6,12 +6,23 @@ Aplikace disponuje **okamžitým přepínačem mezi ČR, EU a USA** v pravém ho
 
 ---
 
-## 🎛️ Volba ekonomiky (Vpravo nahoře)
+## 🎛️ Volba ekonomiky (Pod názvem monitoru)
 
-Uživatel může v pravém horním rohu stránky jediným kliknutím přepínat mezi:
+Přímo pod hlavním názvem **MAKROEKONOMICKÝ & TRŽNÍ MONITOR** může uživatel jediným kliknutím přepínat mezi:
 - **🇨🇿 Česká republika**: ČNB úrokový koridor, PRIBOR, celková inflace CPI & jádrová inflace, reálný a nominální HDP, maloobchodní tržby (spotřeba) a průmyslová produkce, míra nezaměstnanosti, denní devizové kurzy EUR, USD, PLN, GBP, veřejný dluh ČR, výnosová křivka CZGB & IRS.
 - **🇪🇺 Evropská unie / Eurozóna**: Sazby ECB (Depozitní facilita, MRO, Mezní sazba), mezibankovní EURIBOR 3M & peněžní sazba €STR, harmonizovaná inflace HICP & jádrová inflace Core HICP, HDP Eurozóny, maloobchodní tržby (spotřeba) a průmyslová produkce EU, míra nezaměstnanosti, denní kurzy EUR/USD, EUR/CZK, EUR/PLN, EUR/GBP, veřejný dluh Eurozóny a referenční křivka Německých Bundů (2Y–30Y).
 - **🇺🇸 Spojené státy**: Fed Funds Target Range, EFFR, SOFR peněžní trh, U.S. Headline & Core CPI, reálný a nominální HDP USA, maloobchodní tržby (spotřeba) a průmyslová výroba USA, míra nezaměstnanosti U-3 & NFP, Dolarový index DXY, EUR/USD, GBP/USD, USD/PLN, USD/JPY, federální dluh USA a oficiální U.S. Treasury Par Yield Curve (1M–30Y).
+
+---
+
+## 📖 Výkladový glosář pojmů (Glossary pro laiky i investory)
+
+V levém postranním panelu se nachází dedikované tlačítko **📖 Glosář pojmů (Glossary)**, které uživatele přenese na samostatnou vzdělávací stránku:
+- **Srozumitelný lidský jazyk:** Každý ukazatel (přes 35+ klíčových pojmů) je vysvětlen lidskou řečí a metaforami srozumitelnými i pro úplné laiky.
+- **Ekonomická a finanční exaktnost:** Součástí každé karty je rigorózní makroekonomická definice, vazby na měnovou transmisi a vzorce.
+- **Praktický dopad:** Přesný popis, jak se růst či pokles ukazatele projevuje na osobních financích, sazbách hypoték, úsporách, investičním portfoliu nebo kurzu měny.
+- **Vyhledávání a filtry:** Okamžité fulltextové vyhledávání a filtrování podle tematických kategorií a regionů (ČR, EU, USA, Globální).
+- **Přístupnost ze všech částí:** Glosář je přístupný z hlavního levého menu, s tlačítkem návratu na monitor, i jako vnořený náhled v záložce *Seznam ukazatelů & Zdroje*.
 
 ---
 
@@ -40,11 +51,10 @@ Všechny ukazatele jsou **trvale aktivovány a zobrazeny** (bez nutnosti jejich 
    - **Mezinárodní srovnání**: Sovereign výnosové spready 10Y dluhopisů (ČR vs. Německo, ČR vs. USA, Německo vs. USA) v bazických bodech (bps).
 5. **📋 Data a export**:
    - Datový průzkumník s českými popisky, filtrováním a okamžitým stažením kompletního datového setu ve formátu CSV.
-6. **📖 Seznam ukazatelů & Zdroje (Nová stránka)**:
+6. **📖 Seznam ukazatelů & Zdroje (Katalog metadat)**:
    - Strukturovaný katalog všech 80+ makroekonomických ukazatelů s filtry podle země, kategorie a fulltextovým vyhledáváním.
    - U každého indikátoru je uveden kód, jednotka, periodicita, oficiální primární datový zdroj a metodická definice.
    - Možnost stažení kompletního katalogu metadat do CSV.
-   - Podrobný přehled primárních poskytovatelů dat a integrační architektura (ČNB, ČSÚ, MF ČR, Eurostat, ECB, Fed, Treasury, BCPP, Yahoo Finance).
 
 ---
 
@@ -60,11 +70,14 @@ Přímo pod hlavními 4 metrickými boxy v každé oblasti pro Českou republiku
 
 ## 🎨 Vylepšení uživatelského rozhraní (UI & UX)
 
-- **Trvalá aktivace všech indikátorů**: Odstraněn nepřehledný výběrový multiselect v sidebaru – všechny ukazatele se načítají a zobrazují automaticky.
-- **Podbarvené Summary KPI Boxy**: Metrické karty nad grafy mají výraznější a tmavší podklad (`#f1f5f9`), jemný rámeček (`#cbd5e1`) a stínování, díky čemuž lépe vystupují ze stránky.
-- **Skrytá detailní tabulka indikátorů**: Původní rozsáhlá tabulka metrik je ve výchozím stavu elegantně sbalena (`st.expander("📊 Zobrazit detailní přehled indikátorů a metrik", expanded=False)`) a nezabírá místo nad grafy.
-- **Filtrování měn na FX grafu**: Uživatel si může v multiselectu zvolit pouze ty měny, které ho zajímají (`CZK`, `USD`, `GBP`, `EUR`, `PLN`), což eliminuje přeplněnost grafu.
-- **Zdroje dat u každého grafu**: Každý graf obsahuje přesnou citaci primárního zdroje dat (např. *ČNB, Eurostat, ECB, U.S. Treasury, Fed, BCPP, STOXX Ltd., S&P Dow Jones, NASDAQ*).
+- **Přesunutí volby ekonomiky pod název:** Záložky pro volbu ČR, EU a USA jsou přehledně umístěny přímo pod titulem monitoru.
+- **Zmenšené a vyvážené písmo 4 hlavních boxů:** Font metrických hodnot v KPI kartách byl zmenšen a zarovnán pro čisté a kompaktní zobrazení bez přetékání jednotek.
+- **Zvýrazněné hlavní kategorie:** Kategorie záložek mají jemné podbarvení kontejneru (`#e2e8f0`), kontrastní tmavomodré písmo (`#1e3a8a`) a sytě tmavomodrou aktivní záložku s bílým textem.
+- **Informace o aktuálnosti dat u obnovení:** Přímo pod tlačítkem *„🔄 Obnovit data (Vymazat cache)“* se zobrazuje přesné datum, ke kterému jsou načtena makroekonomická data, datum denních FX trhů a čas posledního stažení.
+- **Trvalá aktivace všech indikátorů**: Všechny ukazatele se načítají a zobrazují automaticky.
+- **Skrytá detailní tabulka indikátorů**: Původní rozsáhlá tabulka metrik je ve výchozím stavu elegantně sbalena v expanderu.
+- **Filtrování měn na FX grafu**: Uživatel si může v multiselectu zvolit pouze ty měny, které ho zajímají (`CZK`, `USD`, `GBP`, `EUR`, `PLN`).
+- **Zdroje dat u každého grafu**: Každý graf obsahuje přesnou citaci primárního zdroje dat.
 
 ---
 

@@ -48,6 +48,17 @@ US_INDICATORS = getattr(dl_module, "US_INDICATORS", {k: v for k, v in INDICATORS
 MARKET_INDICATORS = getattr(dl_module, "MARKET_INDICATORS", {k: v for k, v in INDICATORS.items() if v.category == "Akciové trhy"})
 get_cached_macro_data = getattr(dl_module, "get_cached_macro_data")
 
+try:
+    import glossary_data as glossary_module
+except (ImportError, ModuleNotFoundError):
+    try:
+        import macro_dashboard.glossary_data as glossary_module
+    except (ImportError, ModuleNotFoundError):
+        import Macro_Dashboard.glossary_data as glossary_module
+
+render_glossary_view = getattr(glossary_module, "render_glossary_view", None)
+GLOSSARY_ITEMS = getattr(glossary_module, "GLOSSARY_ITEMS", [])
+
 # =============================================================================
 # 1. KONFIGURACE STRÁNKY A STYLING
 # =============================================================================
@@ -81,10 +92,10 @@ CUSTOM_CSS = """
             padding-bottom: 2.0rem !important;
         }
         div[data-testid="stMetric"] {
-            padding: 8px 10px !important;
+            padding: 7px 9px !important;
         }
         div[data-testid="stMetricValue"] {
-            font-size: 1.35rem !important;
+            font-size: 1.08rem !important;
         }
         .sa-header-container {
             padding: 12px 14px !important;
@@ -94,12 +105,12 @@ CUSTOM_CSS = """
         }
     }
     
-    /* VZHLED METRICKÝCH SUMMARY BOXŮ (VÝRAZNĚJŠÍ A TMAVŠÍ PODBARVENÍ) */
+    /* VZHLED METRICKÝCH SUMMARY BOXŮ (KOMPAKTNÍ PÍSMO, VÝRAZNĚJŠÍ A ČISTÉ PROVEDENÍ) */
     div[data-testid="stMetric"] {
         background-color: #f1f5f9 !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 8px !important;
-        padding: 12px 16px !important;
+        padding: 9px 13px !important;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
         transition: all 0.2s ease !important;
     }
@@ -109,21 +120,21 @@ CUSTOM_CSS = """
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
     }
     div[data-testid="stMetricLabel"] p {
-        font-size: 0.80rem !important;
+        font-size: 0.76rem !important;
         font-weight: 700 !important;
         color: #475569 !important;
         text-transform: uppercase !important;
         letter-spacing: 0.04em !important;
-        margin-bottom: 3px !important;
+        margin-bottom: 2px !important;
     }
     div[data-testid="stMetricValue"] {
-        font-size: 1.65rem !important;
+        font-size: 1.22rem !important;
         font-weight: 800 !important;
         color: #0f172a !important;
         font-variant-numeric: tabular-nums !important;
     }
     div[data-testid="stMetricDelta"] {
-        font-size: 0.82rem !important;
+        font-size: 0.78rem !important;
         font-weight: 600 !important;
     }
     
@@ -169,17 +180,17 @@ CUSTOM_CSS = """
         padding-left: 10px;
     }
 
-    /* ZÁLOŽKY (TABS): AGREGOVANÉ KATEGORIE S TMAVŠÍM PODBARVENÍM */
+    /* ZÁLOŽKY (TABS): AGREGOVANÉ KATEGORIE S TMAVŠÍM PODBARVENÍM A TMAVOMODRÝM PÍSMEM */
     div[data-baseweb="tab-list"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        gap: 4px 6px !important;
-        background-color: #f1f5f9 !important;
+        gap: 6px 8px !important;
+        background-color: #e2e8f0 !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 10px !important;
-        padding: 5px 8px !important;
+        padding: 6px 9px !important;
         margin-bottom: 1.1rem !important;
         overflow-x: auto !important;
         white-space: nowrap !important;
@@ -194,32 +205,46 @@ CUSTOM_CSS = """
     }
 
     button[data-baseweb="tab"] {
-        background-color: transparent !important;
-        color: #475569 !important;
-        border: none !important;
+        background-color: #f1f5f9 !important;
+        color: #1e3a8a !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 7px !important;
-        padding: 7px 15px !important;
+        padding: 7px 16px !important;
         font-size: 0.88rem !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.01em !important;
         transition: all 0.15s ease !important;
         white-space: nowrap !important;
-        box-shadow: none !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
         cursor: pointer !important;
         height: auto !important;
     }
 
+    button[data-baseweb="tab"] p,
+    button[data-baseweb="tab"] span {
+        color: #1e3a8a !important;
+        font-weight: 700 !important;
+    }
+
     button[data-baseweb="tab"]:hover {
-        background-color: #e2e8f0 !important;
-        color: #0f172a !important;
+        background-color: #dbeafe !important;
+        color: #172554 !important;
+        border-color: #93c5fd !important;
+    }
+
+    button[data-baseweb="tab"]:hover p,
+    button[data-baseweb="tab"]:hover span {
+        color: #172554 !important;
     }
 
     button[data-baseweb="tab"][aria-selected="true"],
     button[data-baseweb="tab"][data-selected="true"] {
-        background-color: #1e293b !important;
+        background-color: #1e3a8a !important;
         color: #ffffff !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
+        border-color: #1e3a8a !important;
         border-radius: 7px !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+        box-shadow: 0 2px 6px rgba(30, 58, 138, 0.28) !important;
     }
 
     button[data-baseweb="tab"][aria-selected="true"] p,
@@ -227,7 +252,7 @@ CUSTOM_CSS = """
     button[data-baseweb="tab"][data-selected="true"] p,
     button[data-baseweb="tab"][data-selected="true"] span {
         color: #ffffff !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
     }
 
     /* KARTA AKTUÁLNÍHO FINANČNÍHO ZPRAVODAJSTVÍ A KONTEXTU */
@@ -383,7 +408,7 @@ CUSTOM_CSS = """
         gap: 6px;
     }
     .sa-hero-val {
-        font-size: 1.30rem;
+        font-size: 1.15rem;
         font-weight: 700;
         color: #0f172a;
         font-variant-numeric: tabular-nums;
@@ -569,46 +594,42 @@ def render_dataframe(df_to_render: pd.DataFrame) -> None:
 
 
 # =============================================================================
-# 3. VPRAVO NAHOŘE: PŘEPÍNAČ EKONOMIKY (ČR vs. EU vs. USA)
+# 3. HLAVNÍ ZÁHLAVÍ & PŘEPÍNAČ EKONOMIKY (ČR vs. EU vs. USA)
 # =============================================================================
 
-col_top_left, col_top_right = st.columns([2.3, 1.7], vertical_alignment="center")
-
-with col_top_left:
-    st.markdown(
-        """
-        <div style="display: flex; align-items: center; gap: 10px; padding: 2px 0;">
-            <span style="font-size: 1.4rem;">🏛️</span>
-            <div>
-                <div style="font-size: 1.15rem; font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">MAKROEKONOMICKÝ & TRŽNÍ MONITOR</div>
-                <div style="font-size: 0.72rem; font-weight: 600; color: #64748B; text-transform: uppercase;">Institucionální analýza &bull; ČNB &bull; ECB &bull; Fed &bull; Akciové indexy</div>
-            </div>
+st.markdown(
+    """
+    <div style="display: flex; align-items: center; gap: 10px; padding: 2px 0 6px 0;">
+        <span style="font-size: 1.55rem;">🏛️</span>
+        <div>
+            <div style="font-size: 1.25rem; font-weight: 850; color: #0F172A; letter-spacing: -0.02em;">MAKROEKONOMICKÝ & TRŽNÍ MONITOR</div>
+            <div style="font-size: 0.74rem; font-weight: 600; color: #64748B; text-transform: uppercase;">Institucionální analýza &bull; ČNB &bull; ECB &bull; Fed &bull; Akciové indexy &bull; Výnosové křivky</div>
         </div>
-        """,
-        unsafe_allow_html=True
-    )
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-with col_top_right:
-    economy_options = ["🇨🇿 Česká republika", "🇪🇺 Evropská unie", "🇺🇸 Spojené státy"]
-    if hasattr(st, "segmented_control"):
-        selected_economy = st.segmented_control(
-            "Zvolte ekonomiku:",
-            options=economy_options,
-            default="🇨🇿 Česká republika",
-            key="macro_region_top_switch",
-            label_visibility="collapsed"
-        )
-        if not selected_economy:
-            selected_economy = "🇨🇿 Česká republika"
-    else:
-        selected_economy = st.radio(
-            "Zvolte ekonomiku:",
-            options=economy_options,
-            index=0,
-            key="macro_region_top_switch",
-            horizontal=True,
-            label_visibility="collapsed"
-        )
+economy_options = ["🇨🇿 Česká republika", "🇪🇺 Evropská unie", "🇺🇸 Spojené státy"]
+if hasattr(st, "segmented_control"):
+    selected_economy = st.segmented_control(
+        "Zvolte ekonomiku:",
+        options=economy_options,
+        default="🇨🇿 Česká republika",
+        key="macro_region_top_switch",
+        label_visibility="collapsed"
+    )
+    if not selected_economy:
+        selected_economy = "🇨🇿 Česká republika"
+else:
+    selected_economy = st.radio(
+        "Zvolte ekonomiku:",
+        options=economy_options,
+        index=0,
+        key="macro_region_top_switch",
+        horizontal=True,
+        label_visibility="collapsed"
+    )
 
 is_cz = (selected_economy == "🇨🇿 Česká republika")
 is_eu = (selected_economy == "🇪🇺 Evropská unie")
@@ -645,6 +666,28 @@ st.sidebar.markdown(
     """,
     unsafe_allow_html=True
 )
+
+if "current_view" not in st.session_state:
+    st.session_state["current_view"] = "monitor"
+
+st.sidebar.markdown(
+    """
+    <div class="sidebar-section-header">
+        <span class="sidebar-section-title">🧭 Hlavní navigace</span>
+        <span class="sidebar-section-badge">Menu</span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+col_sb_nav1, col_sb_nav2 = st.sidebar.columns(2)
+is_in_glossary = (st.session_state.get("current_view") == "glossary")
+if col_sb_nav1.button("📊 Monitor", use_container_width=True, type="secondary" if is_in_glossary else "primary", key="sb_nav_btn_monitor"):
+    st.session_state["current_view"] = "monitor"
+    st.rerun()
+if col_sb_nav2.button("📖 Glosář pojmů", use_container_width=True, type="primary" if is_in_glossary else "secondary", help="Otevře srozumitelný výkladový glosář všech makroekonomických pojmů a ukazatelů pro laiky i investory.", key="sb_nav_btn_glossary"):
+    st.session_state["current_view"] = "glossary"
+    st.rerun()
 
 # 1. Výběr časového horizontu
 st.sidebar.markdown(
@@ -794,6 +837,8 @@ if st.sidebar.button("🔄 Obnovit data (Vymazat cache)", use_container_width=Tr
     st.cache_data.clear()
     st.rerun()
 
+refresh_meta_slot = st.sidebar.empty()
+
 
 # =============================================================================
 # 5. NAČTENÍ DAT S CACHOVÁNÍM
@@ -809,6 +854,28 @@ with st.spinner("Načítám data z ČNB, Eurostatu, Yahoo Finance a U.S. Treasur
 if df_raw.empty:
     st.error("Nepodařilo se načíst žádná data. Zkuste aktivovat záložní fallback model v levém panelu.")
     st.stop()
+
+# Zobrazení data aktuálnosti dat přímo pod tlačítkem obnovení
+latest_macro_date = df_raw["date"].max()
+latest_macro_str = latest_macro_date.strftime("%d. %m. %Y") if (pd.notna(latest_macro_date) and hasattr(latest_macro_date, "strftime")) else "Aktuální"
+latest_fx_date = df_daily_fx["date"].max() if not df_daily_fx.empty else latest_macro_date
+latest_fx_str = latest_fx_date.strftime("%d. %m. %Y") if (pd.notna(latest_fx_date) and hasattr(latest_fx_date, "strftime")) else latest_macro_str
+fetch_time_str = status_info.get("fetch_timestamp", datetime.now().strftime("%d.%m.%Y %H:%M"))
+
+refresh_meta_slot.markdown(
+    f"""
+    <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 7px; padding: 8px 11px; margin-top: 6px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+        <div style="font-size: 0.73rem; font-weight: 750; color: #1e3a8a; text-transform: uppercase; margin-bottom: 2px;">
+            📅 Data aktuální k: <strong>{latest_macro_str}</strong>
+        </div>
+        <div style="font-size: 0.70rem; color: #475569; line-height: 1.35;">
+            Denní kurzy & trhy: <strong>{latest_fx_str}</strong><br/>
+            Poslední stažení: {fetch_time_str}
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # Status v sidebaru
 mode = status_info.get("mode", "LIVE")
@@ -853,6 +920,30 @@ df_daily_fx_filtered = df_daily_fx[(df_daily_fx["date"] >= start_filter_date) & 
 
 if df.empty:
     st.warning("Pro vybraný časový filtr nejsou k dispozici žádné záznamy. Zvolte prosím širší rozsah.")
+    st.stop()
+
+
+# -----------------------------------------------------------------------------
+# POKUD JE VYBRÁN GLOSÁŘ POJMŮ (GLOSSARY VIEW)
+# -----------------------------------------------------------------------------
+if st.session_state.get("current_view") == "glossary":
+    col_back_top, _ = st.columns([1.8, 3.2])
+    with col_back_top:
+        if st.button("⬅️ Zpět na Makroekonomický Monitor", type="primary", use_container_width=True, key="btn_back_to_mon_top"):
+            st.session_state["current_view"] = "monitor"
+            st.rerun()
+
+    if render_glossary_view:
+        render_glossary_view()
+    else:
+        st.info("Výkladový glosář se načítá...")
+
+    st.markdown("---")
+    col_back_bot, _ = st.columns([1.8, 3.2])
+    with col_back_bot:
+        if st.button("⬅️ Zpět na Makroekonomický Monitor", type="primary", use_container_width=True, key="btn_back_to_mon_bottom"):
+            st.session_state["current_view"] = "monitor"
+            st.rerun()
     st.stop()
 
 
@@ -3224,6 +3315,21 @@ with main_tab_catalog:
     st.markdown('<div class="section-header">Kompletní metodický přehled a katalog všech sledovaných ukazatelů a zdrojů dat</div>', unsafe_allow_html=True)
     st.caption("Strukturovaný přehled všech 80+ makroekonomických a tržních ukazatelů podle jednotlivých zemí a kategorií s uvedením primárních datových zdrojů, metodiky a frekvence aktualizace.")
 
+    col_tb6_g1, col_tb6_g2 = st.columns([1.6, 3.4])
+    with col_tb6_g1:
+        if st.button("📖 Otevřít Výkladový glosář pro laiky", type="primary", use_container_width=True, key="btn_open_glossary_tab6"):
+            st.session_state["current_view"] = "glossary"
+            st.rerun()
+    with col_tb6_g2:
+        st.markdown(
+            """
+            <div style="font-size: 0.83rem; color: #475569; padding-top: 5px;">
+                💡 <em>Hledáte srozumitelný lidský výklad co jednotlivé pojmy znamenají, proč je sledovat a jaký mají vliv na hypotéky či investice? Použijte <strong>Výkladový glosář</strong>.</em>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
     df_cat = get_indicators_catalog_df()
 
     # Horní souhrnné metriky
@@ -3352,3 +3458,8 @@ with main_tab_catalog:
             """,
             unsafe_allow_html=True
         )
+
+    st.markdown("---")
+    with st.expander("📖 Prohlédnout kompletní Výkladový glosář makroekonomických pojmů přímo zde", expanded=False):
+        if render_glossary_view:
+            render_glossary_view()
