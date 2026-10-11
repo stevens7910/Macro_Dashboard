@@ -716,17 +716,22 @@ def render_indicator_search_bar() -> None:
         z-index: 9999 !important;
     }
 
-    /* Skrytí 0px iframe pomocného skriptu */
-    div[data-testid="stElementContainer"]:has(iframe[height="0"]),
-    div[data-testid="stElementContainer"]:has(iframe[style*="height: 0px"]),
-    iframe[height="0"],
-    iframe[style*="height: 0px"] {
-        display: none !important;
-        height: 0 !important;
-        min-height: 0 !important;
+    /* Skrytí pomocného runneru bez display:none (aby ho prohlížeč nezastavil) */
+    div[data-testid="stElementContainer"]:has(iframe[title="macro_search_engine"]),
+    iframe[title="macro_search_engine"],
+    div[data-testid="stElementContainer"]:has(iframe[title="macro_scroll_engine"]),
+    iframe[title="macro_scroll_engine"] {
+        position: absolute !important;
+        top: -9999px !important;
+        left: -9999px !important;
+        width: 1px !important;
+        height: 1px !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        border: none !important;
         margin: 0 !important;
         padding: 0 !important;
-        border: none !important;
+        overflow: hidden !important;
     }
 
     .macro-search-box {
@@ -900,26 +905,24 @@ def render_indicator_search_bar() -> None:
     }
 
     .macro-search-group-count {
-        background: #f1f5f9;
-        color: #64748b;
+        background: #e2e8f0;
+        color: #475569;
         border-radius: 10px;
         padding: 1px 6px;
         font-size: 0.65rem;
-        font-weight: 600;
     }
 
-    /* Result items */
+    /* Indicator item row */
     .macro-search-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 7px 9px;
-        border-radius: 7px;
+        padding: 7px 8px;
+        margin: 2px 0;
+        border-radius: 6px;
         cursor: pointer;
-        transition: background 0.12s ease, border-color 0.12s ease;
+        transition: background-color 0.1s ease, color 0.1s ease;
         border: 1px solid transparent;
-        margin-bottom: 2px;
-        user-select: none;
     }
 
     .macro-search-item:hover,
@@ -1068,374 +1071,410 @@ def render_indicator_search_bar() -> None:
 
     st.sidebar.markdown(html_markup, unsafe_allow_html=True)
 
-    js_template = r"""
-    <script>
-    (function() {
-        const CATALOG = __CATALOG_JSON__;
-        const topWin = (window.parent && window.parent.document) ? window.parent : window;
-        const topDoc = (window.parent && window.parent.document) ? window.parent.document : document;
+    # Runner skript, který se spouští ve standardním Streamlit komponentu,
+    # ale je plně propojen s nadřazeným dokumentem (Same-Origin).
+    runner_html = f"""<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>macro_search_engine</title></head>
+<body>
+<script>
+(function() {{
+    try {{
+        var topWin = (window.parent && window.parent.document) ? window.parent : window;
+        var topDoc = (window.parent && window.parent.document) ? window.parent.document : document;
 
-        let selectedIdx = 0;
-        let currentResults = [];
+        topWin.__MACRO_CATALOG = {catalog_json};
 
-        function stripDiacritics(str) {
-            if (!str) return '';
-            return str
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase()
-                .trim();
-        }
+        // Zkontrolujeme nebo aktualizujeme řídicí skript přímo v hlavním okně
+        var scriptId = 'macro-search-top-controller';
+        var oldScript = topDoc.getElementById(scriptId);
+        if (oldScript) {{
+            oldScript.remove();
+        }}
 
-        function highlightMatch(text, rawQuery) {
-            if (!rawQuery) return text;
-            const normText = stripDiacritics(text);
-            const normQuery = stripDiacritics(rawQuery);
-            if (!normQuery) return text;
+        var controllerScript = topDoc.createElement('script');
+        controllerScript.id = scriptId;
+        controllerScript.textContent = `
+        (function() {{
+            var CATALOG = window.__MACRO_CATALOG || [];
+            var selectedIdx = 0;
+            var currentResults = [];
 
-            const idx = normText.indexOf(normQuery);
-            if (idx === -1) return text;
+            function stripDiacritics(str) {{
+                if (!str) return '';
+                return String(str)
+                    .normalize('NFD')
+                    .replace(/[\\u0300-\\u036f]/g, '')
+                    .toLowerCase()
+                    .trim();
+            }}
 
-            const matchOriginal = text.substring(idx, idx + rawQuery.length);
-            return text.substring(0, idx) +
-                   '<mark class="macro-search-highlight">' + matchOriginal + '</mark>' +
-                   text.substring(idx + rawQuery.length);
-        }
+            function highlightMatch(text, rawQuery) {{
+                if (!rawQuery) return text;
+                var normText = stripDiacritics(text);
+                var normQuery = stripDiacritics(rawQuery);
+                if (!normQuery) return text;
 
-        function getDoms() {
-            return {
-                wrapper: topDoc.getElementById('macro-search-wrapper'),
-                box: topDoc.getElementById('macro-search-box'),
-                input: topDoc.getElementById('macro-sidebar-search-input'),
-                clearBtn: topDoc.getElementById('macro-sidebar-clear-btn'),
-                dropdown: topDoc.getElementById('macro-sidebar-dropdown'),
-                content: topDoc.getElementById('macro-sidebar-dropdown-content')
-            };
-        }
+                var idx = normText.indexOf(normQuery);
+                if (idx === -1) return text;
 
-        function openDropdown() {
-            const doms = getDoms();
-            if (doms.dropdown) {
-                doms.dropdown.classList.add('is-open');
+                var matchOriginal = text.substring(idx, idx + rawQuery.length);
+                return text.substring(0, idx) +
+                       '<mark class="macro-search-highlight">' + matchOriginal + '</mark>' +
+                       text.substring(idx + rawQuery.length);
+            }}
+
+            function getDoms() {{
+                return {{
+                    wrapper: document.getElementById('macro-search-wrapper'),
+                    box: document.getElementById('macro-search-box'),
+                    input: document.getElementById('macro-sidebar-search-input'),
+                    clearBtn: document.getElementById('macro-sidebar-clear-btn'),
+                    dropdown: document.getElementById('macro-sidebar-dropdown'),
+                    content: document.getElementById('macro-sidebar-dropdown-content')
+                }};
+            }}
+
+            function openDropdown() {{
+                var doms = getDoms();
+                if (doms.dropdown) {{
+                    doms.dropdown.classList.add('is-open');
+                }}
                 renderResults(doms.input ? doms.input.value : '');
-            }
-        }
+            }}
 
-        function closeDropdown() {
-            const doms = getDoms();
-            if (doms.dropdown) {
-                doms.dropdown.classList.remove('is-open');
-            }
-            selectedIdx = 0;
-        }
+            function closeDropdown() {{
+                var doms = getDoms();
+                if (doms.dropdown) {{
+                    doms.dropdown.classList.remove('is-open');
+                }}
+                selectedIdx = 0;
+            }}
 
-        function navigateTo(code) {
-            if (!code) return;
-            const doms = getDoms();
-            if (doms.input) doms.input.value = '';
-            closeDropdown();
+            function navigateTo(code) {{
+                if (!code) return;
+                var doms = getDoms();
+                if (doms.input) doms.input.value = '';
+                closeDropdown();
 
-            try {
-                const url = new URL(topWin.location.href);
-                url.searchParams.set('search_indicator', code);
-                topWin.location.href = url.toString();
-            } catch (err) {
-                topWin.location.search = '?search_indicator=' + encodeURIComponent(code);
-            }
-        }
+                try {{
+                    var url = new URL(window.location.href);
+                    url.searchParams.set('search_indicator', code);
+                    window.location.href = url.toString();
+                }} catch (err) {{
+                    window.location.search = '?search_indicator=' + encodeURIComponent(code);
+                }}
+            }}
 
-        function renderResults(query) {
-            const doms = getDoms();
-            if (!doms.content) return;
+            function renderResults(query) {{
+                var doms = getDoms();
+                if (!doms.content) return;
 
-            query = query || '';
-            const cleanQ = stripDiacritics(query);
-            if (doms.clearBtn) {
-                doms.clearBtn.style.display = cleanQ.length > 0 ? 'inline-block' : 'none';
-            }
+                query = query || '';
+                var cleanQ = stripDiacritics(query);
+                if (doms.clearBtn) {{
+                    doms.clearBtn.style.display = cleanQ.length > 0 ? 'inline-block' : 'none';
+                }}
 
-            // Pokud je dotaz prázdný, zobrazíme rychlé tipy a výběr hlavních ukazatelů
-            if (!cleanQ) {
-                const defaultCodes = [
-                    'repo_rate', 'cpi_yoy', 'czgb_10y', 'cz_mortgage_rate',
-                    'ecb_deposit_rate', 'bund_10y', 'eu_cpi_yoy',
-                    'fed_funds_upper', 'us_10y', 'sp500_index', 'vix_index'
-                ];
-                const defaultItems = CATALOG.filter(item => defaultCodes.includes(item.code));
+                // Pokud je dotaz prázdný, zobrazíme rychlé tipy a výběr hlavních ukazatelů
+                if (!cleanQ) {{
+                    var defaultCodes = [
+                        'repo_rate', 'cpi_yoy', 'czgb_10y', 'cz_mortgage_rate',
+                        'ecb_deposit_rate', 'bund_10y', 'eu_cpi_yoy',
+                        'fed_funds_upper', 'us_10y', 'sp500_index', 'vix_index'
+                    ];
+                    var defaultItems = CATALOG.filter(function(item) {{
+                        return defaultCodes.indexOf(item.code) !== -1;
+                    }});
 
-                currentResults = defaultItems;
+                    currentResults = defaultItems;
+                    selectedIdx = 0;
+
+                    var html = '<div class="macro-search-quick-tips">';
+                    html += '<div class="macro-search-tips-title">💡 Rychlé tipy & hledané pojmy:</div>';
+                    html += '<div class="macro-search-tips-chips">';
+                    html += '<span class="macro-search-chip" data-q="repo">2T Repo sazba</span>';
+                    html += '<span class="macro-search-chip" data-q="cpi">Inflace CPI</span>';
+                    html += '<span class="macro-search-chip" data-q="bund">10Y Bund</span>';
+                    html += '<span class="macro-search-chip" data-q="pribor">PRIBOR 3M</span>';
+                    html += '<span class="macro-search-chip" data-q="hypo">Hypotéky</span>';
+                    html += '<span class="macro-search-chip" data-q="sp500">S&P 500</span>';
+                    html += '<span class="macro-search-chip" data-q="vix">VIX</span>';
+                    html += '<span class="macro-search-chip" data-q="mzdy">Mzdy</span>';
+                    html += '</div></div>';
+                    html += renderGroupedList(defaultItems, query);
+                    doms.content.innerHTML = html;
+                    return;
+                }}
+
+                // Multi-token fuzzy matching od 1 znaku
+                var tokens = cleanQ.split(/\\s+/).filter(Boolean);
+                var filtered = CATALOG.filter(function(item) {{
+                    return tokens.every(function(tok) {{
+                        return item.searchText.indexOf(tok) !== -1;
+                    }});
+                }});
+
+                currentResults = filtered;
                 selectedIdx = 0;
 
-                let html = '<div class="macro-search-quick-tips">';
-                html += '<div class="macro-search-tips-title">💡 Rychlé tipy & hledané pojmy:</div>';
-                html += '<div class="macro-search-tips-chips">';
-                html += '<span class="macro-search-chip" data-q="repo">2T Repo sazba</span>';
-                html += '<span class="macro-search-chip" data-q="cpi">Inflace CPI</span>';
-                html += '<span class="macro-search-chip" data-q="bund">10Y Bund</span>';
-                html += '<span class="macro-search-chip" data-q="pribor">PRIBOR 3M</span>';
-                html += '<span class="macro-search-chip" data-q="hypo">Hypotéky</span>';
-                html += '<span class="macro-search-chip" data-q="sp500">S&P 500</span>';
-                html += '<span class="macro-search-chip" data-q="vix">VIX</span>';
-                html += '<span class="macro-search-chip" data-q="mzdy">Mzdy</span>';
-                html += '</div></div>';
-                html += renderGroupedList(defaultItems, query);
-                doms.content.innerHTML = html;
-                bindItemsEvents();
-                return;
-            }
+                if (filtered.length === 0) {{
+                    doms.content.innerHTML = '<div class="macro-search-empty-state">' +
+                        '<span class="macro-search-empty-icon">🔍</span>' +
+                        '<div class="macro-search-empty-title">Žádný indikátor nebyl nalezen.</div>' +
+                        '<div class="macro-search-empty-sub">' +
+                        'Zkuste zadat jiný výraz (např. <strong>CPI</strong>, <strong>repo</strong>, <strong>Bund</strong>, <strong>PRIBOR</strong>, <strong>HDP</strong>, <strong>hypotéky</strong> nebo <strong>VIX</strong>).' +
+                        '</div></div>';
+                    return;
+                }}
 
-            // Multi-token fuzzy matching od 1 znaku
-            const tokens = cleanQ.split(/\s+/).filter(Boolean);
-            const filtered = CATALOG.filter(item => {
-                return tokens.every(tok => item.searchText.includes(tok));
-            });
+                doms.content.innerHTML = renderGroupedList(filtered, query);
+            }}
 
-            currentResults = filtered;
-            selectedIdx = 0;
+            function renderGroupedList(items, query) {{
+                var groups = {{
+                    'CZ': {{ title: '🇨🇿 Česká republika', items: [] }},
+                    'EU': {{ title: '🇪🇺 Evropská unie', items: [] }},
+                    'US': {{ title: '🇺🇸 Spojené státy', items: [] }}
+                }};
 
-            if (filtered.length === 0) {
-                doms.content.innerHTML = '<div class="macro-search-empty-state">' +
-                    '<span class="macro-search-empty-icon">🔍</span>' +
-                    '<div class="macro-search-empty-title">Žádný indikátor nebyl nalezen.</div>' +
-                    '<div class="macro-search-empty-sub">' +
-                    'Zkuste zadat jiný výraz (např. <strong>CPI</strong>, <strong>repo</strong>, <strong>Bund</strong>, <strong>PRIBOR</strong>, <strong>HDP</strong>, <strong>hypotéky</strong> nebo <strong>VIX</strong>).' +
-                    '</div></div>';
-                return;
-            }
+                items.forEach(function(item, globalIdx) {{
+                    if (groups[item.region]) {{
+                        groups[item.region].items.push({{ item: item, globalIdx: globalIdx }});
+                    }}
+                }});
 
-            doms.content.innerHTML = renderGroupedList(filtered, query);
-            bindItemsEvents();
-        }
+                var out = '';
+                ['CZ', 'EU', 'US'].forEach(function(regKey) {{
+                    var grp = groups[regKey];
+                    if (grp.items.length > 0) {{
+                        out += '<div class="macro-search-group-header">' +
+                            '<span>' + grp.title + '</span>' +
+                            '<span class="macro-search-group-count">' + grp.items.length + '</span>' +
+                            '</div>';
+                        grp.items.forEach(function(entry) {{
+                            var it = entry.item;
+                            var gIdx = entry.globalIdx;
+                            var isSel = (gIdx === selectedIdx);
+                            var highlighted = highlightMatch(it.name, query);
+                            out += '<div class="macro-search-item ' + (isSel ? 'is-selected' : '') + '"' +
+                                ' data-idx="' + gIdx + '"' +
+                                ' data-code="' + it.code + '"' +
+                                ' id="macro-item-' + gIdx + '">' +
+                                '<div class="macro-search-item-left">' +
+                                '<div class="macro-search-item-name">' + highlighted + '</div>' +
+                                '<div class="macro-search-item-meta">' +
+                                '<span class="macro-search-item-cat">' + it.category + '</span>' +
+                                '<span class="macro-search-item-bc">• ' + it.mainTab + ' › ' + it.subTabLabel + '</span>' +
+                                '</div></div>' +
+                                '<div class="macro-search-item-right">' +
+                                '<span class="macro-search-region-badge" style="background: ' + it.badgeBg + '; color: ' + it.badgeColor + '; border-color: ' + it.badgeBorder + ';">' +
+                                it.regionBadge +
+                                '</span></div></div>';
+                        }});
+                    }}
+                }});
+                return out;
+            }}
 
-        function renderGroupedList(items, query) {
-            const groups = {
-                'CZ': { title: '🇨🇿 Česká republika', items: [] },
-                'EU': { title: '🇪🇺 Evropská unie', items: [] },
-                'US': { title: '🇺🇸 Spojené státy', items: [] }
-            };
+            function updateSelection(newIdx, shouldScroll) {{
+                if (!currentResults || currentResults.length === 0) return;
+                var doms = getDoms();
+                if (!doms.content) return;
 
-            items.forEach((item, globalIdx) => {
-                if (groups[item.region]) {
-                    groups[item.region].items.push({ item, globalIdx });
-                }
-            });
+                var oldNode = doms.content.querySelector('.macro-search-item[data-idx="' + selectedIdx + '"]');
+                if (oldNode) oldNode.classList.remove('is-selected');
 
-            let out = '';
-            ['CZ', 'EU', 'US'].forEach(regKey => {
-                const grp = groups[regKey];
-                if (grp.items.length > 0) {
-                    out += '<div class="macro-search-group-header">' +
-                        '<span>' + grp.title + '</span>' +
-                        '<span class="macro-search-group-count">' + grp.items.length + '</span>' +
-                        '</div>';
-                    grp.items.forEach(({ item, globalIdx }) => {
-                        const isSel = (globalIdx === selectedIdx);
-                        const highlighted = highlightMatch(item.name, query);
-                        out += '<div class="macro-search-item ' + (isSel ? 'is-selected' : '') + '"' +
-                            ' data-idx="' + globalIdx + '"' +
-                            ' data-code="' + item.code + '"' +
-                            ' id="macro-item-' + globalIdx + '">' +
-                            '<div class="macro-search-item-left">' +
-                            '<div class="macro-search-item-name">' + highlighted + '</div>' +
-                            '<div class="macro-search-item-meta">' +
-                            '<span class="macro-search-item-cat">' + item.category + '</span>' +
-                            '<span class="macro-search-item-bc">• ' + item.mainTab + ' › ' + item.subTabLabel + '</span>' +
-                            '</div></div>' +
-                            '<div class="macro-search-item-right">' +
-                            '<span class="macro-search-region-badge" style="background: ' + item.badgeBg + '; color: ' + item.badgeColor + '; border-color: ' + item.badgeBorder + ';">' +
-                            item.regionBadge +
-                            '</span></div></div>';
-                    });
-                }
-            });
-            return out;
-        }
+                selectedIdx = Math.max(0, Math.min(newIdx, currentResults.length - 1));
 
-        function updateSelection(newIdx, shouldScroll) {
-            if (!currentResults || currentResults.length === 0) return;
-            const doms = getDoms();
-            if (!doms.content) return;
+                var newNode = doms.content.querySelector('.macro-search-item[data-idx="' + selectedIdx + '"]');
+                if (newNode) {{
+                    newNode.classList.add('is-selected');
+                    if (shouldScroll) {{
+                        newNode.scrollIntoView({{ block: 'nearest', behavior: 'smooth' }});
+                    }}
+                }}
+            }}
 
-            const oldNode = doms.content.querySelector('.macro-search-item[data-idx="' + selectedIdx + '"]');
-            if (oldNode) oldNode.classList.remove('is-selected');
+            function handleEnter(val) {{
+                if (currentResults && currentResults.length > 0) {{
+                    var sel = currentResults[selectedIdx] || currentResults[0];
+                    if (sel && sel.code) {{
+                        navigateTo(sel.code);
+                        return;
+                    }}
+                }}
+                var qVal = (val || '').trim();
+                if (qVal) {{
+                    var cleanQ = stripDiacritics(qVal);
+                    var tokens = cleanQ.split(/\\s+/).filter(Boolean);
+                    var match = CATALOG.find(function(item) {{
+                        return tokens.every(function(tok) {{ return item.searchText.indexOf(tok) !== -1; }});
+                    }});
+                    if (match && match.code) {{
+                        navigateTo(match.code);
+                        return;
+                    }}
+                }}
+            }}
 
-            selectedIdx = Math.max(0, Math.min(newIdx, currentResults.length - 1));
+            // ==========================================
+            // DELEGOVANÉ GLOBÁLNÍ UDÁLOSTI V RÁMCI DOKUMENTU
+            // ==========================================
+            if (!window.__macroSearchDelegationAttached) {{
+                window.__macroSearchDelegationAttached = true;
 
-            const newNode = doms.content.querySelector('.macro-search-item[data-idx="' + selectedIdx + '"]');
-            if (newNode) {
-                newNode.classList.add('is-selected');
-                if (shouldScroll) {
-                    newNode.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                }
-            }
-        }
+                // 1. Psaní do vstupu
+                document.addEventListener('input', function(e) {{
+                    if (e.target && e.target.id === 'macro-sidebar-search-input') {{
+                        openDropdown();
+                        renderResults(e.target.value);
+                    }}
+                }}, true);
 
-        function bindItemsEvents() {
-            const doms = getDoms();
-            if (!doms.content) return;
+                // 2. Focus vstupu
+                document.addEventListener('focusin', function(e) {{
+                    if (e.target && e.target.id === 'macro-sidebar-search-input') {{
+                        openDropdown();
+                        renderResults(e.target.value || '');
+                    }}
+                }}, true);
 
-            // Kliknutí na výsledky
-            const items = doms.content.querySelectorAll('.macro-search-item');
-            items.forEach(it => {
-                it.onclick = function(e) {
-                    e.stopPropagation();
-                    const code = it.getAttribute('data-code');
-                    if (code) navigateTo(code);
-                };
-                it.onmouseenter = function() {
-                    const idx = parseInt(it.getAttribute('data-idx'), 10);
-                    if (!isNaN(idx)) updateSelection(idx, false);
-                };
-            });
+                // 3. Klávesnice: Ctrl+K kdekoli a navigace uvnitř vstupu
+                document.addEventListener('keydown', function(e) {{
+                    // Globální zkratka Ctrl+K / Cmd+K
+                    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K' || e.keyCode === 75 || e.code === 'KeyK')) {{
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (typeof e.stopImmediatePropagation === 'function') {{
+                            e.stopImmediatePropagation();
+                        }}
+                        var inp = document.getElementById('macro-sidebar-search-input');
+                        if (inp) {{
+                            inp.focus();
+                            inp.select();
+                            openDropdown();
+                        }}
+                        return false;
+                    }}
 
-            // Kliknutí na chipy
-            const chips = doms.content.querySelectorAll('.macro-search-chip');
-            chips.forEach(chip => {
-                chip.onclick = function(e) {
-                    e.stopPropagation();
-                    const q = chip.getAttribute('data-q');
-                    if (doms.input && q) {
-                        doms.input.value = q;
-                        doms.input.focus();
-                        renderResults(q);
-                    }
-                };
-            });
-        }
+                    // Klávesnice uvnitř vyhledávacího inputu
+                    if (e.target && e.target.id === 'macro-sidebar-search-input') {{
+                        if (e.key === 'ArrowDown') {{
+                            e.preventDefault();
+                            e.stopPropagation();
+                            updateSelection(selectedIdx + 1, true);
+                        }} else if (e.key === 'ArrowUp') {{
+                            e.preventDefault();
+                            e.stopPropagation();
+                            updateSelection(selectedIdx - 1, true);
+                        }} else if (e.key === 'Enter') {{
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleEnter(e.target.value);
+                        }} else if (e.key === 'Escape') {{
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.target.value = '';
+                            closeDropdown();
+                            e.target.blur();
+                        }}
+                    }}
+                }}, true);
 
-        function setupSearch() {
-            const doms = getDoms();
-            if (!doms.input || !doms.dropdown || !doms.content) {
-                setTimeout(setupSearch, 50);
-                return;
-            }
+                // 4. Kliknutí: čipy, výsledky, mazání, klik mimo
+                document.addEventListener('click', function(e) {{
+                    // Vymazat ✕
+                    if (e.target && (e.target.id === 'macro-sidebar-clear-btn' || e.target.closest('#macro-sidebar-clear-btn'))) {{
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var inp = document.getElementById('macro-sidebar-search-input');
+                        if (inp) {{
+                            inp.value = '';
+                            inp.focus();
+                            renderResults('');
+                        }}
+                        return;
+                    }}
 
-            if (doms.input.dataset.searchInitialized === 'true') {
-                return;
-            }
-            doms.input.dataset.searchInitialized = 'true';
+                    // Rychlý chip
+                    var chip = e.target.closest('.macro-search-chip');
+                    if (chip) {{
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var q = chip.getAttribute('data-q');
+                        var inp = document.getElementById('macro-sidebar-search-input');
+                        if (inp && q) {{
+                            inp.value = q;
+                            inp.focus();
+                            openDropdown();
+                            renderResults(q);
+                        }}
+                        return;
+                    }}
 
-            // Kliknutí do boxu zaostří input
-            if (doms.box) {
-                doms.box.onclick = function(e) {
-                    if (e.target !== doms.clearBtn) {
-                        doms.input.focus();
-                    }
-                };
-            }
+                    // Položka indikátoru
+                    var item = e.target.closest('.macro-search-item');
+                    if (item) {{
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var code = item.getAttribute('data-code');
+                        if (code) navigateTo(code);
+                        return;
+                    }}
 
-            // Psaní do vstupu
-            doms.input.oninput = function(e) {
+                    // Kliknutí do boxu
+                    var box = e.target.closest('#macro-search-box');
+                    if (box) {{
+                        var inp = document.getElementById('macro-sidebar-search-input');
+                        if (inp && e.target !== inp) {{
+                            inp.focus();
+                            openDropdown();
+                        }}
+                        return;
+                    }}
+
+                    // Kliknutí mimo vyhledávač
+                    var wrapper = document.getElementById('macro-search-wrapper');
+                    if (wrapper && !wrapper.contains(e.target)) {{
+                        closeDropdown();
+                    }}
+                }}, true);
+
+                // 5. Najetí myší na položku
+                document.addEventListener('mouseover', function(e) {{
+                    var item = e.target.closest('.macro-search-item');
+                    if (item) {{
+                        var idx = parseInt(item.getAttribute('data-idx'), 10);
+                        if (!isNaN(idx)) {{
+                            updateSelection(idx, false);
+                        }}
+                    }}
+                }}, true);
+            }}
+
+            // Okamžité vyrenderování výchozího stavu, pokud je již pole otevřené
+            var curInp = document.getElementById('macro-sidebar-search-input');
+            if (curInp && (document.activeElement === curInp || curInp.value)) {{
                 openDropdown();
-                renderResults(doms.input.value);
-            };
+            }}
+        }})();
+        `;
+        topDoc.head.appendChild(controllerScript);
+    }} catch (e) {{
+        console.error('Macro search initialization error:', e);
+    }}
+}})();
+</script>
+</body>
+</html>"""
 
-            // Focus na vstup
-            doms.input.onfocus = function() {
-                openDropdown();
-                renderResults(doms.input.value || '');
-            };
-
-            // Klávesnice uvnitř vstupu
-            doms.input.onkeydown = function(e) {
-                e.stopPropagation();
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    updateSelection(selectedIdx + 1, true);
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    updateSelection(selectedIdx - 1, true);
-                } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    // 1. Z výběru vyfiltrovaných položek
-                    if (currentResults && currentResults.length > 0) {
-                        const sel = currentResults[selectedIdx] || currentResults[0];
-                        if (sel && sel.code) {
-                            navigateTo(sel.code);
-                            return;
-                        }
-                    }
-                    // 2. Přímé vyhledání podle zadaného textu v inputu
-                    const qVal = (doms.input.value || '').trim();
-                    if (qVal) {
-                        const cleanQ = stripDiacritics(qVal);
-                        const tokens = cleanQ.split(/\s+/).filter(Boolean);
-                        const match = CATALOG.find(item => tokens.every(tok => item.searchText.includes(tok)));
-                        if (match && match.code) {
-                            navigateTo(match.code);
-                            return;
-                        }
-                    }
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    doms.input.value = '';
-                    closeDropdown();
-                    doms.input.blur();
-                }
-            };
-
-            // Tlačítko pro vymazání ✕
-            if (doms.clearBtn) {
-                doms.clearBtn.onclick = function(e) {
-                    e.stopPropagation();
-                    doms.input.value = '';
-                    doms.input.focus();
-                    renderResults('');
-                };
-            }
-
-            // Zavření při kliknutí mimo vyhledávač
-            topDoc.addEventListener('click', function(e) {
-                const currentDoms = getDoms();
-                if (currentDoms.wrapper && !currentDoms.wrapper.contains(e.target)) {
-                    closeDropdown();
-                }
-            });
-        }
-
-        // Globální zkratka Ctrl+K / Cmd+K (CAPTURE PHASE: předbíhá nativní URL řádek prohlížeče)
-        function handleGlobalK(e) {
-            if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K' || e.keyCode === 75 || e.code === 'KeyK')) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (typeof e.stopImmediatePropagation === 'function') {
-                    e.stopImmediatePropagation();
-                }
-                const doms = getDoms();
-                if (doms.input) {
-                    doms.input.focus();
-                    doms.input.select();
-                    openDropdown();
-                }
-                return false;
-            }
-        }
-
-        try {
-            if (topWin.__macroSearchKeyHandler) {
-                topWin.removeEventListener('keydown', topWin.__macroSearchKeyHandler, true);
-                topDoc.removeEventListener('keydown', topWin.__macroSearchKeyHandler, true);
-            }
-            topWin.__macroSearchKeyHandler = handleGlobalK;
-            topWin.addEventListener('keydown', handleGlobalK, { capture: true, passive: false });
-            topDoc.addEventListener('keydown', handleGlobalK, { capture: true, passive: false });
-        } catch (err) {}
-
-        // Spuštění inicializace
-        setupSearch();
-        setTimeout(setupSearch, 60);
-        setTimeout(setupSearch, 200);
-        setTimeout(setupSearch, 500);
-    })();
-    </script>
-    """
-
-    final_js = js_template.replace("__CATALOG_JSON__", catalog_json)
-    try:
-        import streamlit.components.v1 as components
-        components.html(final_js, height=0, width=0)
-    except Exception:
-        pass
+    with st.sidebar:
+        try:
+            import streamlit.components.v1 as components
+            components.html(runner_html, height=1, width=1)
+        except Exception:
+            pass
 
 
 # =============================================================================
@@ -1451,10 +1490,14 @@ def render_scroll_anchor_effect() -> None:
     if not target_anchor:
         return
 
-    script = f"""
-    <script>
-    (function() {{
-        const targetId = "{target_anchor}";
+    script = f"""<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>macro_scroll_engine</title></head>
+<body>
+<script>
+(function() {{
+    const targetId = "{target_anchor}";
+    try {{
         const topDoc = (window.parent && window.parent.document) ? window.parent.document : document;
         let attempts = 0;
         function tryScroll() {{
@@ -1470,16 +1513,18 @@ def render_scroll_anchor_effect() -> None:
                     el.style.outline = 'none';
                     el.style.boxShadow = 'none';
                 }}, 2500);
-            }} else if (attempts < 12) {{
-                setTimeout(tryScroll, 120);
+            }} else if (attempts < 15) {{
+                setTimeout(tryScroll, 100);
             }}
         }}
         setTimeout(tryScroll, 150);
-    }})();
-    </script>
-    """
+    }} catch (e) {{}}
+}})();
+</script>
+</body>
+</html>"""
     try:
         import streamlit.components.v1 as components
-        components.html(script, height=0, width=0)
+        components.html(script, height=1, width=1)
     except Exception:
         pass
