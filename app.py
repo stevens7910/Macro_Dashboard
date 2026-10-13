@@ -196,7 +196,7 @@ CUSTOM_CSS = """
     }
 
     /* =========================================================================
-       DVOUSTUPŇOVÁ NAVIGACE: 1. HLAVNÍ KATEGORIE (PILL TABS S OUTLINE SVG IKONAMI)
+       DVOUSTUPŇOVÁ NAVIGACE: 1. HLAVNÍ KATEGORIE (L1 SEGMENTED CONTROL / TERMINÁLOVÁ LIŠTA)
        ========================================================================= */
 
     /* Skrytí výchozího BaseWeb podtržení a dělicí linky */
@@ -205,36 +205,45 @@ CUSTOM_CSS = """
         display: none !important;
     }
 
-    /* Kontejner horní hlavní navigace (Tier 1) */
-    div[data-baseweb="tab-list"] {
-        display: flex !important;
+    /* Kontejner horní hlavní navigace (Tier 1 - L1: Segmented control) */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) div[data-baseweb="tab-list"],
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) div[data-baseweb="tab-list"] {
+        display: inline-flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        gap: 6px !important;
-        background-color: transparent !important;
-        border: none !important;
-        border-radius: 0 !important;
-        padding: 4px 0 6px 0 !important;
-        margin-bottom: 0.6rem !important;
+        gap: 4px !important;
+        background-color: #f1f5f9 !important; /* jemně šedé pozadí #F1F5F9 */
+        border: 1px solid #e2e8f0 !important; /* decentní rámeček border 1px #E2E8F0 */
+        border-radius: 8px !important; /* rounded-lg */
+        padding: 4px !important;
+        margin-top: 0.25rem !important;
+        margin-bottom: 0.75rem !important;
         overflow-x: auto !important;
         white-space: nowrap !important;
-        scrollbar-width: thin !important;
+        scrollbar-width: none !important; /* no-scrollbar */
+        -ms-overflow-style: none !important;
         -webkit-overflow-scrolling: touch !important;
-        width: 100% !important;
+        max-width: 100% !important;
     }
 
-    /* Neaktivní položka v hlavní navigaci (Tier 1) */
-    button[data-baseweb="tab"] {
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) div[data-baseweb="tab-list"]::-webkit-scrollbar,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) div[data-baseweb="tab-list"]::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    /* L1 Neaktivní taby: neutrální šedý text (#64748B), rounded-md */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"],
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"] {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         background-color: transparent !important;
-        color: #475569 !important; /* text-slate-600 */
+        color: #64748b !important; /* text #64748B */
         border: none !important;
         border-bottom: none !important;
         border-radius: 6px !important; /* rounded-md */
-        padding: 6px 12px !important; /* px-3 py-1.5 */
+        padding: 6px 14px !important;
         font-size: 0.875rem !important;
         font-weight: 500 !important;
         letter-spacing: -0.01em !important;
@@ -247,8 +256,10 @@ CUSTOM_CSS = """
         outline: none !important;
     }
 
-    button[data-baseweb="tab"] p,
-    button[data-baseweb="tab"] span {
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"] p,
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"] span,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"] p,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"] span {
         color: inherit !important;
         font-weight: inherit !important;
         font-size: 0.875rem !important;
@@ -257,28 +268,31 @@ CUSTOM_CSS = """
         padding: 0 !important;
     }
 
-    /* Hover na neaktivní položce hlavní navigace (Tier 1): hover:bg-slate-100 */
-    button[data-baseweb="tab"]:hover {
-        background-color: #f1f5f9 !important; /* hover:bg-slate-100 */
-        color: #1e293b !important;
+    /* L1 Hover na neaktivní položce: jemné zesvětlení */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:hover,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:hover {
+        background-color: rgba(255, 255, 255, 0.65) !important;
+        color: #0f172a !important;
         border: none !important;
         border-bottom: none !important;
     }
 
-    /* Aktivní hlavní kategorie - styl jemné pilulky (bg-blue-50, text-blue-600, rounded-md, px-3 py-1.5) */
-    button[data-baseweb="tab"][aria-selected="true"],
-    button[data-baseweb="tab"][data-selected="true"] {
-        background-color: #eff6ff !important; /* bg-blue-50 */
-        color: #2563eb !important; /* text-blue-600 */
+    /* L1 Aktivní tab: plné bílé pozadí (#FFFFFF), tmavý text (#0F172A), font-semibold, jemný stín (shadow-sm) a zaoblení (rounded-md), bez podtržení */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"][aria-selected="true"],
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"][data-selected="true"],
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"][aria-selected="true"],
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"][data-selected="true"] {
+        background-color: #ffffff !important; /* plné bílé pozadí #FFFFFF */
+        color: #0f172a !important; /* tmavý výrazný text #0F172A */
         border: none !important;
-        border-bottom: none !important; /* Bez spodní čáry! */
+        border-bottom: none !important; /* zrušena spodní linka */
         border-radius: 6px !important; /* rounded-md */
-        padding: 6px 12px !important; /* px-3 py-1.5 */
-        font-weight: 600 !important;
-        box-shadow: none !important;
+        padding: 6px 14px !important;
+        font-weight: 600 !important; /* font-semibold */
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04) !important; /* shadow-sm */
     }
 
-    /* Monochromatické outline SVG ikony 16px (pouze na horních záložkách, barva přes currentColor) */
+    /* Monochromatické outline SVG Lucide ikony 16px (barva přes currentColor) */
     div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]::before,
     div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]::before {
         content: "" !important;
@@ -298,42 +312,42 @@ CUSTOM_CSS = """
         flex-shrink: 0 !important;
     }
 
-    /* Ikona 1: Finanční trhy & Měna (Credit Card outline) */
+    /* Ikona 1: Měnová politika & FX (Lucide Landmark outline) */
     div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(1)::before,
     div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(1)::before {
-        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='14' x='2' y='5' rx='2'/%3E%3Cline x1='2' x2='22' y1='10' y2='10'/%3E%3C/svg%3E") !important;
-        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='14' x='2' y='5' rx='2'/%3E%3Cline x1='2' x2='22' y1='10' y2='10'/%3E%3C/svg%3E") !important;
-    }
-
-    /* Ikona 2: Reálná ekonomika & Práce (Landmark / Bank outline) */
-    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(2)::before,
-    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(2)::before {
         -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='3' x2='21' y1='22' y2='22'/%3E%3Cline x1='6' x2='6' y1='11' y2='18'/%3E%3Cline x1='10' x2='10' y1='11' y2='18'/%3E%3Cline x1='14' x2='14' y1='11' y2='18'/%3E%3Cline x1='18' x2='18' y1='11' y2='18'/%3E%3Cpolygon points='12 2 20 7 4 7'/%3E%3C/svg%3E") !important;
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='3' x2='21' y1='22' y2='22'/%3E%3Cline x1='6' x2='6' y1='11' y2='18'/%3E%3Cline x1='10' x2='10' y1='11' y2='18'/%3E%3Cline x1='14' x2='14' y1='11' y2='18'/%3E%3Cline x1='18' x2='18' y1='11' y2='18'/%3E%3Cpolygon points='12 2 20 7 4 7'/%3E%3C/svg%3E") !important;
     }
 
-    /* Ikona 3: Trhy (Trending Up line chart outline) */
+    /* Ikona 2: Ekonomika & Práce (Lucide Building2 outline) */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(2)::before,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(2)::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cline x1='10' x2='14' y1='6' y2='6'/%3E%3Cline x1='10' x2='14' y1='10' y2='10'/%3E%3Cline x1='10' x2='14' y1='14' y2='14'/%3E%3Cline x1='10' x2='14' y1='18' y2='18'/%3E%3C/svg%3E") !important;
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cline x1='10' x2='14' y1='6' y2='6'/%3E%3Cline x1='10' x2='14' y1='10' y2='10'/%3E%3Cline x1='10' x2='14' y1='14' y2='14'/%3E%3Cline x1='10' x2='14' y1='18' y2='18'/%3E%3C/svg%3E") !important;
+    }
+
+    /* Ikona 3: Akciové trhy (Lucide TrendingUp outline) */
     div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(3)::before,
     div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(3)::before {
         -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='22 7 13.5 15.5 8.5 10.5 2 17'/%3E%3Cpolyline points='16 7 22 7 22 13'/%3E%3C/svg%3E") !important;
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='22 7 13.5 15.5 8.5 10.5 2 17'/%3E%3Cpolyline points='16 7 22 7 22 13'/%3E%3C/svg%3E") !important;
     }
 
-    /* Ikona 4: Fiskál & Svět (Globe outline) */
+    /* Ikona 4: Fiskál & Svět (Lucide Globe outline) */
     div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(4)::before,
     div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(4)::before {
         -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20'/%3E%3Cpath d='M2 12h20'/%3E%3C/svg%3E") !important;
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20'/%3E%3Cpath d='M2 12h20'/%3E%3C/svg%3E") !important;
     }
 
-    /* Ikona 5: Export (Download / Export tray outline) */
+    /* Ikona 5: Export (Lucide Download outline) */
     div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(5)::before,
     div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(5)::before {
         -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='7 10 12 15 17 10'/%3E%3Cline x1='12' x2='12' y1='15' y2='3'/%3E%3C/svg%3E") !important;
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='7 10 12 15 17 10'/%3E%3Cline x1='12' x2='12' y1='15' y2='3'/%3E%3C/svg%3E") !important;
     }
 
-    /* Ikona 6: Metriky (Book open outline) */
+    /* Ikona 6: Metriky (Lucide BookOpen outline) */
     div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(6)::before,
     div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(6)::before {
         -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/%3E%3Cpath d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/%3E%3C/svg%3E") !important;
@@ -341,53 +355,58 @@ CUSTOM_CSS = """
     }
 
     /* =========================================================================
-       DVOUSTUPŇOVÁ NAVIGACE: 2. PODKATEGORIE (TEXTOVÝ STYL SE SPODNÍ MODROU LINKOU)
+       DVOUSTUPŇOVÁ NAVIGACE: 2. PODKATEGORIE (L2 ZAOKROUHLENÉ PILLS s rounded-full)
        ========================================================================= */
 
-    /* Oddělení sekce podkategorií jemnou linkou border-t border-slate-100 a správným odsazením */
+    /* Odsazení podkategorií těsně pod L1 lištou s vertikálním oddělením (mt-3) */
     div[data-baseweb="tab-panel"] > div[data-testid="stTabs"],
     div[data-baseweb="tab-panel"] > div.stTabs,
     div[data-baseweb="tab-panel"] div[data-testid="stTabs"],
     div[data-baseweb="tab-panel"] div.stTabs {
-        border-top: 1px solid #f1f5f9 !important; /* border-t border-slate-100 */
-        padding-top: 0.75rem !important;
-        margin-top: 0.25rem !important;
+        border-top: none !important;
+        padding-top: 0 !important;
+        margin-top: 0.75rem !important; /* mt-3 vertikální oddělení */
     }
 
-    /* Kontejner lišty podkategorií */
+    /* Kontejner L2 lišty podkategorií (pills) */
     div[data-baseweb="tab-panel"] div[data-baseweb="tab-list"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        gap: 1.25rem !important;
+        gap: 8px !important;
         background-color: transparent !important;
         border: none !important;
         border-radius: 0 !important;
-        padding: 0 0 2px 0 !important;
-        margin-bottom: 1.25rem !important;
+        padding: 2px 0 6px 0 !important;
+        margin-bottom: 1.15rem !important;
         overflow-x: auto !important;
         white-space: nowrap !important;
-        scrollbar-width: thin !important;
+        scrollbar-width: none !important; /* no-scrollbar */
+        -ms-overflow-style: none !important;
         -webkit-overflow-scrolling: touch !important;
         width: 100% !important;
     }
 
-    /* Na podkategoriích zakázat pseudoikony */
+    div[data-baseweb="tab-panel"] div[data-baseweb="tab-list"]::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    /* Žádné pseudoikony v L2 */
     div[data-baseweb="tab-panel"] button[data-baseweb="tab"]::before {
         display: none !important;
         content: none !important;
     }
 
-    /* Neaktivní položky v podkategoriích - čistý textový styl */
+    /* Neaktivní L2 pill: jemně šedé pozadí (#F1F5F9), neutrální text (#475569), rounded-full, jemný hover */
     div[data-baseweb="tab-panel"] button[data-baseweb="tab"] {
-        background-color: transparent !important;
-        color: #64748b !important; /* text-slate-500 */
-        border: none !important;
-        border-bottom: 2px solid transparent !important;
-        border-radius: 0 !important;
-        padding: 6px 2px 8px 2px !important;
-        font-size: 0.875rem !important;
+        background-color: #f1f5f9 !important; /* jemně šedé pozadí #F1F5F9 */
+        color: #475569 !important; /* neutrální text #475569 */
+        border: 1px solid #e2e8f0 !important;
+        border-bottom: 1px solid #e2e8f0 !important; /* zrušena spodní linka */
+        border-radius: 9999px !important; /* rounded-full */
+        padding: 5px 14px !important;
+        font-size: 0.8125rem !important; /* 13px */
         font-weight: 500 !important;
         letter-spacing: -0.01em !important;
         transition: all 0.15s ease-in-out !important;
@@ -398,24 +417,34 @@ CUSTOM_CSS = """
         margin: 0 !important;
     }
 
-    /* Hover na podkategorii */
-    div[data-baseweb="tab-panel"] button[data-baseweb="tab"]:hover {
-        background-color: transparent !important;
-        color: #1e293b !important;
-        border-bottom: 2px solid #cbd5e1 !important;
+    div[data-baseweb="tab-panel"] button[data-baseweb="tab"] p,
+    div[data-baseweb="tab-panel"] button[data-baseweb="tab"] span {
+        color: inherit !important;
+        font-weight: inherit !important;
+        font-size: 0.8125rem !important;
+        line-height: 1.25rem !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
-    /* Aktivní vybraná podpoložka - spodní modrá linka (border-b-2 border-blue-600), sytější písmo, modrý text */
+    div[data-baseweb="tab-panel"] button[data-baseweb="tab"]:hover {
+        background-color: #e2e8f0 !important;
+        color: #0f172a !important;
+        border-color: #cbd5e1 !important;
+        border-bottom: 1px solid #cbd5e1 !important;
+    }
+
+    /* Aktivní L2 pill: sytě modré pozadí (#2563EB), bílý text (#FFFFFF), font-medium, rounded-full, bez podtržení */
     div[data-baseweb="tab-panel"] button[data-baseweb="tab"][aria-selected="true"],
     div[data-baseweb="tab-panel"] button[data-baseweb="tab"][data-selected="true"] {
-        background-color: transparent !important;
-        color: #2563eb !important; /* text-blue-600 */
-        border: none !important;
-        border-bottom: 2px solid #2563eb !important; /* border-b-2 border-blue-600 */
-        border-radius: 0 !important;
-        padding: 6px 2px 8px 2px !important;
-        font-weight: 700 !important; /* sytější písmo */
-        box-shadow: none !important;
+        background-color: #2563eb !important; /* sytě modré pozadí #2563EB */
+        color: #ffffff !important; /* bílý text #FFFFFF */
+        border: 1px solid #2563eb !important;
+        border-bottom: 1px solid #2563eb !important; /* zrušeno spodní podtržení */
+        border-radius: 9999px !important; /* rounded-full */
+        padding: 5px 14px !important;
+        font-weight: 500 !important; /* font-medium */
+        box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3) !important;
     }
 
     /* KARTA AKTUÁLNÍHO FINANČNÍHO ZPRAVODAJSTVÍ A KONTEXTU */
@@ -565,21 +594,33 @@ CUSTOM_CSS = """
             grid-template-columns: 1fr;
         }
     }
-    .sa-hero-item {
+    .sa-hero-item, a.sa-hero-item {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        background: #f8fafc;
+        background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 8px;
         padding: 10px 14px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
         min-width: 0;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        text-decoration: none !important;
+        color: inherit !important;
+        cursor: pointer;
+        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        position: relative;
     }
-    .sa-hero-item:hover {
-        border-color: #cbd5e1;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    .sa-hero-item:hover, a.sa-hero-item:hover {
+        border-color: #94a3b8;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+        text-decoration: none !important;
+    }
+    .sa-hero-item:hover .sa-hero-label, a.sa-hero-item:hover .sa-hero-label {
+        color: #2563eb;
+    }
+    .sa-hero-item:active, a.sa-hero-item:active {
+        transform: translateY(0);
     }
     .sa-hero-label {
         font-size: 0.68rem;
@@ -1124,24 +1165,25 @@ with st.sidebar.expander("ℹ️ Stav jednotlivých API endpointů"):
 # 6. FILTRACE PODLE VYBRANÉHO HORIZONTU
 # =============================================================================
 
-max_date = df_raw["date"].max()
+max_macro_date = df_raw["date"].max()
+max_fx_date = df_daily_fx["date"].max() if not df_daily_fx.empty else max_macro_date
 min_date = df_raw["date"].min()
 
 if horizon_option in ("1R", "1 rok"):
-    start_filter_date = max_date - pd.DateOffset(years=1)
-    end_filter_date = max_date
+    start_filter_date = max_macro_date - pd.DateOffset(years=1)
 elif horizon_option in ("3R", "3 roky"):
-    start_filter_date = max_date - pd.DateOffset(years=3)
-    end_filter_date = max_date
+    start_filter_date = max_macro_date - pd.DateOffset(years=3)
 elif horizon_option in ("5R", "5 let"):
-    start_filter_date = max_date - pd.DateOffset(years=5)
-    end_filter_date = max_date
+    start_filter_date = max_macro_date - pd.DateOffset(years=5)
 elif horizon_option in ("Od 2015", "Celá historie (od 2015)", "Celá historie", "MAX"):
     start_filter_date = min_date
-    end_filter_date = max_date
+else:
+    start_filter_date = max_macro_date - pd.DateOffset(years=1)
 
-df = df_raw[(df_raw["date"] >= start_filter_date) & (df_raw["date"] <= end_filter_date)].copy().sort_values("date").reset_index(drop=True)
-df_daily_fx_filtered = df_daily_fx[(df_daily_fx["date"] >= start_filter_date) & (df_daily_fx["date"] <= end_filter_date)].copy().sort_values("date").reset_index(drop=True)
+end_filter_date = max(max_macro_date, max_fx_date)
+
+df = df_raw[(df_raw["date"] >= start_filter_date) & (df_raw["date"] <= max_macro_date)].copy().sort_values("date").reset_index(drop=True)
+df_daily_fx_filtered = df_daily_fx[(df_daily_fx["date"] >= start_filter_date) & (df_daily_fx["date"] <= max_fx_date)].copy().sort_values("date").reset_index(drop=True)
 
 if df.empty:
     st.warning("Pro vybraný časový filtr nejsou k dispozici žádné záznamy. Zvolte prosím širší rozsah.")
@@ -1353,9 +1395,9 @@ eu_btp_sp_prev = safe_metric(prev_row, "eu_btp_bund_spread", eu_btp_sp_curr)
 vix_curr = safe_metric(last_row, "vix_index", 15.2)
 vix_prev = safe_metric(prev_row, "vix_index", vix_curr)
 
-# Poslední denní FX data
-last_daily_fx = df_daily_fx_filtered.iloc[-1] if not df_daily_fx_filtered.empty else last_row
-prev_daily_fx = df_daily_fx_filtered.iloc[-2] if len(df_daily_fx_filtered) > 1 else last_daily_fx
+# Poslední denní FX data (z nejaktuálnějších načtených dat df_daily_fx k dnešnímu dni)
+last_daily_fx = df_daily_fx.iloc[-1] if not df_daily_fx.empty else (df_daily_fx_filtered.iloc[-1] if not df_daily_fx_filtered.empty else last_row)
+prev_daily_fx = df_daily_fx.iloc[-2] if len(df_daily_fx) > 1 else last_daily_fx
 
 daily_eur_czk = safe_metric(last_daily_fx, "eur_czk", eur_cz_curr)
 daily_usd_czk = safe_metric(last_daily_fx, "usd_czk", usd_cz_curr)
@@ -1448,8 +1490,8 @@ def get_indicator_period_str(col: str, default_freq: str = "M") -> str:
     - 'měsíční: 09/2026'
     - 'kvartální: Q3/2026'
     """
-    if col in ("eur_czk", "usd_czk", "pln_czk", "gbp_czk", "eur_usd", "eur_pln", "eur_gbp", "dxy_index", "usd_jpy", "usd_pln", "usd_chf"):
-        fx_source = df_daily_fx_filtered if not df_daily_fx_filtered.empty else df_daily_fx
+    if col in ("eur_czk", "usd_czk", "pln_czk", "gbp_czk", "chf_czk", "eur_usd", "eur_pln", "eur_gbp", "gbp_usd", "dxy_index", "usd_jpy", "usd_pln", "usd_chf"):
+        fx_source = df_daily_fx if not df_daily_fx.empty else df_daily_fx_filtered
         if col in fx_source.columns:
             s_fx = fx_source[col].dropna()
             if not s_fx.empty:
@@ -1683,7 +1725,7 @@ if is_cz:
                 </div>
             </div>
             <div class="sa-hero-strip">
-                <div class="sa-hero-item">
+                <a href="?search_indicator=repo_rate" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: 2T Repo ČNB">
                     <span class="sa-hero-label">2T Repo ČNB</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{repo_curr:.2f} %</span>
@@ -1691,8 +1733,8 @@ if is_cz:
                     </div>
                     <div class="sa-hero-spark-row">{spark_repo}</div>
                     <div class="sa-hero-date">{date_hero_repo}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=pribor_3m" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: PRIBOR 3M">
                     <span class="sa-hero-label">PRIBOR 3M</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{prib3m_curr:.2f} %</span>
@@ -1700,8 +1742,8 @@ if is_cz:
                     </div>
                     <div class="sa-hero-spark-row">{spark_pribor}</div>
                     <div class="sa-hero-date">{date_hero_pribor}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=eur_czk" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Kurz EUR/CZK">
                     <span class="sa-hero-label">Kurz EUR/CZK</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{daily_eur_czk:.2f} Kč</span>
@@ -1709,8 +1751,8 @@ if is_cz:
                     </div>
                     <div class="sa-hero-spark-row">{spark_eur_czk}</div>
                     <div class="sa-hero-date">{date_hero_eur_czk}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=czgb_10y" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: 10Y CZGB Výnos">
                     <span class="sa-hero-label">10Y CZGB Výnos</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{czgb10_curr:.2f} %</span>
@@ -1718,8 +1760,8 @@ if is_cz:
                     </div>
                     <div class="sa-hero-spark-row">{spark_czgb10}</div>
                     <div class="sa-hero-date">{date_hero_czgb10}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=cpi_yoy" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Inflace ČR (CPI)">
                     <span class="sa-hero-label">Inflace ČR (CPI)</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{cpi_cz_curr:.1f} %</span>
@@ -1727,8 +1769,8 @@ if is_cz:
                     </div>
                     <div class="sa-hero-spark-row">{spark_cpi}</div>
                     <div class="sa-hero-date">{date_hero_cpi}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=gdp_growth_real" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Reálný růst HDP">
                     <span class="sa-hero-label">Reálný růst HDP</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{gdp_cz_curr:+.1f} % YoY</span>
@@ -1736,8 +1778,8 @@ if is_cz:
                     </div>
                     <div class="sa-hero-spark-row">{spark_gdp}</div>
                     <div class="sa-hero-date">{date_hero_gdp}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=unemployment_rate" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Míra nezaměstnanosti">
                     <span class="sa-hero-label">Míra nezaměstnanosti</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{une_cz_curr:.1f} %</span>
@@ -1745,8 +1787,8 @@ if is_cz:
                     </div>
                     <div class="sa-hero-spark-row">{spark_une}</div>
                     <div class="sa-hero-date">{date_hero_une}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=px_index" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Index PX (Praha)">
                     <span class="sa-hero-label">Index PX (Praha)</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{px_curr:,.0f} b.</span>
@@ -1754,7 +1796,7 @@ if is_cz:
                     </div>
                     <div class="sa-hero-spark-row">{spark_px}</div>
                     <div class="sa-hero-date">{date_hero_px}</div>
-                </div>
+                </a>
             </div>
         </div>
         """,
@@ -1776,7 +1818,7 @@ elif is_eu:
                 </div>
             </div>
             <div class="sa-hero-strip">
-                <div class="sa-hero-item">
+                <a href="?search_indicator=ecb_deposit_rate" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Depozitní sazba ECB">
                     <span class="sa-hero-label">Depozitní sazba ECB</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{ecb_dep_curr:.2f} %</span>
@@ -1784,8 +1826,8 @@ elif is_eu:
                     </div>
                     <div class="sa-hero-spark-row">{spark_ecb}</div>
                     <div class="sa-hero-date">{date_hero_ecb}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=euribor_3m" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: EURIBOR 3M">
                     <span class="sa-hero-label">EURIBOR 3M</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{euribor3m_curr:.2f} %</span>
@@ -1793,8 +1835,8 @@ elif is_eu:
                     </div>
                     <div class="sa-hero-spark-row">{spark_euribor}</div>
                     <div class="sa-hero-date">{date_hero_euribor}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=eur_usd" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Kurz EUR/USD">
                     <span class="sa-hero-label">Kurz EUR/USD</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{daily_eur_usd:.4f} $</span>
@@ -1802,8 +1844,8 @@ elif is_eu:
                     </div>
                     <div class="sa-hero-spark-row">{spark_eur_usd}</div>
                     <div class="sa-hero-date">{date_hero_eur_usd}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=bund_10y" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: 10Y Německý Bund">
                     <span class="sa-hero-label">10Y Německý Bund</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{bund10_curr:.2f} %</span>
@@ -1811,8 +1853,8 @@ elif is_eu:
                     </div>
                     <div class="sa-hero-spark-row">{spark_bund10}</div>
                     <div class="sa-hero-date">{date_hero_bund10}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=eu_cpi_yoy" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Inflace Eurozóny (HICP)">
                     <span class="sa-hero-label">Inflace Eurozóny (HICP)</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{cpi_eu_curr:.1f} %</span>
@@ -1820,8 +1862,8 @@ elif is_eu:
                     </div>
                     <div class="sa-hero-spark-row">{spark_eu_cpi}</div>
                     <div class="sa-hero-date">{date_hero_eu_cpi}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=eu_gdp_growth_real" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Reálný růst HDP EU">
                     <span class="sa-hero-label">Reálný růst HDP EU</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{gdp_eu_curr:+.1f} % YoY</span>
@@ -1829,8 +1871,8 @@ elif is_eu:
                     </div>
                     <div class="sa-hero-spark-row">{spark_eu_gdp}</div>
                     <div class="sa-hero-date">{date_hero_eu_gdp}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=eu_unemployment_rate" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Nezaměstnanost EU">
                     <span class="sa-hero-label">Nezaměstnanost EU</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{une_eu_curr:.1f} %</span>
@@ -1838,8 +1880,8 @@ elif is_eu:
                     </div>
                     <div class="sa-hero-spark-row">{spark_eu_une}</div>
                     <div class="sa-hero-date">{date_hero_eu_une}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=stoxx50_index" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Euro Stoxx 50">
                     <span class="sa-hero-label">Euro Stoxx 50</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{stoxx50_curr:,.0f} b.</span>
@@ -1847,7 +1889,7 @@ elif is_eu:
                     </div>
                     <div class="sa-hero-spark-row">{spark_stoxx}</div>
                     <div class="sa-hero-date">{date_hero_stoxx}</div>
-                </div>
+                </a>
             </div>
         </div>
         """,
@@ -1869,7 +1911,7 @@ else:
                 </div>
             </div>
             <div class="sa-hero-strip">
-                <div class="sa-hero-item">
+                <a href="?search_indicator=fed_funds_upper" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Fed Funds Target">
                     <span class="sa-hero-label">Fed Funds Target</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{fed_lower_curr:.2f} – {fed_upper_curr:.2f} %</span>
@@ -1877,8 +1919,8 @@ else:
                     </div>
                     <div class="sa-hero-spark-row">{spark_fed}</div>
                     <div class="sa-hero-date">{date_hero_fed}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=sofr_rate" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: SOFR">
                     <span class="sa-hero-label">SOFR</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{sofr_curr:.2f} %</span>
@@ -1886,8 +1928,8 @@ else:
                     </div>
                     <div class="sa-hero-spark-row">{spark_sofr}</div>
                     <div class="sa-hero-date">{date_hero_sofr}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=dxy_index" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Dolarový index DXY">
                     <span class="sa-hero-label">Dolarový index DXY</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{daily_dxy:.2f}</span>
@@ -1895,8 +1937,8 @@ else:
                     </div>
                     <div class="sa-hero-spark-row">{spark_dxy}</div>
                     <div class="sa-hero-date">{date_hero_dxy}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=us_10y" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: 10Y US Treasury">
                     <span class="sa-hero-label">10Y US Treasury</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{us10_curr:.2f} %</span>
@@ -1904,8 +1946,8 @@ else:
                     </div>
                     <div class="sa-hero-spark-row">{spark_us10}</div>
                     <div class="sa-hero-date">{date_hero_us10}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=us_cpi_yoy" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Inflace USA (CPI)">
                     <span class="sa-hero-label">Inflace USA (CPI)</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{cpi_us_curr:.1f} %</span>
@@ -1913,8 +1955,8 @@ else:
                     </div>
                     <div class="sa-hero-spark-row">{spark_us_cpi}</div>
                     <div class="sa-hero-date">{date_hero_us_cpi}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=us_gdp_growth_real" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Reálný růst HDP USA">
                     <span class="sa-hero-label">Reálný růst HDP USA</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{gdp_us_curr:+.1f} % YoY</span>
@@ -1922,8 +1964,8 @@ else:
                     </div>
                     <div class="sa-hero-spark-row">{spark_us_gdp}</div>
                     <div class="sa-hero-date">{date_hero_us_gdp}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=us_unemployment_rate" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Nezaměstnanost USA (U-3)">
                     <span class="sa-hero-label">Nezaměstnanost USA (U-3)</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{une_us_curr:.1f} %</span>
@@ -1931,8 +1973,8 @@ else:
                     </div>
                     <div class="sa-hero-spark-row">{spark_us_une}</div>
                     <div class="sa-hero-date">{date_hero_us_une}</div>
-                </div>
-                <div class="sa-hero-item">
+                </a>
+                <a href="?search_indicator=sp500_index" target="_self" class="sa-hero-item" title="Zobrazit detail metriky: Index S&P 500">
                     <span class="sa-hero-label">Index S&P 500</span>
                     <div class="sa-hero-val-row">
                         <span class="sa-hero-val">{sp500_curr:,.0f} b.</span>
@@ -1940,7 +1982,7 @@ else:
                     </div>
                     <div class="sa-hero-spark-row">{spark_sp500}</div>
                     <div class="sa-hero-date">{date_hero_sp500}</div>
-                </div>
+                </a>
             </div>
         </div>
         """,
@@ -3922,17 +3964,23 @@ def get_indicators_catalog_df() -> pd.DataFrame:
 # =============================================================================
 
 main_dashboard_tabs_list = [
-    "Finanční trhy & Měna",
-    "Reálná ekonomika & Práce",
-    "Trhy",
+    "Měnová politika & FX",
+    "Ekonomika & Práce",
+    "Akciové trhy",
     "Fiskál & Svět",
     "Export",
     "Metriky"
 ]
 main_tabs_default = st.session_state.get("main_dashboard_tabs_selected")
 if main_tabs_default:
+    legacy_map = {
+        "Finanční trhy & Měna": "Měnová politika & FX",
+        "Reálná ekonomika & Práce": "Ekonomika & Práce",
+        "Trhy": "Akciové trhy"
+    }
+    main_tabs_default = legacy_map.get(main_tabs_default, main_tabs_default)
     for clean_tab in main_dashboard_tabs_list:
-        if clean_tab in main_tabs_default:
+        if clean_tab in main_tabs_default or main_tabs_default in clean_tab:
             main_tabs_default = clean_tab
             break
 if main_tabs_default not in main_dashboard_tabs_list:
@@ -3946,7 +3994,7 @@ main_tab_markets, main_tab_real, main_tab_stocks, main_tab_public, main_tab_expo
 
 
 # =============================================================================
-# 1. KATEGORIE: FINANČNÍ TRHY & MĚNA
+# 1. KATEGORIE: MĚNOVÁ POLITIKA & FX
 # =============================================================================
 with main_tab_markets:
     markets_subtabs_list = [
@@ -3956,6 +4004,11 @@ with main_tab_markets:
         f"Bankovní sektor & Úvěry ({'ČR' if is_cz else ('Eurozóna' if is_eu else 'USA')})"
     ]
     markets_subtab_default = st.session_state.get("sub_tab_markets_selected")
+    if markets_subtab_default:
+        for clean_sub in markets_subtabs_list:
+            if markets_subtab_default in clean_sub or clean_sub in markets_subtab_default:
+                markets_subtab_default = clean_sub
+                break
     if markets_subtab_default not in markets_subtabs_list:
         markets_subtab_default = None
 
@@ -4168,6 +4221,11 @@ with main_tab_real:
         "Trh práce & Mzdy"
     ]
     real_subtab_default = st.session_state.get("sub_tab_real_selected")
+    if real_subtab_default:
+        for clean_sub in real_subtabs_list:
+            if real_subtab_default in clean_sub or clean_sub in real_subtab_default:
+                real_subtab_default = clean_sub
+                break
     if real_subtab_default not in real_subtabs_list:
         real_subtab_default = None
 
@@ -4375,6 +4433,11 @@ with main_tab_stocks:
         "⚡ Index volatility VIX (Tržní riziko)"
     ]
     stocks_subtab_default = st.session_state.get("sub_tab_stocks_selected")
+    if stocks_subtab_default:
+        for clean_sub in stocks_subtabs_list:
+            if stocks_subtab_default in clean_sub or clean_sub in stocks_subtab_default:
+                stocks_subtab_default = clean_sub
+                break
     if stocks_subtab_default not in stocks_subtabs_list:
         stocks_subtab_default = None
 
@@ -4532,6 +4595,11 @@ with main_tab_public:
         "Mezinárodní srovnání"
     ]
     public_subtab_default = st.session_state.get("sub_tab_public_selected")
+    if public_subtab_default:
+        for clean_sub in public_subtabs_list:
+            if public_subtab_default in clean_sub or clean_sub in public_subtab_default:
+                public_subtab_default = clean_sub
+                break
     if public_subtab_default not in public_subtabs_list:
         public_subtab_default = None
 
