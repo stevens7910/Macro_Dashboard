@@ -20,6 +20,7 @@ Funkce a vlastnosti:
 from __future__ import annotations
 
 import json
+import textwrap
 from typing import Dict, Any, Optional
 import streamlit as st
 from data_loader import INDICATORS, IndicatorInfo
@@ -710,6 +711,7 @@ def render_indicator_search_bar() -> None:
     div[data-testid="stElementContainer"]:has(.macro-search-wrapper),
     div[data-testid="stMarkdownContainer"]:has(.macro-search-wrapper),
     div.stMarkdown:has(.macro-search-wrapper),
+    div[data-testid="stHtml"]:has(.macro-search-wrapper),
     .stHtml:has(.macro-search-wrapper) {
         overflow: visible !important;
         position: relative !important;
@@ -1056,7 +1058,6 @@ def render_indicator_search_bar() -> None:
             <button type="button" id="macro-sidebar-clear-btn" class="macro-search-clear-btn" title="Vymazat">✕</button>
             <span class="macro-search-shortcut"><kbd>Ctrl</kbd> + <kbd>K</kbd></span>
         </div>
-
         <div id="macro-sidebar-dropdown" class="macro-search-dropdown">
             <div id="macro-sidebar-dropdown-content">
                 <!-- Dynamicky generovaný obsah -->
@@ -1069,7 +1070,11 @@ def render_indicator_search_bar() -> None:
     </div>
     """
 
-    st.sidebar.markdown(html_markup, unsafe_allow_html=True)
+    clean_html = textwrap.dedent(html_markup).strip()
+    if hasattr(st.sidebar, "html"):
+        st.sidebar.html(clean_html)
+    else:
+        st.sidebar.markdown(clean_html, unsafe_allow_html=True)
 
     # Runner skript, který se spouští ve standardním Streamlit komponentu,
     # ale je plně propojen s nadřazeným dokumentem (Same-Origin).
