@@ -629,6 +629,16 @@ CUSTOM_CSS = """
         width: 100%;
         overflow: hidden;
     }
+    .sa-hero-date {
+        font-size: 0.65rem;
+        color: #64748b;
+        font-weight: 500;
+        margin-top: 4px;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
     /* Dvou-sloupcová tabulka klíčových metrik (Key Metrics Widget) */
     .sa-stats-card {
@@ -663,6 +673,16 @@ CUSTOM_CSS = """
     .sa-stat-label {
         color: #475569;
         font-weight: 500;
+        display: inline-flex;
+        align-items: baseline;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+    .sa-stat-date {
+        font-size: 0.72rem;
+        font-weight: 400;
+        color: #64748b;
+        white-space: nowrap;
     }
     .sa-stat-val {
         color: #0f172a;
@@ -1418,6 +1438,54 @@ def generate_svg_sparkline(
 
 
 # -----------------------------------------------------------------------------
+# POMOCNÁ FUNKCE PRO ZÍSKÁNÍ DATUMU A PERIODICITY POSLEDNÍ AKTUALIZACE INDIKÁTORU
+# -----------------------------------------------------------------------------
+
+def get_indicator_period_str(col: str, default_freq: str = "M") -> str:
+    """
+    Vrátí přesný popisek periodicity a data poslední aktualizace, např.:
+    - 'denní: 09. 10. 2026'
+    - 'měsíční: 09/2026'
+    - 'kvartální: Q3/2026'
+    """
+    if col in ("eur_czk", "usd_czk", "pln_czk", "gbp_czk", "eur_usd", "eur_pln", "eur_gbp", "dxy_index", "usd_jpy", "usd_pln", "usd_chf"):
+        fx_source = df_daily_fx_filtered if not df_daily_fx_filtered.empty else df_daily_fx
+        if col in fx_source.columns:
+            s_fx = fx_source[col].dropna()
+            if not s_fx.empty:
+                dt_fx = fx_source.loc[s_fx.index, "date"].iloc[-1]
+                if pd.notna(dt_fx) and hasattr(dt_fx, "strftime"):
+                    return f"denní: {dt_fx.strftime('%d. %m. %Y')}"
+
+    if col in df.columns:
+        s = df[col].dropna()
+        if not s.empty:
+            dt = df.loc[s.index, "date"].iloc[-1]
+            if pd.notna(dt) and hasattr(dt, "strftime"):
+                if default_freq == "Q" or frequency_code == "Q":
+                    q = (dt.month - 1) // 3 + 1
+                    return f"kvartální: Q{q}/{dt.year}"
+                elif default_freq == "D":
+                    return f"denní: {dt.strftime('%d. %m. %Y')}"
+                else:
+                    return f"měsíční: {dt.strftime('%m/%Y')}"
+
+    dt_fallback = last_row.get("date") if hasattr(last_row, "get") else None
+    if pd.notna(dt_fallback) and hasattr(dt_fallback, "strftime"):
+        if default_freq == "Q" or frequency_code == "Q":
+            q = (dt_fallback.month - 1) // 3 + 1
+            return f"kvartální: Q{q}/{dt_fallback.year}"
+        elif default_freq == "D":
+            return f"denní: {dt_fallback.strftime('%d. %m. %Y')}"
+        else:
+            return f"měsíční: {dt_fallback.strftime('%m/%Y')}"
+
+    return "Aktuální"
+
+p = get_indicator_period_str
+
+
+# -----------------------------------------------------------------------------
 # VÝPOČTY KONZISTENTNÍCH DELT A ODVOZENÝCH METRIK PRO 4x2 KPI MŘÍŽKU
 # -----------------------------------------------------------------------------
 
@@ -1567,6 +1635,34 @@ spark_us_gdp = generate_svg_sparkline(df.get("us_gdp_growth_real"))
 spark_us_une = generate_svg_sparkline(df.get("us_unemployment_rate"))
 spark_sp500 = generate_svg_sparkline(df.get("sp500_index"))
 
+# Popisky periodicity a poslední aktualizace pro horní 4x2 KPI mřížku
+date_hero_repo = p("repo_rate", "M")
+date_hero_pribor = p("pribor_3m", "M")
+date_hero_eur_czk = p("eur_czk", "D")
+date_hero_czgb10 = p("czgb_10y", "M")
+date_hero_cpi = p("cpi_yoy", "M")
+date_hero_gdp = p("gdp_growth_real", "Q")
+date_hero_une = p("unemployment_rate", "M")
+date_hero_px = p("px_index", "M")
+
+date_hero_ecb = p("ecb_deposit_rate", "M")
+date_hero_euribor = p("euribor_3m", "M")
+date_hero_eur_usd = p("eur_usd", "D")
+date_hero_bund10 = p("bund_10y", "M")
+date_hero_eu_cpi = p("eu_cpi_yoy", "M")
+date_hero_eu_gdp = p("eu_gdp_growth_real", "Q")
+date_hero_eu_une = p("eu_unemployment_rate", "M")
+date_hero_stoxx = p("stoxx50_index", "M")
+
+date_hero_fed = p("fed_funds_upper", "M")
+date_hero_sofr = p("sofr_rate", "M")
+date_hero_dxy = p("dxy_index", "D")
+date_hero_us10 = p("us_10y", "M")
+date_hero_us_cpi = p("us_cpi_yoy", "M")
+date_hero_us_gdp = p("us_gdp_growth_real", "Q")
+date_hero_us_une = p("us_unemployment_rate", "M")
+date_hero_sp500 = p("sp500_index", "M")
+
 
 # -----------------------------------------------------------------------------
 # ZOBRAZENÍ TOP HERO BOXU PODLE ZVOLENÉ ZEMĚ (SYMETRICKÁ MŘÍŽKA 4 x 2)
@@ -1594,6 +1690,7 @@ if is_cz:
                         <span class="{repo_chg_cls}">{repo_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_repo}</div>
+                    <div class="sa-hero-date">{date_hero_repo}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">PRIBOR 3M</span>
@@ -1602,6 +1699,7 @@ if is_cz:
                         <span class="{prib3m_chg_cls}">{prib3m_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_pribor}</div>
+                    <div class="sa-hero-date">{date_hero_pribor}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Kurz EUR/CZK</span>
@@ -1610,6 +1708,7 @@ if is_cz:
                         <span class="{eur_czk_chg_cls}">{eur_czk_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_eur_czk}</div>
+                    <div class="sa-hero-date">{date_hero_eur_czk}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">10Y CZGB Výnos</span>
@@ -1618,6 +1717,7 @@ if is_cz:
                         <span class="{czgb10_chg_cls}">{czgb10_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_czgb10}</div>
+                    <div class="sa-hero-date">{date_hero_czgb10}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Inflace ČR (CPI)</span>
@@ -1626,6 +1726,7 @@ if is_cz:
                         <span class="{cpi_cz_chg_cls}">Cíl 2.0 %</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_cpi}</div>
+                    <div class="sa-hero-date">{date_hero_cpi}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Reálný růst HDP</span>
@@ -1634,6 +1735,7 @@ if is_cz:
                         <span class="{gdp_cz_chg_cls}">{gdp_cz_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_gdp}</div>
+                    <div class="sa-hero-date">{date_hero_gdp}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Míra nezaměstnanosti</span>
@@ -1642,6 +1744,7 @@ if is_cz:
                         <span class="{une_cz_chg_cls}">{une_cz_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_une}</div>
+                    <div class="sa-hero-date">{date_hero_une}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Index PX (Praha)</span>
@@ -1650,6 +1753,7 @@ if is_cz:
                         <span class="{px_chg_cls}">{px_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_px}</div>
+                    <div class="sa-hero-date">{date_hero_px}</div>
                 </div>
             </div>
         </div>
@@ -1679,6 +1783,7 @@ elif is_eu:
                         <span class="{ecb_dep_chg_cls}">{ecb_dep_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_ecb}</div>
+                    <div class="sa-hero-date">{date_hero_ecb}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">EURIBOR 3M</span>
@@ -1687,6 +1792,7 @@ elif is_eu:
                         <span class="{euribor3m_chg_cls}">{euribor3m_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_euribor}</div>
+                    <div class="sa-hero-date">{date_hero_euribor}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Kurz EUR/USD</span>
@@ -1695,6 +1801,7 @@ elif is_eu:
                         <span class="{eur_usd_chg_cls}">{eur_usd_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_eur_usd}</div>
+                    <div class="sa-hero-date">{date_hero_eur_usd}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">10Y Německý Bund</span>
@@ -1703,6 +1810,7 @@ elif is_eu:
                         <span class="{bund10_chg_cls}">{bund10_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_bund10}</div>
+                    <div class="sa-hero-date">{date_hero_bund10}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Inflace Eurozóny (HICP)</span>
@@ -1711,6 +1819,7 @@ elif is_eu:
                         <span class="{cpi_eu_chg_cls}">Cíl 2.0 %</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_eu_cpi}</div>
+                    <div class="sa-hero-date">{date_hero_eu_cpi}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Reálný růst HDP EU</span>
@@ -1719,6 +1828,7 @@ elif is_eu:
                         <span class="{gdp_eu_chg_cls}">{gdp_eu_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_eu_gdp}</div>
+                    <div class="sa-hero-date">{date_hero_eu_gdp}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Nezaměstnanost EU</span>
@@ -1727,6 +1837,7 @@ elif is_eu:
                         <span class="{une_eu_chg_cls}">{une_eu_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_eu_une}</div>
+                    <div class="sa-hero-date">{date_hero_eu_une}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Euro Stoxx 50</span>
@@ -1735,6 +1846,7 @@ elif is_eu:
                         <span class="{stoxx50_chg_cls}">{stoxx50_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_stoxx}</div>
+                    <div class="sa-hero-date">{date_hero_stoxx}</div>
                 </div>
             </div>
         </div>
@@ -1764,6 +1876,7 @@ else:
                         <span class="{fed_chg_cls}">{fed_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_fed}</div>
+                    <div class="sa-hero-date">{date_hero_fed}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">SOFR</span>
@@ -1772,6 +1885,7 @@ else:
                         <span class="{sofr_chg_cls}">{sofr_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_sofr}</div>
+                    <div class="sa-hero-date">{date_hero_sofr}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Dolarový index DXY</span>
@@ -1780,6 +1894,7 @@ else:
                         <span class="{dxy_chg_cls}">{dxy_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_dxy}</div>
+                    <div class="sa-hero-date">{date_hero_dxy}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">10Y US Treasury</span>
@@ -1788,6 +1903,7 @@ else:
                         <span class="{us10_chg_cls}">{us10_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_us10}</div>
+                    <div class="sa-hero-date">{date_hero_us10}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Inflace USA (CPI)</span>
@@ -1796,6 +1912,7 @@ else:
                         <span class="{cpi_us_chg_cls}">Cíl 2.0 %</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_us_cpi}</div>
+                    <div class="sa-hero-date">{date_hero_us_cpi}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Reálný růst HDP USA</span>
@@ -1804,6 +1921,7 @@ else:
                         <span class="{gdp_us_chg_cls}">{gdp_us_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_us_gdp}</div>
+                    <div class="sa-hero-date">{date_hero_us_gdp}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Nezaměstnanost USA (U-3)</span>
@@ -1812,6 +1930,7 @@ else:
                         <span class="{une_us_chg_cls}">{une_us_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_us_une}</div>
+                    <div class="sa-hero-date">{date_hero_us_une}</div>
                 </div>
                 <div class="sa-hero-item">
                     <span class="sa-hero-label">Index S&P 500</span>
@@ -1820,6 +1939,7 @@ else:
                         <span class="{sp500_chg_cls}">{sp500_chg_str}</span>
                     </div>
                     <div class="sa-hero-spark-row">{spark_sp500}</div>
+                    <div class="sa-hero-date">{date_hero_sp500}</div>
                 </div>
             </div>
         </div>
@@ -1840,103 +1960,103 @@ with st.expander("📊 Zobrazit detailní přehled indikátorů a metrik", expan
                 <div class="sa-stats-grid">
                     <div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">2T Repo sazba ČNB</span>
+                            <span class="sa-stat-label">2T Repo sazba ČNB <span class="sa-stat-date">({p("repo_rate", "M")})</span></span>
                             <span class="sa-stat-val">{repo_curr:.2f} % <span class="sa-hero-change-neutral">{repo_delta:+.2f}</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Diskontní sazba (spodní koridor)</span>
+                            <span class="sa-stat-label">Diskontní sazba (spodní koridor) <span class="sa-stat-date">({p("discount_rate", "M")})</span></span>
                             <span class="sa-stat-val">{disc_curr:.2f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Lombardní sazba (horní koridor)</span>
+                            <span class="sa-stat-label">Lombardní sazba (horní koridor) <span class="sa-stat-date">({p("lombard_rate", "M")})</span></span>
                             <span class="sa-stat-val">{lomb_curr:.2f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">PRIBOR 3M (referenční sazba)</span>
+                            <span class="sa-stat-label">PRIBOR 3M (referenční sazba) <span class="sa-stat-date">({p("pribor_3m", "M")})</span></span>
                             <span class="sa-stat-val">{prib3m_curr:.2f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Meziroční inflace CPI</span>
+                            <span class="sa-stat-label">Meziroční inflace CPI <span class="sa-stat-date">({p("cpi_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{cpi_cz_curr:.1f} % <span class="sa-hero-change-pos">Cíl 2.0 %</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Jádrová inflace ČR (Core CPI)</span>
+                            <span class="sa-stat-label">Jádrová inflace ČR (Core CPI) <span class="sa-stat-date">({p("cpi_core_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{core_cpi_cz_curr:.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Maloobchodní tržby (Spotřeba YoY)</span>
+                            <span class="sa-stat-label">Maloobchodní tržby (Spotřeba YoY) <span class="sa-stat-date">({p("retail_sales_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{retail_cz_curr:+.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Průmyslová produkce (YoY)</span>
+                            <span class="sa-stat-label">Průmyslová produkce (YoY) <span class="sa-stat-date">({p("industrial_prod_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{ind_cz_curr:+.1f} %</span>
                         </div>
                     </div>
                     <div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Reálný růst HDP (YoY)</span>
+                            <span class="sa-stat-label">Reálný růst HDP (YoY) <span class="sa-stat-date">({p("gdp_growth_real", "Q")})</span></span>
                             <span class="sa-stat-val">{gdp_cz_curr:+.1f} % <span class="sa-hero-change-pos">{gdp_cz_delta:+.1f}</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Míra nezaměstnanosti (ILO)</span>
+                            <span class="sa-stat-label">Míra nezaměstnanosti (ILO) <span class="sa-stat-date">({p("unemployment_rate", "M")})</span></span>
                             <span class="sa-stat-val">{une_cz_curr:.1f} % <span class="sa-hero-change-pos">Nejnižší v EU</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">EUR/CZK &bull; USD/CZK (denní)</span>
+                            <span class="sa-stat-label">EUR/CZK &bull; USD/CZK <span class="sa-stat-date">({p("eur_czk", "D")})</span></span>
                             <span class="sa-stat-val">{daily_eur_czk:.2f} &bull; {daily_usd_czk:.2f} Kč</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">PLN/CZK &bull; GBP/CZK (denní)</span>
+                            <span class="sa-stat-label">PLN/CZK &bull; GBP/CZK <span class="sa-stat-date">({p("pln_czk", "D")})</span></span>
                             <span class="sa-stat-val">{daily_pln_czk:.2f} &bull; {daily_gbp_czk:.2f} Kč</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Výnos 10Y CZGB (státní dluhopis)</span>
+                            <span class="sa-stat-label">Výnos 10Y CZGB (státní dluhopis) <span class="sa-stat-date">({p("czgb_10y", "M")})</span></span>
                             <span class="sa-stat-val">{czgb10_curr:.2f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Sklon křivky CZGB (10Y − 2Y)</span>
+                            <span class="sa-stat-label">Sklon křivky CZGB (10Y − 2Y) <span class="sa-stat-date">({p("czgb_spread_10y_2y", "M")})</span></span>
                             <span class="sa-stat-val">{cz_spread_curr * 100:+.0f} bps <span class="{'sa-hero-change-pos' if cz_spread_curr >= 0 else 'sa-hero-change-neg'}">{'Normální' if cz_spread_curr >= 0 else 'Inverze'}</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Veřejný dluh ČR (% HDP)</span>
+                            <span class="sa-stat-label">Veřejný dluh ČR (% HDP) <span class="sa-stat-date">({p("public_debt_gdp_pct", "Q")})</span></span>
                             <span class="sa-stat-val">{debt_cz_pct:.1f} % <span class="sa-hero-change-pos">&lt; 60 % limit</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Kvartální saldo rozpočtu</span>
+                            <span class="sa-stat-label">Kvartální saldo rozpočtu <span class="sa-stat-date">({p("budget_deficit_czk_bn", "Q")})</span></span>
                             <span class="sa-stat-val">{deficit_cz_curr:,.1f} mld. Kč</span>
                         </div>
                     </div>
                     <div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">PMI v průmyslu ČR (S&P Global)</span>
+                            <span class="sa-stat-label">PMI v průmyslu ČR (S&P Global) <span class="sa-stat-date">({p("cz_pmi_manufacturing", "M")})</span></span>
                             <span class="sa-stat-val">{cz_pmi_curr:.1f} b. <span class="{'sa-hero-change-pos' if cz_pmi_curr >= 50 else 'sa-hero-change-neg'}">{'Expanze' if cz_pmi_curr >= 50 else 'Útlum'}</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Důvěra konjunktury (ČSÚ)</span>
+                            <span class="sa-stat-label">Důvěra konjunktury (ČSÚ) <span class="sa-stat-date">({p("cz_confidence_composite", "M")})</span></span>
                             <span class="sa-stat-val">{cz_conf_curr:.1f} b.</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Průměrná hrubá mzda (YoY)</span>
+                            <span class="sa-stat-label">Průměrná hrubá mzda (YoY) <span class="sa-stat-date">({p("cz_nominal_wage_yoy", "Q")})</span></span>
                             <span class="sa-stat-val">{cz_nom_wage_curr:+.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Průměrná reálná mzda (YoY)</span>
+                            <span class="sa-stat-label">Průměrná reálná mzda (YoY) <span class="sa-stat-date">({p("cz_real_wage_yoy", "Q")})</span></span>
                             <span class="sa-stat-val">{cz_real_wage_curr:+.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Nové hypotéky (sazba & objem)</span>
+                            <span class="sa-stat-label">Nové hypotéky (sazba & objem) <span class="sa-stat-date">({p("cz_mortgage_rate", "M")})</span></span>
                             <span class="sa-stat-val">{cz_mort_rate_curr:.2f} % &bull; {cz_mort_vol_curr:.1f} mld. Kč</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Korporátní úvěry & M2 (YoY)</span>
+                            <span class="sa-stat-label">Korporátní úvěry & M2 (YoY) <span class="sa-stat-date">({p("cz_corporate_loans_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{cz_corp_loans_curr:+.1f} % &bull; {cz_m2_curr:+.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Běžný účet k HDP & Obchod ČSÚ</span>
+                            <span class="sa-stat-label">Běžný účet k HDP & Obchod ČSÚ <span class="sa-stat-date">({p("cz_current_account_gdp_pct", "Q")})</span></span>
                             <span class="sa-stat-val">{cz_ca_curr:+.1f} % &bull; {cz_trade_bal_curr:+.1f} mld. Kč</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Spread CZGB vs. Bund & ASW 10Y</span>
+                            <span class="sa-stat-label">Spread CZGB vs. Bund & ASW 10Y <span class="sa-stat-date">({p("czgb_bund_spread_10y", "M")})</span></span>
                             <span class="sa-stat-val">{czgb_bund_sp_curr:+.0f} bps &bull; {cz_asw_curr:+.0f} bps</span>
                         </div>
                     </div>
@@ -1953,95 +2073,95 @@ with st.expander("📊 Zobrazit detailní přehled indikátorů a metrik", expan
                 <div class="sa-stats-grid">
                     <div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Depozitní sazba ECB</span>
+                            <span class="sa-stat-label">Depozitní sazba ECB <span class="sa-stat-date">({p("ecb_deposit_rate", "M")})</span></span>
                             <span class="sa-stat-val">{ecb_dep_curr:.2f} % <span class="sa-hero-change-neutral">{ecb_dep_delta:+.2f}</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Refinanční operace (MRO)</span>
+                            <span class="sa-stat-label">Refinanční operace (MRO) <span class="sa-stat-date">({p("ecb_refi_rate", "M")})</span></span>
                             <span class="sa-stat-val">{ecb_refi_curr:.2f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Mezní zápůjční sazba ECB</span>
+                            <span class="sa-stat-label">Mezní zápůjční sazba ECB <span class="sa-stat-date">({p("ecb_lending_rate", "M")})</span></span>
                             <span class="sa-stat-val">{ecb_lend_curr:.2f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">EURIBOR 3M &bull; €STR</span>
+                            <span class="sa-stat-label">EURIBOR 3M &bull; €STR <span class="sa-stat-date">({p("euribor_3m", "M")})</span></span>
                             <span class="sa-stat-val">{euribor3m_curr:.2f} % &bull; {estr_curr:.2f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Harmonizovaná inflace (HICP)</span>
+                            <span class="sa-stat-label">Harmonizovaná inflace (HICP) <span class="sa-stat-date">({p("eu_cpi_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{cpi_eu_curr:.1f} % <span class="sa-hero-change-pos">Cíl 2.0 %</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Jádrová inflace EU (Core HICP)</span>
+                            <span class="sa-stat-label">Jádrová inflace EU (Core HICP) <span class="sa-stat-date">({p("eu_core_cpi_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{core_cpi_eu_curr:.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Maloobchodní tržby EU (Spotřeba YoY)</span>
+                            <span class="sa-stat-label">Maloobchodní tržby EU (Spotřeba YoY) <span class="sa-stat-date">({p("eu_retail_sales_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{retail_eu_curr:+.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Průmyslová produkce EU (YoY)</span>
+                            <span class="sa-stat-label">Průmyslová produkce EU (YoY) <span class="sa-stat-date">({p("eu_industrial_prod_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{ind_eu_curr:+.1f} %</span>
                         </div>
                     </div>
                     <div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Reálný růst HDP Eurozóny (YoY)</span>
+                            <span class="sa-stat-label">Reálný růst HDP Eurozóny (YoY) <span class="sa-stat-date">({p("eu_gdp_growth_real", "Q")})</span></span>
                             <span class="sa-stat-val">{gdp_eu_curr:+.1f} % <span class="sa-hero-change-pos">{gdp_eu_delta:+.1f}</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Míra nezaměstnanosti v EU</span>
+                            <span class="sa-stat-label">Míra nezaměstnanosti v EU <span class="sa-stat-date">({p("eu_unemployment_rate", "M")})</span></span>
                             <span class="sa-stat-val">{une_eu_curr:.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">EUR/USD &bull; EUR/CZK</span>
+                            <span class="sa-stat-label">EUR/USD &bull; EUR/CZK <span class="sa-stat-date">({p("eur_usd", "D")})</span></span>
                             <span class="sa-stat-val">{daily_eur_usd:.4f} $ &bull; {daily_eur_czk:.2f} Kč</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">EUR/PLN &bull; EUR/GBP</span>
+                            <span class="sa-stat-label">EUR/PLN &bull; EUR/GBP <span class="sa-stat-date">({p("eur_pln", "D")})</span></span>
                             <span class="sa-stat-val">{daily_eur_pln:.4f} zł &bull; {daily_eur_gbp:.4f} £</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Výnos 10Y Německý Bund</span>
+                            <span class="sa-stat-label">Výnos 10Y Německý Bund <span class="sa-stat-date">({p("bund_10y", "M")})</span></span>
                             <span class="sa-stat-val">{bund10_curr:.2f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Sklon Bund křivky (10Y − 2Y)</span>
+                            <span class="sa-stat-label">Sklon Bund křivky (10Y − 2Y) <span class="sa-stat-date">({p("bund_spread_10y_2y", "M")})</span></span>
                             <span class="sa-stat-val">{bund_spread_curr * 100:+.0f} bps <span class="{'sa-hero-change-pos' if bund_spread_curr >= 0 else 'sa-hero-change-neg'}">{'Normální' if bund_spread_curr >= 0 else 'Inverze'}</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Veřejný dluh Eurozóny k HDP</span>
+                            <span class="sa-stat-label">Veřejný dluh Eurozóny k HDP <span class="sa-stat-date">({p("eu_public_debt_gdp_pct", "Q")})</span></span>
                             <span class="sa-stat-val">{debt_eu_pct:.1f} % <span class="sa-hero-change-neutral">{debt_eu_nom:,.0f} mld. €</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Kvartální deficit vládních institucí</span>
+                            <span class="sa-stat-label">Kvartální deficit vládních institucí <span class="sa-stat-date">({p("eu_budget_deficit_eur_bn", "Q")})</span></span>
                             <span class="sa-stat-val">{deficit_eu_curr:,.0f} mld. EUR</span>
                         </div>
                     </div>
                     <div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Composite PMI Eurozóny</span>
+                            <span class="sa-stat-label">Composite PMI Eurozóny <span class="sa-stat-date">({p("eu_composite_pmi", "M")})</span></span>
                             <span class="sa-stat-val">{eu_pmi_curr:.1f} b. <span class="{'sa-hero-change-pos' if eu_pmi_curr >= 50 else 'sa-hero-change-neg'}">{'Expanze' if eu_pmi_curr >= 50 else 'Útlum'}</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Německý Ifo index klimatu</span>
+                            <span class="sa-stat-label">Německý Ifo index klimatu <span class="sa-stat-date">({p("eu_ifo_business_climate", "M")})</span></span>
                             <span class="sa-stat-val">{eu_ifo_curr:.1f} b.</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Sjednané mzdy Eurozóna (ECB YoY)</span>
+                            <span class="sa-stat-label">Sjednané mzdy Eurozóna (ECB YoY) <span class="sa-stat-date">({p("eu_negotiated_wages_yoy", "Q")})</span></span>
                             <span class="sa-stat-val">{eu_wages_curr:+.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Rizikový spread 10Y BTP - Bund</span>
+                            <span class="sa-stat-label">Rizikový spread 10Y BTP - Bund <span class="sa-stat-date">({p("eu_btp_bund_spread", "M")})</span></span>
                             <span class="sa-stat-val">{eu_btp_sp_curr:+.0f} bps</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Euro Stoxx 50 (Index)</span>
+                            <span class="sa-stat-label">Euro Stoxx 50 (Index) <span class="sa-stat-date">({p("stoxx50_index", "M")})</span></span>
                             <span class="sa-stat-val">{stoxx50_curr:,.0f} b.</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Běžný účet Eurozóny (% HDP)</span>
+                            <span class="sa-stat-label">Běžný účet Eurozóny (% HDP) <span class="sa-stat-date">({p("eu_gdp_growth_real", "Q")})</span></span>
                             <span class="sa-stat-val">+2.8 %</span>
                         </div>
                     </div>
@@ -2058,95 +2178,95 @@ with st.expander("📊 Zobrazit detailní přehled indikátorů a metrik", expan
                 <div class="sa-stats-grid">
                     <div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Fed Funds Target (horní limit)</span>
+                            <span class="sa-stat-label">Fed Funds Target (horní limit) <span class="sa-stat-date">({p("fed_funds_upper", "M")})</span></span>
                             <span class="sa-stat-val">{fed_upper_curr:.2f} % <span class="sa-hero-change-neutral">{fed_upper_delta:+.2f}</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Fed Funds Target (dolní limit)</span>
+                            <span class="sa-stat-label">Fed Funds Target (dolní limit) <span class="sa-stat-date">({p("fed_funds_lower", "M")})</span></span>
                             <span class="sa-stat-val">{fed_lower_curr:.2f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Efektivní sazba EFFR</span>
+                            <span class="sa-stat-label">Efektivní sazba EFFR <span class="sa-stat-date">({p("fed_effective_rate", "M")})</span></span>
                             <span class="sa-stat-val">{fed_effr_curr:.2f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">SOFR &bull; 3M T-Bill</span>
+                            <span class="sa-stat-label">SOFR &bull; 3M T-Bill <span class="sa-stat-date">({p("sofr_rate", "M")})</span></span>
                             <span class="sa-stat-val">{sofr_curr:.2f} % &bull; {us3m_curr:.2f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Spotřebitelská inflace (CPI Headline)</span>
+                            <span class="sa-stat-label">Spotřebitelská inflace (CPI Headline) <span class="sa-stat-date">({p("us_cpi_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{cpi_us_curr:.1f} % <span class="sa-hero-change-pos">Cíl 2.0 %</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Jádrová inflace USA (Core CPI)</span>
+                            <span class="sa-stat-label">Jádrová inflace USA (Core CPI) <span class="sa-stat-date">({p("us_core_cpi_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{core_cpi_us_curr:.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Maloobchodní tržby USA (Spotřeba YoY)</span>
+                            <span class="sa-stat-label">Maloobchodní tržby USA (Spotřeba YoY) <span class="sa-stat-date">({p("us_retail_sales_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{retail_us_curr:+.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Průmyslová produkce USA (YoY)</span>
+                            <span class="sa-stat-label">Průmyslová produkce USA (YoY) <span class="sa-stat-date">({p("us_industrial_prod_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{ind_us_curr:+.1f} %</span>
                         </div>
                     </div>
                     <div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Reálný růst HDP USA (YoY)</span>
+                            <span class="sa-stat-label">Reálný růst HDP USA (YoY) <span class="sa-stat-date">({p("us_gdp_growth_real", "Q")})</span></span>
                             <span class="sa-stat-val">{gdp_us_curr:+.1f} % <span class="sa-hero-change-pos">{gdp_us_delta:+.1f}</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Míra nezaměstnanosti (U-3)</span>
+                            <span class="sa-stat-label">Míra nezaměstnanosti (U-3) <span class="sa-stat-date">({p("us_unemployment_rate", "M")})</span></span>
                             <span class="sa-stat-val">{une_us_curr:.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Dolarový index DXY &bull; EUR/USD</span>
+                            <span class="sa-stat-label">Dolarový index DXY &bull; EUR/USD <span class="sa-stat-date">({p("dxy_index", "D")})</span></span>
                             <span class="sa-stat-val">{daily_dxy:.2f} b. &bull; {daily_eur_usd:.4f} $</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">GBP/USD &bull; USD/PLN &bull; USD/JPY</span>
+                            <span class="sa-stat-label">GBP/USD &bull; USD/PLN &bull; USD/JPY <span class="sa-stat-date">({p("gbp_usd", "D")})</span></span>
                             <span class="sa-stat-val">{daily_gbp_usd:.4f} &bull; {daily_usd_pln:.2f} &bull; {daily_usd_jpy:.1f}</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Výnos 10Y US Treasury (Benchmark)</span>
+                            <span class="sa-stat-label">Výnos 10Y US Treasury (Benchmark) <span class="sa-stat-date">({p("us_10y", "M")})</span></span>
                             <span class="sa-stat-val">{us10_curr:.2f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Sklon US křivky (10Y − 2Y)</span>
+                            <span class="sa-stat-label">Sklon US křivky (10Y − 2Y) <span class="sa-stat-date">({p("us_spread_10y_2y", "M")})</span></span>
                             <span class="sa-stat-val">{us_spread_curr * 100:+.0f} bps <span class="{'sa-hero-change-pos' if us_spread_curr >= 0 else 'sa-hero-change-neg'}">{'Normální' if us_spread_curr >= 0 else 'Inverze'}</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Federální dluh USA k HDP</span>
+                            <span class="sa-stat-label">Federální dluh USA k HDP <span class="sa-stat-date">({p("us_public_debt_gdp_pct", "Q")})</span></span>
                             <span class="sa-stat-val">{debt_us_pct:.1f} % <span class="sa-hero-change-neutral">{debt_us_nom:,.0f} mld. $</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Kvartální federální deficit</span>
+                            <span class="sa-stat-label">Kvartální federální deficit <span class="sa-stat-date">({p("us_budget_deficit_usd_bn", "Q")})</span></span>
                             <span class="sa-stat-val">{deficit_us_curr:,.0f} mld. USD</span>
                         </div>
                     </div>
                     <div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">ISM Manufacturing PMI</span>
+                            <span class="sa-stat-label">ISM Manufacturing PMI <span class="sa-stat-date">({p("us_ism_manufacturing", "M")})</span></span>
                             <span class="sa-stat-val">{us_ism_mfg_curr:.1f} b. <span class="{'sa-hero-change-pos' if us_ism_mfg_curr >= 50 else 'sa-hero-change-neg'}">{'Expanze' if us_ism_mfg_curr >= 50 else 'Útlum'}</span></span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">ISM Services PMI</span>
+                            <span class="sa-stat-label">ISM Services PMI <span class="sa-stat-date">({p("us_ism_services", "M")})</span></span>
                             <span class="sa-stat-val">{us_ism_srv_curr:.1f} b.</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Spotřebitelský sentiment Michigan</span>
+                            <span class="sa-stat-label">Spotřebitelský sentiment Michigan <span class="sa-stat-date">({p("us_michigan_sentiment", "M")})</span></span>
                             <span class="sa-stat-val">{us_mich_curr:.1f} b.</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Průměrná hodinová mzda (YoY)</span>
+                            <span class="sa-stat-label">Průměrná hodinová mzda (YoY) <span class="sa-stat-date">({p("us_hourly_earnings_yoy", "M")})</span></span>
                             <span class="sa-stat-val">{us_earn_curr:+.1f} %</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">Index volatility VIX (Tržní riziko)</span>
+                            <span class="sa-stat-label">Index volatility VIX (Tržní riziko) <span class="sa-stat-date">({p("vix_index", "M")})</span></span>
                             <span class="sa-stat-val">{vix_curr:.2f} b.</span>
                         </div>
                         <div class="sa-stat-row">
-                            <span class="sa-stat-label">S&P 500 &bull; NASDAQ Composite</span>
+                            <span class="sa-stat-label">S&P 500 &bull; NASDAQ Composite <span class="sa-stat-date">({p("sp500_index", "M")})</span></span>
                             <span class="sa-stat-val">{sp500_curr:,.0f} &bull; {nasdaq_curr:,.0f} b.</span>
                         </div>
                     </div>
