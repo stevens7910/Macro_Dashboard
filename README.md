@@ -41,9 +41,9 @@ Přímo v levém menu pod hlavní navigací je k dispozici vyhledávací pole s 
 
 ---
 
-## 📑 Hlavní kategorie záložek (6 Tematických bloků)
+## 📑 Hlavní kategorie záložek (7 Tematických bloků)
 
-Všechny ukazatele (celkem **101 metrik**) jsou **trvale aktivovány a zobrazeny**:
+Všechny ukazatele (celkem **106 metrik**) jsou **trvale aktivovány a zobrazeny**:
 
 1. **💳 Finanční trhy & Měna**:
    - **Měnověpolitické sazby**: ČNB (2T Repo, Lombard, Diskont, 3M PRIBOR) / ECB (Depozitní, MRO, Mezní zápůjční, 3M EURIBOR, €STR) / Fed (Fed Funds Upper/Lower, SOFR, 3M T-Bill).
@@ -58,25 +58,38 @@ Všechny ukazatele (celkem **101 metrik**) jsou **trvale aktivovány a zobrazeny
    - **Průmysl a spotřeba**: Maloobchodní tržby (spotřeba domácností YoY %) vs. Index průmyslové produkce (YoY %).
    - **Trh práce & Mzdy**: Míra nezaměstnanosti (ČR / EU / USA U-3 & NFP) doplněná o **průměrnou nominální hrubou mzdu ČR (YoY)**, **průměrnou reálnou mzdu ČR (YoY)**, **sjednané mzdy v Eurozóně (ECB Negotiated Wages YoY)** a **průměrnou hodinovou mzdu v USA (Average Hourly Earnings YoY)**.
 
-3. **📈 Trhy (Akciové indexy & Riziko)**:
-   - **Vzájemné srovnání indexů**: Normalizovaná kumulativní výkonnost v % (od počátku vybraného období) nebo rebase na bázi 100 pro:
+3. **📈 Akciové trhy (Denní data & Vzájemné srovnání)**:
+   - **Napojení na vysokofrekvenční denní data**: S&P 500, NASDAQ, Euro Stoxx 50 a Index PX navázané na denní obchodní seance (včetně API Burzy cenných papírů Praha).
+   - **Přepínač frekvence**: Možnost volby mezi denními daty (High-Frequency s 50denním klouzavým průměrem) a měsíční agregací (12M SMA).
+   - **Vzájemné srovnání indexů**: Normalizovaná kumulativní výkonnost v % nebo rebase na bázi 100 pro:
      - 🇨🇿 **Index PX** (Burza cenných papírů Praha / BCPP)
      - 🇪🇺 **Euro Stoxx 50** (Přední korporátní lídři Eurozóny)
      - 🇺🇸 **S&P 500** (Široký benchmark amerického akciového trhu)
      - 🇺🇸 **NASDAQ Composite** (Globální technologický a inovační lídr)
-   - **Detailní pohledy na jednotlivé indexy**: Samostatné cenové grafy, 12měsíční klouzavý průměr, minima/maxima a statistiky zhodnocení.
-   - **⚡ Index volatility VIX (Tržní sentiment a riziko)**: Cboe Volatility Index („Index strachu“) s barevnými zónami sentimentu (< 15 klid/sebeuspokojení, 15–20 normální rozmezí, 20–30 zvýšená nervozita, > 30 tržní panika/stres).
+   - **⚡ Index volatility VIX (Tržní sentiment a riziko)**: Cboe Volatility Index („Index strachu“) s barevnými zónami sentimentu.
+   - **Export do CSV**: Okamžité stažení denních dat akciových indexů.
 
-4. **🌐 Fiskál & Svět**:
+4. **🪙 Komodity (Měsíční data 2015–současnost)**:
+   - **5 hlavních globálních komodit**:
+     - 🟡 **Zlato (Gold)**: USD za trojskou unci (COMEX GC=F), monetární kotva a strategická rezerva centrálních bank.
+     - 🛢️ **Ropa Brent**: USD za barel (ICE BZ=F), globální energetický benchmark a přenos do cen PHM.
+     - 🔥 **Zemní plyn (Henry Hub)**: USD za MMBtu (NYMEX NG=F), toky LNG do Evropy a průmyslový dopad.
+     - 🏗️ **Měď (Doctor Copper)**: USD za libru (COMEX HG=F), předstihový barometr průmyslového cyklu a elektrifikace.
+     - ⚪ **Stříbro (Silver)**: USD za trojskou unci (COMEX SI=F), Gold/Silver ratio a poptávka z fotovoltaiky.
+   - **Srovnávací graf s normalizací**: Relativní zhodnocení (%) vs. Rebase na bázi 100 s multiselectem.
+   - **Detailní analytické karty**: Makroekonomické souvislosti, strukturální trendy a korelace.
+   - **Export do CSV**: Samostatné stažení kompletních měsíčních časových řad komodit.
+
+5. **🌐 Fiskál & Svět**:
    - **Veřejný dluh & Saldo**: Konsolidovaný veřejný dluh k HDP (% HDP, maastrichtské pravidlo 60 %) a kvartální schodky/přebytky rozpočtu.
    - **Vnější rovnováha & Zahraniční obchod**: Měsíční saldo zahraničního obchodu ČSÚ (mld. Kč) v kombinaci s podílem běžného účtu platební bilance k HDP (Current Account % HDP).
    - **Mezinárodní srovnání**: Sovereign výnosové spready 10Y dluhopisů (ČR vs. Německo, ČR vs. USA, Německo vs. USA) a sazbové diferenciály v bazických bodech (bps).
 
-5. **📋 Export**:
+6. **📋 Export**:
    - Datový průzkumník s českými popisky, filtrováním a okamžitým stažením kompletního datového setu ve formátu CSV.
 
-6. **📖 Metriky (Katalog ukazatelů & Zdroje)**:
-   - Strukturovaný katalog všech **101 makroekonomických a tržních ukazatelů** s filtry podle země, kategorie a fulltextovým vyhledáváním.
+7. **📖 Metriky (Katalog ukazatelů & Zdroje)**:
+   - Strukturovaný katalog všech **106 makroekonomických a tržních ukazatelů** s filtry podle země, kategorie a fulltextovým vyhledáváním.
    - U každého indikátoru je uveden kód, jednotka, periodicita, oficiální primární datový zdroj a metodická definice.
    - Možnost stažení kompletního katalogu metadat do CSV.
 

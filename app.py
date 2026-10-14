@@ -333,23 +333,30 @@ CUSTOM_CSS = """
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='22 7 13.5 15.5 8.5 10.5 2 17'/%3E%3Cpolyline points='16 7 22 7 22 13'/%3E%3C/svg%3E") !important;
     }
 
-    /* Ikona 4: Fiskál & Svět (Lucide Globe outline) */
+    /* Ikona 4: Komodity (Lucide Gem / Suroviny outline) */
     div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(4)::before,
     div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(4)::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3h12l4 6-10 13L2 9Z'/%3E%3Cpath d='M11 3 8 9l4 13 4-13-3-6'/%3E%3Cpath d='M2 9h20'/%3E%3C/svg%3E") !important;
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3h12l4 6-10 13L2 9Z'/%3E%3Cpath d='M11 3 8 9l4 13 4-13-3-6'/%3E%3Cpath d='M2 9h20'/%3E%3C/svg%3E") !important;
+    }
+
+    /* Ikona 5: Fiskál & Svět (Lucide Globe outline) */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(5)::before,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(5)::before {
         -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20'/%3E%3Cpath d='M2 12h20'/%3E%3C/svg%3E") !important;
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20'/%3E%3Cpath d='M2 12h20'/%3E%3C/svg%3E") !important;
     }
 
-    /* Ikona 5: Export (Lucide Download outline) */
-    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(5)::before,
-    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(5)::before {
+    /* Ikona 6: Export (Lucide Download outline) */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(6)::before,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(6)::before {
         -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='7 10 12 15 17 10'/%3E%3Cline x1='12' x2='12' y1='15' y2='3'/%3E%3C/svg%3E") !important;
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='7 10 12 15 17 10'/%3E%3Cline x1='12' x2='12' y1='15' y2='3'/%3E%3C/svg%3E") !important;
     }
 
-    /* Ikona 6: Metriky (Lucide BookOpen outline) */
-    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(6)::before,
-    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(6)::before {
+    /* Ikona 7: Metriky (Lucide BookOpen outline) */
+    div[data-testid="stTabs"]:not(div[data-baseweb="tab-panel"] div[data-testid="stTabs"]) button[data-baseweb="tab"]:nth-of-type(7)::before,
+    div.stTabs:not(div[data-baseweb="tab-panel"] div.stTabs) button[data-baseweb="tab"]:nth-of-type(7)::before {
         -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/%3E%3Cpath d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/%3E%3C/svg%3E") !important;
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/%3E%3Cpath d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/%3E%3C/svg%3E") !important;
     }
@@ -1413,6 +1420,73 @@ daily_gbp_usd = safe_metric(last_daily_fx, "gbp_usd", gbp_usd_curr)
 daily_usd_jpy = safe_metric(last_daily_fx, "usd_jpy", usd_jpy_curr)
 daily_usd_pln = safe_metric(last_daily_fx, "usd_pln", usd_pln_curr)
 
+# -----------------------------------------------------------------------------
+# Poslední denní data pro Akciové indexy (S&P 500, NASDAQ, Euro Stoxx 50, Index PX, VIX)
+# -----------------------------------------------------------------------------
+df_daily_has_stocks = not df_daily_fx.empty and "sp500_index" in df_daily_fx.columns
+df_st_valid = df_daily_fx.dropna(subset=["sp500_index"]) if df_daily_has_stocks else pd.DataFrame()
+last_daily_st = df_st_valid.iloc[-1] if not df_st_valid.empty else last_daily_fx
+prev_daily_st = df_st_valid.iloc[-2] if len(df_st_valid) > 1 else last_daily_st
+
+daily_sp500 = safe_metric(last_daily_st, "sp500_index", safe_metric(last_row, "sp500_index", 7805.0))
+prev_daily_sp500 = safe_metric(prev_daily_st, "sp500_index", daily_sp500)
+sp500_daily_delta = round(daily_sp500 - prev_daily_sp500, 2)
+sp500_daily_pct = round(((daily_sp500 / prev_daily_sp500) - 1.0) * 100.0, 2) if prev_daily_sp500 else 0.0
+
+daily_nasdaq = safe_metric(last_daily_st, "nasdaq_index", safe_metric(last_row, "nasdaq_index", 27200.0))
+prev_daily_nasdaq = safe_metric(prev_daily_st, "nasdaq_index", daily_nasdaq)
+nasdaq_daily_delta = round(daily_nasdaq - prev_daily_nasdaq, 2)
+nasdaq_daily_pct = round(((daily_nasdaq / prev_daily_nasdaq) - 1.0) * 100.0, 2) if prev_daily_nasdaq else 0.0
+
+daily_stoxx50 = safe_metric(last_daily_st, "stoxx50_index", safe_metric(last_row, "stoxx50_index", 6167.0))
+prev_daily_stoxx50 = safe_metric(prev_daily_st, "stoxx50_index", daily_stoxx50)
+stoxx50_daily_delta = round(daily_stoxx50 - prev_daily_stoxx50, 2)
+stoxx50_daily_pct = round(((daily_stoxx50 / prev_daily_stoxx50) - 1.0) * 100.0, 2) if prev_daily_stoxx50 else 0.0
+
+daily_px = safe_metric(last_daily_st, "px_index", safe_metric(last_row, "px_index", 2603.0))
+prev_daily_px = safe_metric(prev_daily_st, "px_index", daily_px)
+px_daily_delta = round(daily_px - prev_daily_px, 2)
+px_daily_pct = round(((daily_px / prev_daily_px) - 1.0) * 100.0, 2) if prev_daily_px else 0.0
+
+daily_vix = safe_metric(last_daily_st, "vix_index", safe_metric(last_row, "vix_index", 15.2))
+prev_daily_vix = safe_metric(prev_daily_st, "vix_index", daily_vix)
+vix_daily_delta = round(daily_vix - prev_daily_vix, 2)
+
+# Zajištění konzistence proměnných napříč celým dashboardem
+sp500_curr = daily_sp500
+nasdaq_curr = daily_nasdaq
+stoxx50_curr = daily_stoxx50
+px_curr = daily_px
+vix_curr = daily_vix
+
+# -----------------------------------------------------------------------------
+# Měsíční komodity (5 hlavních komodit včetně zlata)
+# -----------------------------------------------------------------------------
+gold_curr = safe_metric(last_row, "gold_usd", 4180.0)
+gold_prev = safe_metric(prev_row, "gold_usd", gold_curr)
+gold_delta = round(gold_curr - gold_prev, 2)
+gold_pct = round(((gold_curr / gold_prev) - 1.0) * 100.0, 2) if gold_prev else 0.0
+
+oil_curr = safe_metric(last_row, "oil_brent_usd", 106.5)
+oil_prev = safe_metric(prev_row, "oil_brent_usd", oil_curr)
+oil_delta = round(oil_curr - oil_prev, 2)
+oil_pct = round(((oil_curr / oil_prev) - 1.0) * 100.0, 2) if oil_prev else 0.0
+
+natgas_curr = safe_metric(last_row, "natgas_usd", 3.32)
+natgas_prev = safe_metric(prev_row, "natgas_usd", natgas_curr)
+natgas_delta = round(natgas_curr - natgas_prev, 3)
+natgas_pct = round(((natgas_curr / natgas_prev) - 1.0) * 100.0, 2) if natgas_prev else 0.0
+
+copper_curr = safe_metric(last_row, "copper_usd", 6.73)
+copper_prev = safe_metric(prev_row, "copper_usd", copper_curr)
+copper_delta = round(copper_curr - copper_prev, 3)
+copper_pct = round(((copper_curr / copper_prev) - 1.0) * 100.0, 2) if copper_prev else 0.0
+
+silver_curr = safe_metric(last_row, "silver_usd", 59.35)
+silver_prev = safe_metric(prev_row, "silver_usd", silver_curr)
+silver_delta = round(silver_curr - silver_prev, 2)
+silver_pct = round(((silver_curr / silver_prev) - 1.0) * 100.0, 2) if silver_prev else 0.0
+
 
 # =============================================================================
 # SPARKLINE GENERÁTOR A VÝPOČET DELT PRO HORNÍ PŘEHLEDOVÉ KPI KARTY
@@ -1490,7 +1564,11 @@ def get_indicator_period_str(col: str, default_freq: str = "M") -> str:
     - 'měsíční: 09/2026'
     - 'kvartální: Q3/2026'
     """
-    if col in ("eur_czk", "usd_czk", "pln_czk", "gbp_czk", "chf_czk", "eur_usd", "eur_pln", "eur_gbp", "gbp_usd", "dxy_index", "usd_jpy", "usd_pln", "usd_chf"):
+    if col in (
+        "eur_czk", "usd_czk", "pln_czk", "gbp_czk", "chf_czk", "eur_usd",
+        "eur_pln", "eur_gbp", "gbp_usd", "dxy_index", "usd_jpy", "usd_pln", "usd_chf",
+        "px_index", "stoxx50_index", "sp500_index", "nasdaq_index", "vix_index"
+    ) or default_freq == "D":
         fx_source = df_daily_fx if not df_daily_fx.empty else df_daily_fx_filtered
         if col in fx_source.columns:
             s_fx = fx_source[col].dropna()
@@ -1565,11 +1643,10 @@ une_cz_delta = round(une_cz_curr - une_cz_prev, 1)
 une_cz_chg_cls = "sa-hero-change-neutral" if abs(une_cz_delta) < 0.05 else ("sa-hero-change-pos" if une_cz_delta < 0 else "sa-hero-change-neg")
 une_cz_chg_str = f"{une_cz_delta:+.1f} p.b." if abs(une_cz_delta) >= 0.05 else "stabilní"
 
-px_prev = safe_metric(prev_row, "px_index", px_curr)
-px_delta = round(px_curr - px_prev, 0)
-px_pct = round((px_delta / px_prev) * 100, 2) if px_prev else 0.0
-px_chg_cls = "sa-hero-change-neutral" if abs(px_delta) < 0.5 else ("sa-hero-change-pos" if px_delta > 0 else "sa-hero-change-neg")
-px_chg_str = f"{px_delta:+,.0f} b. ({px_pct:+.2f} % d/d)" if abs(px_delta) >= 0.5 else "+0 b. (+0.00 % d/d)"
+px_delta = px_daily_delta
+px_pct = px_daily_pct
+px_chg_cls = "sa-hero-change-neutral" if abs(px_delta) < 0.1 else ("sa-hero-change-pos" if px_delta > 0 else "sa-hero-change-neg")
+px_chg_str = f"{px_delta:+,.1f} b. ({px_pct:+.2f} % d/d)" if abs(px_delta) >= 0.05 else "+0.0 b. (+0.00 % d/d)"
 
 spark_repo = generate_svg_sparkline(df.get("repo_rate"))
 spark_pribor = generate_svg_sparkline(df.get("pribor_3m"))
@@ -1578,7 +1655,7 @@ spark_czgb10 = generate_svg_sparkline(df.get("czgb_10y"))
 spark_cpi = generate_svg_sparkline(df.get("cpi_yoy"))
 spark_gdp = generate_svg_sparkline(df.get("gdp_growth_real"))
 spark_une = generate_svg_sparkline(df.get("unemployment_rate"))
-spark_px = generate_svg_sparkline(df.get("px_index"))
+spark_px = generate_svg_sparkline(df_daily_fx_filtered["px_index"] if ("px_index" in df_daily_fx_filtered.columns and not df_daily_fx_filtered.empty) else df.get("px_index"))
 
 # 2. EVROPSKÁ UNIE
 real_ecb_rate = round(ecb_dep_curr - cpi_eu_curr, 2)
@@ -1613,11 +1690,10 @@ une_eu_delta = round(une_eu_curr - une_eu_prev, 1)
 une_eu_chg_cls = "sa-hero-change-neutral" if abs(une_eu_delta) < 0.05 else ("sa-hero-change-pos" if une_eu_delta < 0 else "sa-hero-change-neg")
 une_eu_chg_str = f"{une_eu_delta:+.1f} p.b." if abs(une_eu_delta) >= 0.05 else "stabilní"
 
-stoxx50_prev = safe_metric(prev_row, "stoxx50_index", stoxx50_curr)
-stoxx50_delta = round(stoxx50_curr - stoxx50_prev, 0)
-stoxx50_pct = round((stoxx50_delta / stoxx50_prev) * 100, 2) if stoxx50_prev else 0.0
-stoxx50_chg_cls = "sa-hero-change-neutral" if abs(stoxx50_delta) < 0.5 else ("sa-hero-change-pos" if stoxx50_delta > 0 else "sa-hero-change-neg")
-stoxx50_chg_str = f"{stoxx50_delta:+,.0f} b. ({stoxx50_pct:+.2f} % d/d)" if abs(stoxx50_delta) >= 0.5 else "+0 b. (+0.00 % d/d)"
+stoxx50_delta = stoxx50_daily_delta
+stoxx50_pct = stoxx50_daily_pct
+stoxx50_chg_cls = "sa-hero-change-neutral" if abs(stoxx50_delta) < 0.1 else ("sa-hero-change-pos" if stoxx50_delta > 0 else "sa-hero-change-neg")
+stoxx50_chg_str = f"{stoxx50_delta:+,.1f} b. ({stoxx50_pct:+.2f} % d/d)" if abs(stoxx50_delta) >= 0.05 else "+0.0 b. (+0.00 % d/d)"
 
 spark_ecb = generate_svg_sparkline(df.get("ecb_deposit_rate"))
 spark_euribor = generate_svg_sparkline(df.get("euribor_3m"))
@@ -1626,7 +1702,7 @@ spark_bund10 = generate_svg_sparkline(df.get("bund_10y"))
 spark_eu_cpi = generate_svg_sparkline(df.get("eu_cpi_yoy"))
 spark_eu_gdp = generate_svg_sparkline(df.get("eu_gdp_growth_real"))
 spark_eu_une = generate_svg_sparkline(df.get("eu_unemployment_rate"))
-spark_stoxx = generate_svg_sparkline(df.get("stoxx50_index"))
+spark_stoxx = generate_svg_sparkline(df_daily_fx_filtered["stoxx50_index"] if ("stoxx50_index" in df_daily_fx_filtered.columns and not df_daily_fx_filtered.empty) else df.get("stoxx50_index"))
 
 # 3. SPOJENÉ STÁTY
 real_fed_rate = round(fed_upper_curr - cpi_us_curr, 2)
@@ -1662,11 +1738,10 @@ une_us_delta = round(une_us_curr - une_us_prev, 1)
 une_us_chg_cls = "sa-hero-change-neutral" if abs(une_us_delta) < 0.05 else ("sa-hero-change-pos" if une_us_delta < 0 else "sa-hero-change-neg")
 une_us_chg_str = f"{une_us_delta:+.1f} p.b." if abs(une_us_delta) >= 0.05 else "stabilní"
 
-sp500_prev = safe_metric(prev_row, "sp500_index", sp500_curr)
-sp500_delta = round(sp500_curr - sp500_prev, 0)
-sp500_pct = round((sp500_delta / sp500_prev) * 100, 2) if sp500_prev else 0.0
-sp500_chg_cls = "sa-hero-change-neutral" if abs(sp500_delta) < 0.5 else ("sa-hero-change-pos" if sp500_delta > 0 else "sa-hero-change-neg")
-sp500_chg_str = f"{sp500_delta:+,.0f} b. ({sp500_pct:+.2f} % d/d)" if abs(sp500_delta) >= 0.5 else "+0 b. (+0.00 % d/d)"
+sp500_delta = sp500_daily_delta
+sp500_pct = sp500_daily_pct
+sp500_chg_cls = "sa-hero-change-neutral" if abs(sp500_delta) < 0.1 else ("sa-hero-change-pos" if sp500_delta > 0 else "sa-hero-change-neg")
+sp500_chg_str = f"{sp500_delta:+,.1f} b. ({sp500_pct:+.2f} % d/d)" if abs(sp500_delta) >= 0.05 else "+0.0 b. (+0.00 % d/d)"
 
 spark_fed = generate_svg_sparkline(df.get("fed_funds_upper"))
 spark_sofr = generate_svg_sparkline(df.get("sofr_rate"))
@@ -1675,7 +1750,7 @@ spark_us10 = generate_svg_sparkline(df.get("us_10y"))
 spark_us_cpi = generate_svg_sparkline(df.get("us_cpi_yoy"))
 spark_us_gdp = generate_svg_sparkline(df.get("us_gdp_growth_real"))
 spark_us_une = generate_svg_sparkline(df.get("us_unemployment_rate"))
-spark_sp500 = generate_svg_sparkline(df.get("sp500_index"))
+spark_sp500 = generate_svg_sparkline(df_daily_fx_filtered["sp500_index"] if ("sp500_index" in df_daily_fx_filtered.columns and not df_daily_fx_filtered.empty) else df.get("sp500_index"))
 
 # Popisky periodicity a poslední aktualizace pro horní 4x2 KPI mřížku
 date_hero_repo = p("repo_rate", "M")
@@ -1685,7 +1760,7 @@ date_hero_czgb10 = p("czgb_10y", "M")
 date_hero_cpi = p("cpi_yoy", "M")
 date_hero_gdp = p("gdp_growth_real", "Q")
 date_hero_une = p("unemployment_rate", "M")
-date_hero_px = p("px_index", "M")
+date_hero_px = p("px_index", "D")
 
 date_hero_ecb = p("ecb_deposit_rate", "M")
 date_hero_euribor = p("euribor_3m", "M")
@@ -1694,7 +1769,7 @@ date_hero_bund10 = p("bund_10y", "M")
 date_hero_eu_cpi = p("eu_cpi_yoy", "M")
 date_hero_eu_gdp = p("eu_gdp_growth_real", "Q")
 date_hero_eu_une = p("eu_unemployment_rate", "M")
-date_hero_stoxx = p("stoxx50_index", "M")
+date_hero_stoxx = p("stoxx50_index", "D")
 
 date_hero_fed = p("fed_funds_upper", "M")
 date_hero_sofr = p("sofr_rate", "M")
@@ -1703,7 +1778,7 @@ date_hero_us10 = p("us_10y", "M")
 date_hero_us_cpi = p("us_cpi_yoy", "M")
 date_hero_us_gdp = p("us_gdp_growth_real", "Q")
 date_hero_us_une = p("us_unemployment_rate", "M")
-date_hero_sp500 = p("sp500_index", "M")
+date_hero_sp500 = p("sp500_index", "D")
 
 
 # -----------------------------------------------------------------------------
@@ -2990,9 +3065,9 @@ def build_stock_comparison_chart(dframe: pd.DataFrame, selected_indices: List[st
 
 
 def build_single_stock_chart(dframe: pd.DataFrame, col: str, title: str, color: str = "#2563EB") -> go.Figure:
-    """Detailní cenový graf konkrétního akciového indexu s trendem a extrémy."""
+    """Detailní cenový graf konkrétního akciového indexu s trendem a extrémy (adaptivní pro denní i měsíční data)."""
     fig = go.Figure()
-    if col in dframe.columns:
+    if col in dframe.columns and not dframe[col].dropna().empty:
         fig.add_trace(go.Scatter(
             x=dframe["date"],
             y=dframe[col],
@@ -3004,6 +3079,141 @@ def build_single_stock_chart(dframe: pd.DataFrame, col: str, title: str, color: 
             hovertemplate=f"<b>{title}</b>: %{{y:,.1f}} bodů<extra></extra>"
         ))
 
+        # Adaptivní klouzavý průměr podle frekvence (denní vs. měsíční)
+        if len(dframe) >= 100:
+            sma = dframe[col].rolling(window=50, min_periods=10).mean()
+            sma_label = "50D klouzavý průměr"
+        elif len(dframe) >= 12:
+            sma = dframe[col].rolling(window=12, min_periods=3).mean()
+            sma_label = "12M klouzavý průměr"
+        else:
+            sma = None
+            sma_label = ""
+
+        if sma is not None:
+            fig.add_trace(go.Scatter(
+                x=dframe["date"],
+                y=sma,
+                mode="lines",
+                name=sma_label,
+                line=dict(color="#64748B", width=1.5, dash="dot"),
+                hovertemplate=f"<b>{sma_label}</b>: %{{y:,.1f}} bodů<extra></extra>"
+            ))
+
+        valid_df = dframe.dropna(subset=[col])
+        if not valid_df.empty:
+            min_val = valid_df[col].min()
+            max_val = valid_df[col].max()
+            min_row = valid_df.loc[valid_df[col] == min_val].iloc[0]
+            max_row = valid_df.loc[valid_df[col] == max_val].iloc[0]
+
+            fig.add_trace(go.Scatter(
+                x=[min_row["date"], max_row["date"]],
+                y=[min_val, max_val],
+                mode="markers+text",
+                name="Extrémy",
+                marker=dict(size=8, color=["#16A34A", "#DC2626"]),
+                text=[f"Min: {min_val:,.0f}", f"Max: {max_val:,.0f}"],
+                textposition=["bottom center", "top center"],
+                showlegend=False,
+                hoverinfo="skip"
+            ))
+
+    fig.update_layout(
+        height=430,
+        hovermode="x unified",
+        margin=dict(l=20, r=20, t=30, b=20),
+        xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis=dict(title="Hodnota indexu (body)", showgrid=True, gridcolor="#f1f5f9"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF"
+    )
+    return fig
+
+
+# --- G2. KOMODITY (ZLATO, ROPA, PLYN, MĚĎ, STŘÍBRO) ---
+def build_commodity_comparison_chart(dframe: pd.DataFrame, selected_commodities: List[str], mode: str = "pct") -> go.Figure:
+    """Srovnávací graf normalizované výkonnosti komodit (Zlato, Ropa Brent, Plyn, Měď, Stříbro)."""
+    fig = go.Figure()
+    if dframe.empty or not selected_commodities:
+        return fig
+
+    commodity_configs = {
+        "Zlato (Gold)": ("gold_usd", "#EAB308", "Zlato", "$/oz"),
+        "Ropa Brent": ("oil_brent_usd", "#0284C7", "Ropa Brent", "$/barel"),
+        "Zemní plyn (Henry Hub)": ("natgas_usd", "#DC2626", "Zemní plyn", "$/MMBtu"),
+        "Měď (Doctor Copper)": ("copper_usd", "#D97706", "Měď", "$/libra"),
+        "Stříbro (Silver)": ("silver_usd", "#94A3B8", "Stříbro", "$/oz")
+    }
+
+    first_row = dframe.iloc[0]
+
+    for label in selected_commodities:
+        cfg = commodity_configs.get(label)
+        if not cfg:
+            continue
+        col, color, name, unit = cfg
+        if col in dframe.columns and not dframe[col].dropna().empty:
+            base_val = first_row.get(col)
+            if base_val is None or pd.isna(base_val) or base_val <= 0:
+                valid_first = dframe[col].dropna()
+                base_val = valid_first.iloc[0] if not valid_first.empty else 1.0
+
+            if base_val and base_val > 0:
+                if mode == "pct":
+                    y_vals = ((dframe[col] / base_val) - 1.0) * 100.0
+                    hover = f"<b>{name}</b>: %{{y:+.2f}} % (cena: %{{customdata:,.2f}} {unit})<extra></extra>"
+                else:
+                    y_vals = (dframe[col] / base_val) * 100.0
+                    hover = f"<b>{name}</b>: %{{y:.1f}} b. (cena: %{{customdata:,.2f}} {unit})<extra></extra>"
+
+                fig.add_trace(go.Scatter(
+                    x=dframe["date"],
+                    y=y_vals,
+                    mode="lines",
+                    name=f"{name} ({unit})",
+                    line=dict(color=color, width=2.6),
+                    customdata=dframe[col],
+                    hovertemplate=hover
+                ))
+
+    ref_line = 0.0 if mode == "pct" else 100.0
+    fig.add_hline(y=ref_line, line=dict(color="#64748B", width=1.5, dash="dash"),
+                  annotation_text="Báze (0 %)" if mode == "pct" else "Báze (100 b.)",
+                  annotation_position="bottom left")
+
+    y_title = "Relativní zhodnocení (%)" if mode == "pct" else "Index rebase (báze = 100)"
+    suffix = " %" if mode == "pct" else " b."
+
+    fig.update_layout(
+        height=460,
+        hovermode="x unified",
+        margin=dict(l=20, r=20, t=30, b=20),
+        xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis=dict(title=y_title, ticksuffix=suffix, showgrid=True, gridcolor="#f1f5f9"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF"
+    )
+    return fig
+
+
+def build_single_commodity_chart(dframe: pd.DataFrame, col: str, title: str, unit: str, color: str = "#D97706") -> go.Figure:
+    """Detailní cenový graf konkrétní komodity s 12M klouzavým průměrem a extrémy."""
+    fig = go.Figure()
+    if col in dframe.columns and not dframe[col].dropna().empty:
+        fig.add_trace(go.Scatter(
+            x=dframe["date"],
+            y=dframe[col],
+            mode="lines",
+            name=f"{title} ({unit})",
+            line=dict(color=color, width=2.8),
+            fill="tozeroy",
+            fillcolor=f"rgba{tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + (0.06,)}",
+            hovertemplate=f"<b>{title}</b>: %{{y:,.2f}} {unit}<extra></extra>"
+        ))
+
         if len(dframe) >= 12:
             sma12 = dframe[col].rolling(window=12, min_periods=3).mean()
             fig.add_trace(go.Scatter(
@@ -3012,32 +3222,34 @@ def build_single_stock_chart(dframe: pd.DataFrame, col: str, title: str, color: 
                 mode="lines",
                 name="12M klouzavý průměr",
                 line=dict(color="#64748B", width=1.5, dash="dot"),
-                hovertemplate="<b>12M SMA</b>: %{y:,.1f} bodů<extra></extra>"
+                hovertemplate=f"<b>12M SMA</b>: %{{y:,.2f}} {unit}<extra></extra>"
             ))
 
-        min_val = dframe[col].min()
-        max_val = dframe[col].max()
-        min_row = dframe.loc[dframe[col] == min_val].iloc[0]
-        max_row = dframe.loc[dframe[col] == max_val].iloc[0]
+        valid_df = dframe.dropna(subset=[col])
+        if not valid_df.empty:
+            min_val = valid_df[col].min()
+            max_val = valid_df[col].max()
+            min_row = valid_df.loc[valid_df[col] == min_val].iloc[0]
+            max_row = valid_df.loc[valid_df[col] == max_val].iloc[0]
 
-        fig.add_trace(go.Scatter(
-            x=[min_row["date"], max_row["date"]],
-            y=[min_val, max_val],
-            mode="markers+text",
-            name="Extrémy",
-            marker=dict(size=8, color=["#16A34A", "#DC2626"]),
-            text=[f"Min: {min_val:,.0f}", f"Max: {max_val:,.0f}"],
-            textposition=["bottom center", "top center"],
-            showlegend=False,
-            hoverinfo="skip"
-        ))
+            fig.add_trace(go.Scatter(
+                x=[min_row["date"], max_row["date"]],
+                y=[min_val, max_val],
+                mode="markers+text",
+                name="Extrémy",
+                marker=dict(size=8, color=["#16A34A", "#DC2626"]),
+                text=[f"Min: {min_val:,.2f}", f"Max: {max_val:,.2f}"],
+                textposition=["bottom center", "top center"],
+                showlegend=False,
+                hoverinfo="skip"
+            ))
 
     fig.update_layout(
         height=430,
         hovermode="x unified",
         margin=dict(l=20, r=20, t=30, b=20),
         xaxis=dict(title="", showgrid=True, gridcolor="#f1f5f9"),
-        yaxis=dict(title="Hodnota indexu (body)", showgrid=True, gridcolor="#f1f5f9"),
+        yaxis=dict(title=f"Cena ({unit})", showgrid=True, gridcolor="#f1f5f9"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor="rgba(255, 255, 255, 0.85)"),
         plot_bgcolor="#FFFFFF",
         paper_bgcolor="#FFFFFF"
@@ -3891,6 +4103,8 @@ def get_indicators_catalog_df() -> pd.DataFrame:
             return "Eurostat & ECB"
 
         else: # US
+            if any(k in code for k in ["gold", "oil_brent", "natgas", "copper", "silver"]):
+                return "Komoditní burzy (COMEX, NYMEX, ICE Europe) & Yahoo Finance"
             if "ism_" in code:
                 return "Institute for Supply Management (ISM)"
             if "michigan" in code:
@@ -3967,6 +4181,7 @@ main_dashboard_tabs_list = [
     "Měnová politika & FX",
     "Ekonomika & Práce",
     "Akciové trhy",
+    "Komodity",
     "Fiskál & Svět",
     "Export",
     "Metriky"
@@ -3986,7 +4201,7 @@ if main_tabs_default:
 if main_tabs_default not in main_dashboard_tabs_list:
     main_tabs_default = None
 
-main_tab_markets, main_tab_real, main_tab_stocks, main_tab_public, main_tab_export, main_tab_catalog = st.tabs(
+main_tab_markets, main_tab_real, main_tab_stocks, main_tab_commodities, main_tab_public, main_tab_export, main_tab_catalog = st.tabs(
     main_dashboard_tabs_list,
     default=main_tabs_default,
     key="main_dashboard_tabs_widget"
@@ -4447,30 +4662,16 @@ with main_tab_stocks:
         key="sub_tab_stocks_widget"
     )
 
+    # Příprava datové řady pro akcie (Denní high-frequency vs. Měsíční agregace)
+    # Zjistíme dostupnost denních dat v df_daily_fx_filtered
+    has_daily_stocks = "sp500_index" in df_daily_fx_filtered.columns and not df_daily_fx_filtered["sp500_index"].dropna().empty
+
     # 3.1 Vzájemné srovnání indexů
     with sub_tab_stock_cmp:
-        st.markdown('<div class="section-header">Srovnání výkonnosti hlavních světových a lokálních akciových indexů</div>', unsafe_allow_html=True)
-        st.caption("Porovnejte relativní kumulativní výnos nebo normalizovanou bázi pro S&P 500, NASDAQ, Euro Stoxx 50 a Index PX Pražské burzy.")
+        st.markdown('<div class="section-header">Srovnání výkonnosti hlavních světových a lokálních akciových indexů (Denní data)</div>', unsafe_allow_html=True)
+        st.caption("Porovnejte relativní kumulativní výnos nebo normalizovanou bázi pro S&P 500, NASDAQ, Euro Stoxx 50 a Index PX Pražské burzy s denní frekvencí.")
 
-        # Souhrnné metriky pro všechny 4 indexy
-        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-        sp_first = df["sp500_index"].iloc[0] if ("sp500_index" in df.columns and not df.empty) else 1.0
-        sp_chg = ((sp500_curr / sp_first) - 1.0) * 100.0 if sp_first > 0 else 0.0
-
-        nq_first = df["nasdaq_index"].iloc[0] if ("nasdaq_index" in df.columns and not df.empty) else 1.0
-        nq_chg = ((nasdaq_curr / nq_first) - 1.0) * 100.0 if nq_first > 0 else 0.0
-
-        sx_first = df["stoxx50_index"].iloc[0] if ("stoxx50_index" in df.columns and not df.empty) else 1.0
-        sx_chg = ((stoxx50_curr / sx_first) - 1.0) * 100.0 if sx_first > 0 else 0.0
-
-        px_first = df["px_index"].iloc[0] if ("px_index" in df.columns and not df.empty) else 1.0
-        px_chg = ((px_curr / px_first) - 1.0) * 100.0 if px_first > 0 else 0.0
-
-        col_m1.metric("🇺🇸 S&P 500", f"{sp500_curr:,.0f} b.", delta=f"{sp_chg:+.1f} % (za období)")
-        col_m2.metric("🇺🇸 NASDAQ Composite", f"{nasdaq_curr:,.0f} b.", delta=f"{nq_chg:+.1f} % (za období)")
-        col_m3.metric("🇪🇺 Euro Stoxx 50", f"{stoxx50_curr:,.0f} b.", delta=f"{sx_chg:+.1f} % (za období)")
-        col_m4.metric("🇨🇿 Index PX (Praha)", f"{px_curr:,.0f} b.", delta=f"{px_chg:+.1f} % (za období)")
-
+        # Ovládací prvky pro srovnání a volbu frekvence
         col_sc1, col_sc2 = st.columns([2.5, 1.5])
         with col_sc1:
             indices_to_compare = st.multiselect(
@@ -4480,93 +4681,151 @@ with main_tab_stocks:
                 key="indices_to_compare_multiselect"
             )
         with col_sc2:
-            cmp_mode_choice = st.radio(
-                "Metrika normalizace:",
-                ["📈 Relativní výkonnost (% od počátku období)", "🔢 Rebase na bázi 100"],
+            stock_freq_view_mode = st.radio(
+                "Frekvence řady pro grafy:",
+                ["📅 Denní data (High-Frequency)", "📊 Měsíční agregace"],
                 horizontal=True,
-                key="stock_cmp_mode_radio"
+                key="stock_freq_view_mode"
             )
 
+        df_for_stocks = df_daily_fx_filtered if ("Denní" in stock_freq_view_mode and has_daily_stocks) else df
+
+        # Výpočet zhodnocení za vybrané období (podle výchozího bodu zobrazené řady)
+        sp_first_val = df_for_stocks["sp500_index"].dropna().iloc[0] if ("sp500_index" in df_for_stocks.columns and not df_for_stocks["sp500_index"].dropna().empty) else daily_sp500
+        sp_period_pct = ((daily_sp500 / sp_first_val) - 1.0) * 100.0 if sp_first_val > 0 else 0.0
+
+        nq_first_val = df_for_stocks["nasdaq_index"].dropna().iloc[0] if ("nasdaq_index" in df_for_stocks.columns and not df_for_stocks["nasdaq_index"].dropna().empty) else daily_nasdaq
+        nq_period_pct = ((daily_nasdaq / nq_first_val) - 1.0) * 100.0 if nq_first_val > 0 else 0.0
+
+        sx_first_val = df_for_stocks["stoxx50_index"].dropna().iloc[0] if ("stoxx50_index" in df_for_stocks.columns and not df_for_stocks["stoxx50_index"].dropna().empty) else daily_stoxx50
+        sx_period_pct = ((daily_stoxx50 / sx_first_val) - 1.0) * 100.0 if sx_first_val > 0 else 0.0
+
+        px_first_val = df_for_stocks["px_index"].dropna().iloc[0] if ("px_index" in df_for_stocks.columns and not df_for_stocks["px_index"].dropna().empty) else daily_px
+        px_period_pct = ((daily_px / px_first_val) - 1.0) * 100.0 if px_first_val > 0 else 0.0
+
+        # Souhrnné metriky pro všechny 4 indexy s napojením na DENNÍ DATA
+        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+        col_m1.metric(
+            "🇺🇸 S&P 500",
+            f"{daily_sp500:,.1f} b.",
+            delta=f"{daily_sp500_pct_d:+.2f} % d/d",
+            help=f"Poslední denní závěr: {daily_sp500_date} ({daily_sp500_chg_d:+.1f} b. d/d) | Změna za sledované období: {sp_period_pct:+.1f} %"
+        )
+        col_m2.metric(
+            "🇺🇸 NASDAQ Composite",
+            f"{daily_nasdaq:,.1f} b.",
+            delta=f"{daily_nasdaq_pct_d:+.2f} % d/d",
+            help=f"Poslední denní závěr: {daily_nasdaq_date} ({daily_nasdaq_chg_d:+.1f} b. d/d) | Změna za sledované období: {nq_period_pct:+.1f} %"
+        )
+        col_m3.metric(
+            "🇪🇺 Euro Stoxx 50",
+            f"{daily_stoxx50:,.1f} b.",
+            delta=f"{daily_stoxx50_pct_d:+.2f} % d/d",
+            help=f"Poslední denní závěr: {daily_stoxx50_date} ({daily_stoxx50_chg_d:+.1f} b. d/d) | Změna za sledované období: {sx_period_pct:+.1f} %"
+        )
+        col_m4.metric(
+            "🇨🇿 Index PX (Praha)",
+            f"{daily_px:,.1f} b.",
+            delta=f"{daily_px_pct_d:+.2f} % d/d",
+            help=f"Poslední denní závěr: {daily_px_date} ({daily_px_chg_d:+.1f} b. d/d) | Změna za sledované období: {px_period_pct:+.1f} %"
+        )
+
+        cmp_mode_choice = st.radio(
+            "Metrika normalizace:",
+            ["📈 Relativní výkonnost (% od počátku období)", "🔢 Rebase na bázi 100"],
+            horizontal=True,
+            key="stock_cmp_mode_radio"
+        )
+
         cmp_mode = "pct" if "Relativní" in cmp_mode_choice else "rebase"
-        fig_stock_cmp = build_stock_comparison_chart(df, indices_to_compare, mode=cmp_mode)
+        fig_stock_cmp = build_stock_comparison_chart(df_for_stocks, indices_to_compare, mode=cmp_mode)
         render_plotly_chart(fig_stock_cmp, key="chart_stock_comparison")
-        st.caption("📌 **Zdroj dat:** Burza cenných papírů Praha (PSE / Index PX), STOXX Ltd. (Euro Stoxx 50), S&P Dow Jones Indices (S&P 500) & NASDAQ OMX (NASDAQ Composite) / Yahoo Finance API")
+        st.caption("📌 **Zdroj dat:** Burza cenných papírů Praha (PSE / Index PX), STOXX Ltd. (Euro Stoxx 50), S&P Dow Jones Indices (S&P 500) & NASDAQ OMX (NASDAQ Composite) / Yahoo Finance API (denní závěrečné kurzy)")
+
+        # Tlačítko stažení denních dat indexů
+        stock_cols = [c for c in ["date", "px_index", "stoxx50_index", "sp500_index", "nasdaq_index", "vix_index"] if c in df_daily_fx_filtered.columns]
+        if stock_cols:
+            csv_daily_stocks = df_daily_fx_filtered[stock_cols].dropna(how="all", subset=[c for c in stock_cols if c != "date"]).to_csv(index=False, sep=";", decimal=",").encode("utf-8-sig")
+            st.download_button(
+                label="📥 Stáhnout kompletní denní data akciových indexů (CSV)",
+                data=csv_daily_stocks,
+                file_name=f"denni_akciove_indexy_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv",
+                key="btn_dl_daily_stocks_csv"
+            )
 
     # 3.2 Index PX
     with sub_tab_px:
-        st.markdown('<div class="section-header">Index PX – Burza cenných papírů Praha (BCPP)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Index PX – Burza cenných papírů Praha (BCPP – Denní data)</div>', unsafe_allow_html=True)
         st.caption("Oficiální cenový index pražské burzy zahrnující klíčové české emise (ČEZ, Komerční banka, Erste Group, Moneta Money Bank, Colt CZ).")
         col_px1, col_px2, col_px3, col_px4 = st.columns(4)
-        col_px1.metric("Aktuální hodnota", f"{px_curr:,.1f} bodů")
-        col_px2.metric("Výkonnost za vybrané období", f"{px_chg:+.1f} %")
-        col_px3.metric("Minimum v období", f"{df['px_index'].min():,.1f} b." if "px_index" in df.columns else "N/A")
-        col_px4.metric("Maximum v období", f"{df['px_index'].max():,.1f} b." if "px_index" in df.columns else "N/A")
+        col_px1.metric("Aktuální denní kurz", f"{daily_px:,.1f} bodů", delta=f"{daily_px_pct_d:+.2f} % d/d ({daily_px_chg_d:+.1f} b.)")
+        col_px2.metric("Výkonnost za vybrané období", f"{px_period_pct:+.1f} %", delta=f"{daily_px - px_first_val:+.1f} b.")
+        col_px3.metric("Minimum v období", f"{df_for_stocks['px_index'].min():,.1f} b." if "px_index" in df_for_stocks.columns else "N/A")
+        col_px4.metric("Maximum v období", f"{df_for_stocks['px_index'].max():,.1f} b." if "px_index" in df_for_stocks.columns else "N/A")
         render_cz_news_card(CZ_NEWS["stocks_px"])
-        fig_single_px = build_single_stock_chart(df, "px_index", "Index PX (Praha)", color="#DC2626")
+        fig_single_px = build_single_stock_chart(df_for_stocks, "px_index", "Index PX (Praha)", color="#DC2626")
         render_plotly_chart(fig_single_px, key="chart_single_px")
-        st.caption("📌 **Zdroj dat:** Burza cenných papírů Praha (PSE / BCPP) – Oficiální kalkulace indexu PX")
+        st.caption(f"📌 **Zdroj dat:** Burza cenných papírů Praha (PSE / BCPP API) – Oficiální kalkulace indexu PX (poslední aktualizace: {daily_px_date})")
 
     # 3.3 Euro Stoxx 50
     with sub_tab_stoxx:
-        st.markdown('<div class="section-header">Euro Stoxx 50 – Benchmark předních akcií Eurozóny</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Euro Stoxx 50 – Benchmark předních akcií Eurozóny (Denní data)</div>', unsafe_allow_html=True)
         st.caption("Index nejvýznamnějších 50 korporátních lídrů Eurozóny napříč 8 zeměmi (např. ASML, LVMH, SAP, TotalEnergies, Siemens, Allianz, Sanofi).")
         col_sx1, col_sx2, col_sx3, col_sx4 = st.columns(4)
-        col_sx1.metric("Aktuální hodnota", f"{stoxx50_curr:,.1f} bodů")
-        col_sx2.metric("Výkonnost za vybrané období", f"{sx_chg:+.1f} %")
-        col_sx3.metric("Minimum v období", f"{df['stoxx50_index'].min():,.1f} b." if "stoxx50_index" in df.columns else "N/A")
-        col_sx4.metric("Maximum v období", f"{df['stoxx50_index'].max():,.1f} b." if "stoxx50_index" in df.columns else "N/A")
-        fig_single_stoxx = build_single_stock_chart(df, "stoxx50_index", "Euro Stoxx 50", color="#059669")
+        col_sx1.metric("Aktuální denní kurz", f"{daily_stoxx50:,.1f} bodů", delta=f"{daily_stoxx50_pct_d:+.2f} % d/d ({daily_stoxx50_chg_d:+.1f} b.)")
+        col_sx2.metric("Výkonnost za vybrané období", f"{sx_period_pct:+.1f} %", delta=f"{daily_stoxx50 - sx_first_val:+.1f} b.")
+        col_sx3.metric("Minimum v období", f"{df_for_stocks['stoxx50_index'].min():,.1f} b." if "stoxx50_index" in df_for_stocks.columns else "N/A")
+        col_sx4.metric("Maximum v období", f"{df_for_stocks['stoxx50_index'].max():,.1f} b." if "stoxx50_index" in df_for_stocks.columns else "N/A")
+        fig_single_stoxx = build_single_stock_chart(df_for_stocks, "stoxx50_index", "Euro Stoxx 50", color="#059669")
         render_plotly_chart(fig_single_stoxx, key="chart_single_stoxx")
-        st.caption("📌 **Zdroj dat:** STOXX Ltd. (Deutsche Börse Group) & Yahoo Finance")
+        st.caption(f"📌 **Zdroj dat:** STOXX Ltd. (Deutsche Börse Group) & Yahoo Finance (poslední aktualizace: {daily_stoxx50_date})")
 
     # 3.4 S&P 500
     with sub_tab_sp500:
-        st.markdown('<div class="section-header">S&P 500 – Globální měřítko amerického akciového trhu</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">S&P 500 – Globální měřítko amerického akciového trhu (Denní data)</div>', unsafe_allow_html=True)
         st.caption("Index 500 největších veřejně obchodovaných společností v USA pokrývající přibližně 80 % tržní kapitalizace celého amerického trhu.")
         col_sp1, col_sp2, col_sp3, col_sp4 = st.columns(4)
-        col_sp1.metric("Aktuální hodnota", f"{sp500_curr:,.1f} bodů")
-        col_sp1_delta = sp500_curr - safe_metric(prev_row, "sp500_index", sp500_curr)
-        col_sp2.metric("Výkonnost za vybrané období", f"{sp_chg:+.1f} %", delta=f"{col_sp1_delta:+.1f} b.")
-        col_sp3.metric("Minimum v období", f"{df['sp500_index'].min():,.1f} b." if "sp500_index" in df.columns else "N/A")
-        col_sp4.metric("Maximum v období", f"{df['sp500_index'].max():,.1f} b." if "sp500_index" in df.columns else "N/A")
-        fig_single_sp = build_single_stock_chart(df, "sp500_index", "S&P 500", color="#2563EB")
+        col_sp1.metric("Aktuální denní kurz", f"{daily_sp500:,.1f} bodů", delta=f"{daily_sp500_pct_d:+.2f} % d/d ({daily_sp500_chg_d:+.1f} b.)")
+        col_sp2.metric("Výkonnost za vybrané období", f"{sp_period_pct:+.1f} %", delta=f"{daily_sp500 - sp_first_val:+.1f} b.")
+        col_sp3.metric("Minimum v období", f"{df_for_stocks['sp500_index'].min():,.1f} b." if "sp500_index" in df_for_stocks.columns else "N/A")
+        col_sp4.metric("Maximum v období", f"{df_for_stocks['sp500_index'].max():,.1f} b." if "sp500_index" in df_for_stocks.columns else "N/A")
+        fig_single_sp = build_single_stock_chart(df_for_stocks, "sp500_index", "S&P 500", color="#2563EB")
         render_plotly_chart(fig_single_sp, key="chart_single_sp")
-        st.caption("📌 **Zdroj dat:** S&P Dow Jones Indices & Yahoo Finance")
+        st.caption(f"📌 **Zdroj dat:** S&P Dow Jones Indices & Yahoo Finance (poslední aktualizace: {daily_sp500_date})")
 
     # 3.5 NASDAQ Composite
     with sub_tab_nasdaq:
-        st.markdown('<div class="section-header">NASDAQ Composite – Světový technologický a inovační lídr</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">NASDAQ Composite – Světový technologický a inovační lídr (Denní data)</div>', unsafe_allow_html=True)
         st.caption("Index zahrnující přes 3 000 akcií kótovaných na burze NASDAQ s vysokým zastoupením technologického sektoru (Apple, Microsoft, Nvidia, Amazon, Alphabet, Meta).")
         col_nq1, col_nq2, col_nq3, col_nq4 = st.columns(4)
-        col_nq1.metric("Aktuální hodnota", f"{nasdaq_curr:,.1f} bodů")
-        col_nq1_delta = nasdaq_curr - safe_metric(prev_row, "nasdaq_index", nasdaq_curr)
-        col_nq2.metric("Výkonnost za vybrané období", f"{nq_chg:+.1f} %", delta=f"{col_nq1_delta:+.1f} b.")
-        col_nq3.metric("Minimum v období", f"{df['nasdaq_index'].min():,.1f} b." if "nasdaq_index" in df.columns else "N/A")
-        col_nq4.metric("Maximum v období", f"{df['nasdaq_index'].max():,.1f} b." if "nasdaq_index" in df.columns else "N/A")
-        fig_single_nq = build_single_stock_chart(df, "nasdaq_index", "NASDAQ Composite", color="#7C3AED")
+        col_nq1.metric("Aktuální denní kurz", f"{daily_nasdaq:,.1f} bodů", delta=f"{daily_nasdaq_pct_d:+.2f} % d/d ({daily_nasdaq_chg_d:+.1f} b.)")
+        col_nq2.metric("Výkonnost za vybrané období", f"{nq_period_pct:+.1f} %", delta=f"{daily_nasdaq - nq_first_val:+.1f} b.")
+        col_nq3.metric("Minimum v období", f"{df_for_stocks['nasdaq_index'].min():,.1f} b." if "nasdaq_index" in df_for_stocks.columns else "N/A")
+        col_nq4.metric("Maximum v období", f"{df_for_stocks['nasdaq_index'].max():,.1f} b." if "nasdaq_index" in df_for_stocks.columns else "N/A")
+        fig_single_nq = build_single_stock_chart(df_for_stocks, "nasdaq_index", "NASDAQ Composite", color="#7C3AED")
         render_plotly_chart(fig_single_nq, key="chart_single_nasdaq")
-        st.caption("📌 **Zdroj dat:** NASDAQ OMX Group & Yahoo Finance")
+        st.caption(f"📌 **Zdroj dat:** NASDAQ OMX Group & Yahoo Finance (poslední aktualizace: {daily_nasdaq_date})")
 
     # 3.6 Index volatility VIX (Tržní sentiment & riziko)
     with sub_tab_vix:
-        st.markdown('<div class="section-header">Index volatility VIX – Tržní sentiment a vnímané riziko (Cboe "Index strachu")</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Index volatility VIX – Tržní sentiment a vnímané riziko (Cboe "Index strachu" – Denní data)</div>', unsafe_allow_html=True)
         st.caption("Cboe Volatility Index (VIX) vyjadřuje implikovanou 30denní volatilitu opcí na index S&P 500. Je klíčovým barometrem tržního strachu, averze k riziku a stresu na globálních trzích.")
         col_vx1, col_vx2, col_vx3, col_vx4 = st.columns(4)
-        vix_delta = vix_curr - vix_prev
-        col_vx1.metric("Index VIX", f"{vix_curr:.2f} bodů", delta=f"{vix_delta:+.2f} b.", delta_color="inverse")
-        if vix_curr < 15.0:
+        col_vx1.metric("Index VIX", f"{daily_vix:.2f} bodů", delta=f"{daily_vix_chg_d:+.2f} b. d/d", delta_color="inverse")
+        if daily_vix < 15.0:
             regime_label = "Klid / Sebeuspokojení (< 15)"
-        elif vix_curr <= 20.0:
+        elif daily_vix <= 20.0:
             regime_label = "Normální rozmezí (15–20)"
-        elif vix_curr <= 30.0:
+        elif daily_vix <= 30.0:
             regime_label = "Zvýšená nervozita (20–30)"
         else:
             regime_label = "Tržní panika / Stres (> 30)"
         col_vx2.metric("Tržní režim sentimentu", regime_label)
-        vix_min = df["vix_index"].min() if "vix_index" in df.columns else 12.0
-        vix_max = df["vix_index"].max() if "vix_index" in df.columns else 35.0
-        col_vx3.metric("Minimum v období", f"{vix_min:.2f} b.")
-        col_vx4.metric("Maximum v období", f"{vix_max:.2f} b.")
+        vix_min_val = df_for_stocks["vix_index"].min() if "vix_index" in df_for_stocks.columns else 12.0
+        vix_max_val = df_for_stocks["vix_index"].max() if "vix_index" in df_for_stocks.columns else 35.0
+        col_vx3.metric("Minimum v období", f"{vix_min_val:.2f} b.")
+        col_vx4.metric("Maximum v období", f"{vix_max_val:.2f} b.")
 
         st.markdown(
             """
@@ -4580,13 +4839,336 @@ with main_tab_stocks:
             """,
             unsafe_allow_html=True
         )
-        fig_vix = build_vix_chart(df)
+        fig_vix = build_vix_chart(df_for_stocks)
         render_plotly_chart(fig_vix, key="chart_vix_sentiment")
-        st.caption("📌 **Zdroj dat:** Chicago Board Options Exchange (Cboe VIX Index) & S&P Dow Jones Indices / Yahoo Finance API (^VIX)")
+        st.caption(f"📌 **Zdroj dat:** Chicago Board Options Exchange (Cboe VIX Index) & S&P Dow Jones Indices / Yahoo Finance API (^VIX, poslední aktualizace: {daily_vix_date})")
 
 
 # =============================================================================
-# 4. KATEGORIE: VEŘEJNÉ FINANCE & SVĚT
+# 4. KATEGORIE: KOMODITY (ZLATO, ROPA, ZEMNÍ PLYN, MĚĎ, STŘÍBRO)
+# =============================================================================
+with main_tab_commodities:
+    commodities_subtabs_list = [
+        "📊 Vzájemné srovnání komodit",
+        "🟡 Zlato (Gold)",
+        "🛢️ Ropa Brent",
+        "🔥 Zemní plyn (Henry Hub)",
+        "🏗️ Měď (Doctor Copper)",
+        "⚪ Stříbro (Silver)"
+    ]
+    commodities_subtab_default = st.session_state.get("sub_tab_commodities_selected")
+    if commodities_subtab_default:
+        for clean_sub in commodities_subtabs_list:
+            if commodities_subtab_default in clean_sub or clean_sub in commodities_subtab_default:
+                commodities_subtab_default = clean_sub
+                break
+    if commodities_subtab_default not in commodities_subtabs_list:
+        commodities_subtab_default = None
+
+    sub_tab_comm_cmp, sub_tab_gold, sub_tab_oil, sub_tab_natgas, sub_tab_copper, sub_tab_silver = st.tabs(
+        commodities_subtabs_list,
+        default=commodities_subtab_default,
+        key="sub_tab_commodities_widget"
+    )
+
+    # Spočítáme výkonnost komodit za vybrané časové období
+    gold_first_val = df["gold_usd"].dropna().iloc[0] if ("gold_usd" in df.columns and not df["gold_usd"].dropna().empty) else gold_curr
+    gold_period_pct = ((gold_curr / gold_first_val) - 1.0) * 100.0 if gold_first_val > 0 else 0.0
+
+    oil_first_val = df["oil_brent_usd"].dropna().iloc[0] if ("oil_brent_usd" in df.columns and not df["oil_brent_usd"].dropna().empty) else oil_curr
+    oil_period_pct = ((oil_curr / oil_first_val) - 1.0) * 100.0 if oil_first_val > 0 else 0.0
+
+    natgas_first_val = df["natgas_usd"].dropna().iloc[0] if ("natgas_usd" in df.columns and not df["natgas_usd"].dropna().empty) else natgas_curr
+    natgas_period_pct = ((natgas_curr / natgas_first_val) - 1.0) * 100.0 if natgas_first_val > 0 else 0.0
+
+    copper_first_val = df["copper_usd"].dropna().iloc[0] if ("copper_usd" in df.columns and not df["copper_usd"].dropna().empty) else copper_curr
+    copper_period_pct = ((copper_curr / copper_first_val) - 1.0) * 100.0 if copper_first_val > 0 else 0.0
+
+    silver_first_val = df["silver_usd"].dropna().iloc[0] if ("silver_usd" in df.columns and not df["silver_usd"].dropna().empty) else silver_curr
+    silver_period_pct = ((silver_curr / silver_first_val) - 1.0) * 100.0 if silver_first_val > 0 else 0.0
+
+    # 4.1 Vzájemné srovnání komodit
+    with sub_tab_comm_cmp:
+        st.markdown('<div class="section-header">Srovnání výkonnosti hlavních světových komodit (Měsíční data)</div>', unsafe_allow_html=True)
+        st.caption("Porovnejte normalizovanou výkonnost 5 klíčových komodit: drahé kovy (Zlato, Stříbro), energie (Ropa Brent, Zemní plyn) a klíčový průmyslový kov (Měď).")
+
+        # 5 KPI karet pro 5 hlavních komodit
+        col_c1, col_c2, col_c3, col_c4, col_c5 = st.columns(5)
+        col_c1.metric(
+            "🟡 Zlato (Gold)",
+            f"${gold_curr:,.2f}",
+            delta=f"{gold_pct:+.2f} % m/m",
+            help=f"Jednotka: USD/oz | Změna za sledované období: {gold_period_pct:+.1f} % ({gold_delta:+.2f} $ m/m)"
+        )
+        col_c2.metric(
+            "🛢️ Ropa Brent",
+            f"${oil_curr:,.2f}",
+            delta=f"{oil_pct:+.2f} % m/m",
+            help=f"Jednotka: USD/barel | Změna za sledované období: {oil_period_pct:+.1f} % ({oil_delta:+.2f} $ m/m)"
+        )
+        col_c3.metric(
+            "🔥 Zemní plyn",
+            f"${natgas_curr:,.2f}",
+            delta=f"{natgas_pct:+.2f} % m/m",
+            help=f"Jednotka: USD/MMBtu (Henry Hub) | Změna za sledované období: {natgas_period_pct:+.1f} % ({natgas_delta:+.3f} $ m/m)"
+        )
+        col_c4.metric(
+            "🏗️ Měď (Copper)",
+            f"${copper_curr:,.2f}",
+            delta=f"{copper_pct:+.2f} % m/m",
+            help=f"Jednotka: USD/libra (lb) | Změna za sledované období: {copper_period_pct:+.1f} % ({copper_delta:+.3f} $ m/m)"
+        )
+        col_c5.metric(
+            "⚪ Stříbro (Silver)",
+            f"${silver_curr:,.2f}",
+            delta=f"{silver_pct:+.2f} % m/m",
+            help=f"Jednotka: USD/oz | Změna za sledované období: {silver_period_pct:+.1f} % ({silver_delta:+.2f} $ m/m)"
+        )
+
+        col_cc1, col_cc2 = st.columns([2.5, 1.5])
+        with col_cc1:
+            commodities_to_compare = st.multiselect(
+                "Vyberte komodity ke srovnání v grafu:",
+                options=["Zlato (Gold)", "Ropa Brent", "Zemní plyn (Henry Hub)", "Měď (Doctor Copper)", "Stříbro (Silver)"],
+                default=["Zlato (Gold)", "Ropa Brent", "Zemní plyn (Henry Hub)", "Měď (Doctor Copper)", "Stříbro (Silver)"],
+                key="commodities_to_compare_multiselect"
+            )
+        with col_cc2:
+            comm_cmp_mode_choice = st.radio(
+                "Metrika normalizace komodit:",
+                ["📈 Relativní výkonnost (% od počátku období)", "🔢 Rebase na bázi 100"],
+                horizontal=True,
+                key="commodity_cmp_mode_radio"
+            )
+
+        comm_cmp_mode = "pct" if "Relativní" in comm_cmp_mode_choice else "rebase"
+        fig_comm_cmp = build_commodity_comparison_chart(df, commodities_to_compare, mode=comm_cmp_mode)
+        render_plotly_chart(fig_comm_cmp, key="chart_commodity_comparison")
+        st.caption("📌 **Zdroj dat:** New York Mercantile Exchange (NYMEX), Commodity Exchange (COMEX), Intercontinental Exchange (ICE Europe) & Yahoo Finance API")
+
+        # Tlačítko stažení dat komodit
+        comm_cols = [c for c in ["date", "gold_usd", "oil_brent_usd", "natgas_usd", "copper_usd", "silver_usd"] if c in df.columns]
+        if comm_cols:
+            csv_commodities = df[comm_cols].dropna(how="all", subset=[c for c in comm_cols if c != "date"]).to_csv(index=False, sep=";", decimal=",").encode("utf-8-sig")
+            st.download_button(
+                label="📥 Stáhnout kompletní měsíční data komodit (CSV)",
+                data=csv_commodities,
+                file_name=f"mesicni_komodity_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv",
+                key="btn_dl_commodities_csv"
+            )
+
+    # 4.2 Zlato (Gold)
+    with sub_tab_gold:
+        st.markdown('<div class="section-header">🟡 Zlato (Gold) – Globální bezpečný přístav a monetární kotva</div>', unsafe_allow_html=True)
+        st.caption("Světová cena zlata v USD za trojskou unci (1 oz = 31,1035 g). Zlato slouží jako strategická rezerva centrálních bank, pojistka proti systémovému finančnímu stresu a zajištění kupní síly.")
+        col_g1, col_g2, col_g3, col_g4 = st.columns(4)
+        col_g1.metric("Aktuální cena", f"${gold_curr:,.2f} / oz", delta=f"{gold_pct:+.2f} % m/m ({gold_delta:+.2f} $)")
+        col_g2.metric("Výkonnost za vybrané období", f"{gold_period_pct:+.1f} %", delta=f"{gold_curr - gold_first_val:+.2f} $")
+        col_g3.metric("Minimum v období", f"${df['gold_usd'].min():,.2f}" if "gold_usd" in df.columns else "N/A")
+        col_g4.metric("Maximum v období", f"${df['gold_usd'].max():,.2f}" if "gold_usd" in df.columns else "N/A")
+
+        st.markdown(
+            f"""
+            <div class="macro-news-card">
+                <div class="macro-news-top">
+                    <div class="macro-news-tag">
+                        <span class="news-dot" style="background:#eab308;"></span>
+                        <span>MAKROEKONOMICKÝ VÝZNAM & STRATEGIE CENTRÁLNÍCH BANK</span>
+                    </div>
+                    <div class="macro-news-meta">
+                        <span>🏛️ ČNB & Globální centrální banky &bull; COMEX / LBMA</span>
+                    </div>
+                </div>
+                <div class="macro-news-headline">Cena zlata dosahuje ${gold_curr:,.2f} za trojskou unci</div>
+                <div class="macro-news-content">
+                    <div class="news-section-item">
+                        <span class="news-label">🔍 Hlavní cenotvorné faktory:</span>
+                        <span class="news-text">Poptávka po fyzickém zlatě je tažena agresivními nákupy centrálních bank (včetně České národní banky, která dlouhodobě navyšuje podíl zlata v devizových rezervách na cílových 100 tun), geopolitickou fragmentací a očekáváním uvolňování úrokových sazeb Fedu.</span>
+                    </div>
+                    <div class="news-section-item">
+                        <span class="news-label">📊 Tržní vazby & Korelace:</span>
+                        <span class="news-text">Zlato historicky vykazuje silnou inverzní korelaci s reálnými americkými dluhopisovými výnosy (TIPS) a sílou dolarového indexu (DXY). Pokles reálných sazeb snižuje oportunitní náklad držby neúročeného drahého kovu.</span>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        fig_gold = build_single_commodity_chart(df, "gold_usd", "Zlato (Gold)", "$/oz", color="#EAB308")
+        render_plotly_chart(fig_gold, key="chart_single_gold")
+        st.caption("📌 **Zdroj dat:** Commodity Exchange (COMEX: GC=F) & London Bullion Market Association (LBMA) / Yahoo Finance API")
+
+    # 4.3 Ropa Brent
+    with sub_tab_oil:
+        st.markdown('<div class="section-header">🛢️ Ropa Brent (Brent Crude Oil) – Světový energetický benchmark</div>', unsafe_allow_html=True)
+        st.caption("Cena lehké sladké ropy Brent ze Severního moře v USD za barel (158,98 litrů). Klíčová komodita pro světovou dopravu, petrochemii a primární zdroj nákladových inflačních šoků.")
+        col_o1, col_o2, col_o3, col_o4 = st.columns(4)
+        col_o1.metric("Aktuální cena", f"${oil_curr:,.2f} / barel", delta=f"{oil_pct:+.2f} % m/m ({oil_delta:+.2f} $)")
+        col_o2.metric("Výkonnost za vybrané období", f"{oil_period_pct:+.1f} %", delta=f"{oil_curr - oil_first_val:+.2f} $")
+        col_o3.metric("Minimum v období", f"${df['oil_brent_usd'].min():,.2f}" if "oil_brent_usd" in df.columns else "N/A")
+        col_o4.metric("Maximum v období", f"${df['oil_brent_usd'].max():,.2f}" if "oil_brent_usd" in df.columns else "N/A")
+
+        st.markdown(
+            f"""
+            <div class="macro-news-card">
+                <div class="macro-news-top">
+                    <div class="macro-news-tag">
+                        <span class="news-dot" style="background:#0284c7;"></span>
+                        <span>ENERGETICKÁ ROVNOVÁHA & KARTEL OPEC+</span>
+                    </div>
+                    <div class="macro-news-meta">
+                        <span>🛢️ Mezinárodní energetická agentura (IEA) &bull; ICE Europe</span>
+                    </div>
+                </div>
+                <div class="macro-news-headline">Cena ropy Brent se pohybuje na úrovni ${oil_curr:,.2f} za barel</div>
+                <div class="macro-news-content">
+                    <div class="news-section-item">
+                        <span class="news-label">🔍 Nabídková a poptávková strana:</span>
+                        <span class="news-text">Rovnováha trhu s ropou závisí na těžebních kvótách aliance OPEC+ (vedené Saúdskou Arábií a Ruskem) a tempu těžby z břidličných ložisek v USA. Na straně poptávky hraje rozhodující roli průmyslová aktivita v Číně a globální letecká i nákladní doprava.</span>
+                    </div>
+                    <div class="news-section-item">
+                        <span class="news-label">📊 Dopad na českou a evropskou ekonomiku:</span>
+                        <span class="news-text">Pohyby cen ropy se s prodlevou 2–3 týdnů přímo promítají do cen pohonných hmot (Benzin Natural 95, Nafta) na tuzemských čerpacích stanicích a ovlivňují dopravní složku spotřebitelského koše inflace CPI.</span>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        fig_oil = build_single_commodity_chart(df, "oil_brent_usd", "Ropa Brent", "$/barel", color="#0284C7")
+        render_plotly_chart(fig_oil, key="chart_single_oil_brent")
+        st.caption("📌 **Zdroj dat:** Intercontinental Exchange (ICE Europe: BZ=F) & U.S. Energy Information Administration (EIA) / Yahoo Finance API")
+
+    # 4.4 Zemní plyn (Henry Hub)
+    with sub_tab_natgas:
+        st.markdown('<div class="section-header">🔥 Zemní plyn (Natural Gas) – Henry Hub Benchmark</div>', unsafe_allow_html=True)
+        st.caption("Referenční cena amerického zemního plynu na trhu Henry Hub v Louisianě v USD za milion britských termálních jednotek (MMBtu, cca 293 kWh).")
+        col_ng1, col_ng2, col_ng3, col_ng4 = st.columns(4)
+        col_ng1.metric("Aktuální cena", f"${natgas_curr:,.2f} / MMBtu", delta=f"{natgas_pct:+.2f} % m/m ({natgas_delta:+.3f} $)")
+        col_ng2.metric("Výkonnost za vybrané období", f"{natgas_period_pct:+.1f} %", delta=f"{natgas_curr - natgas_first_val:+.3f} $")
+        col_ng3.metric("Minimum v období", f"${df['natgas_usd'].min():,.2f}" if "natgas_usd" in df.columns else "N/A")
+        col_ng4.metric("Maximum v období", f"${df['natgas_usd'].max():,.2f}" if "natgas_usd" in df.columns else "N/A")
+
+        st.markdown(
+            f"""
+            <div class="macro-news-card">
+                <div class="macro-news-top">
+                    <div class="macro-news-tag">
+                        <span class="news-dot" style="background:#dc2626;"></span>
+                        <span>GLOBÁLNÍ TRH LNG & EVROPSKÁ ENERGETICKÁ BEZPEČNOST</span>
+                    </div>
+                    <div class="macro-news-meta">
+                        <span>⚡ NYMEX &bull; EIA Weekly Gas Storage Report</span>
+                    </div>
+                </div>
+                <div class="macro-news-headline">Zemní plyn Henry Hub se obchoduje za ${natgas_curr:,.2f} / MMBtu</div>
+                <div class="macro-news-content">
+                    <div class="news-section-item">
+                        <span class="news-label">🔍 Sezónnost a globální toky LNG:</span>
+                        <span class="news-text">Trh se zemním plynem vykazuje výraznou sezónnost závislou na zimních teplotách na severní polokouli. Po odstřižení ruských plynovodů se americký Henry Hub stal klíčovou referencí pro export zkapalněného plynu (LNG) do evropských terminálů (nizozemský uzel TTF).</span>
+                    </div>
+                    <div class="news-section-item">
+                        <span class="news-label">📊 Průmyslový dopad:</span>
+                        <span class="news-text">Cena plynu přímo determinuje náklady výroby elektřiny v paroplynových elektrárnách a je základní surovinou pro chemický průmysl (výroba čpavku a dusíkatých hnojiv pro zemědělství).</span>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        fig_natgas = build_single_commodity_chart(df, "natgas_usd", "Zemní plyn (Henry Hub)", "$/MMBtu", color="#DC2626")
+        render_plotly_chart(fig_natgas, key="chart_single_natgas")
+        st.caption("📌 **Zdroj dat:** New York Mercantile Exchange (NYMEX: NG=F) & U.S. Energy Information Administration (EIA) / Yahoo Finance API")
+
+    # 4.5 Měď (Doctor Copper)
+    with sub_tab_copper:
+        st.markdown('<div class="section-header">🏗️ Měď (Doctor Copper) – Barometr globální průmyslové a zelené transformace</div>', unsafe_allow_html=True)
+        st.caption("Světová cena vysoce vodivé mědi v USD za libru (1 lb = 0,45359 kg). Měď má v ekonomii čestný titul 'Doctor Copper' díky schopnosti předstihnout hospodářský cyklus.")
+        col_cu1, col_cu2, col_cu3, col_cu4 = st.columns(4)
+        col_cu1.metric("Aktuální cena", f"${copper_curr:,.2f} / libra", delta=f"{copper_pct:+.2f} % m/m ({copper_delta:+.3f} $)")
+        col_cu2.metric("Výkonnost za vybrané období", f"{copper_period_pct:+.1f} %", delta=f"{copper_curr - copper_first_val:+.3f} $")
+        col_cu3.metric("Minimum v období", f"${df['copper_usd'].min():,.2f}" if "copper_usd" in df.columns else "N/A")
+        col_cu4.metric("Maximum v období", f"${df['copper_usd'].max():,.2f}" if "copper_usd" in df.columns else "N/A")
+
+        st.markdown(
+            f"""
+            <div class="macro-news-card">
+                <div class="macro-news-top">
+                    <div class="macro-news-tag">
+                        <span class="news-dot" style="background:#d97706;"></span>
+                        <span>STRUKTURÁLNÍ MEGATRENDY & PRŮMYSLOVÝ CYKLUS</span>
+                    </div>
+                    <div class="macro-news-meta">
+                        <span>🏭 COMEX &bull; London Metal Exchange (LME)</span>
+                    </div>
+                </div>
+                <div class="macro-news-headline">Cena mědi dosahuje ${copper_curr:,.2f} za libru</div>
+                <div class="macro-news-content">
+                    <div class="news-section-item">
+                        <span class="news-label">🔍 Proč Doctor Copper?:</span>
+                        <span class="news-text">Měď nachází uplatnění v každém odvětví moderní ekonomiky: od stavebních rozvodů přes strojírenství až po spotřební elektroniku. Růst cen mědi spolehlivě signalizuje expanzi průmyslové výroby, zatímco propad varuje před přicházející recesí.</span>
+                    </div>
+                    <div class="news-section-item">
+                        <span class="news-label">⚡ Elektrifikace & AI Datacentra:</span>
+                        <span class="news-text">Strukturální poptávku akceleruje přechod na elektromobilitu (elektromobil vyžaduje cca 4× více mědi než spalovací vůz), výstavba větrných/solárních parků a masivní investice do elektrické infrastruktury pro výpočetní centra umělé inteligence (AI).</span>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        fig_copper = build_single_commodity_chart(df, "copper_usd", "Měď (Doctor Copper)", "$/libra", color="#D97706")
+        render_plotly_chart(fig_copper, key="chart_single_copper")
+        st.caption("📌 **Zdroj dat:** Commodity Exchange (COMEX: HG=F) & London Metal Exchange (LME) / Yahoo Finance API")
+
+    # 4.6 Stříbro (Silver)
+    with sub_tab_silver:
+        st.markdown('<div class="section-header">⚪ Stříbro (Silver) – Duální kov: Investiční bezpečí & Průmyslová revoluce</div>', unsafe_allow_html=True)
+        st.caption("Světová cena stříbra v USD za trojskou unci (1 oz = 31,1035 g). Stříbro unikátně kombinuje monetární status drahého kovu s nenahraditelným využitím v moderních technologiích.")
+        col_s1, col_s2, col_s3, col_s4 = st.columns(4)
+        col_s1.metric("Aktuální cena", f"${silver_curr:,.2f} / oz", delta=f"{silver_pct:+.2f} % m/m ({silver_delta:+.2f} $)")
+        col_s2.metric("Výkonnost za vybrané období", f"{silver_period_pct:+.1f} %", delta=f"{silver_curr - silver_first_val:+.2f} $")
+        col_s3.metric("Minimum v období", f"${df['silver_usd'].min():,.2f}" if "silver_usd" in df.columns else "N/A")
+        col_s4.metric("Maximum v období", f"${df['silver_usd'].max():,.2f}" if "silver_usd" in df.columns else "N/A")
+
+        # Výpočet poměru zlata a stříbra (Gold/Silver ratio)
+        gold_silver_ratio = round(gold_curr / silver_curr, 1) if silver_curr > 0 else 0.0
+
+        st.markdown(
+            f"""
+            <div class="macro-news-card">
+                <div class="macro-news-top">
+                    <div class="macro-news-tag">
+                        <span class="news-dot" style="background:#94a3b8;"></span>
+                        <span>FOTOVOLTAIKA & GOLD/SILVER RATIO</span>
+                    </div>
+                    <div class="macro-news-meta">
+                        <span>☀️ The Silver Institute &bull; COMEX (SI=F)</span>
+                    </div>
+                </div>
+                <div class="macro-news-headline">Stříbro se obchoduje na ${silver_curr:,.2f} za unci (Gold/Silver poměr: {gold_silver_ratio:.1f})</div>
+                <div class="macro-news-content">
+                    <div class="news-section-item">
+                        <span class="news-label">🔍 Průmyslová poptávka:</span>
+                        <span class="news-text">Více než 50 % celosvětové roční těžby stříbra směřuje do průmyslu. Klíčovým motorem je výroba fotovoltaických solárních panelů (PV články), kde má stříbro nejvyšší elektrickou a tepelnou vodivost ze všech kovů, a automobilová elektronika.</span>
+                    </div>
+                    <div class="news-section-item">
+                        <span class="news-label">📊 Poměr zlata a stříbra (Gold/Silver Ratio):</span>
+                        <span class="news-text">Aktuální poměr cen zlata a stříbra činí {gold_silver_ratio:.1f}. Historický průměr ve 20. století se pohyboval okolo 50–60. Vyšší hodnota indikuje relativní podhodnocení stříbra vůči zlatu, což v býčích cyklech drahých kovů často vede k prudkému zhodnocení stříbra.</span>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        fig_silver = build_single_commodity_chart(df, "silver_usd", "Stříbro (Silver)", "$/oz", color="#64748B")
+        render_plotly_chart(fig_silver, key="chart_single_silver")
+        st.caption("📌 **Zdroj dat:** Commodity Exchange (COMEX: SI=F) & The Silver Institute / Yahoo Finance API")
+
+
+# =============================================================================
+# 5. KATEGORIE: VEŘEJNÉ FINANCE & SVĚT
 # =============================================================================
 with main_tab_public:
     public_subtabs_list = [

@@ -873,6 +873,50 @@ INDICATORS: Dict[str, IndicatorInfo] = {
         category="Akciové trhy",
         description="Vlajkový technologický index burzy NASDAQ zahrnující více než 3 000 amerických i mezinárodních společností.",
         region="US"
+    ),
+
+    # =========================================================================
+    # 🪙 KOMODITNÍ A SUROVINOVÉ TRHY (MĚSÍČNÍ DATA)
+    # =========================================================================
+    "gold_usd": IndicatorInfo(
+        code="gold_usd",
+        name_cz="Zlato (Gold)",
+        unit="USD/oz",
+        category="Komodity",
+        description="Spotová / futures cena zlata na burze COMEX v amerických dolarech za trojskou unci (31,1035 g). Tradiční globální bezpečný přístav (safe haven), uchovatel hodnoty a klíčové zajištění proti inflaci a geopolitickému riziku.",
+        region="GLOBAL"
+    ),
+    "oil_brent_usd": IndicatorInfo(
+        code="oil_brent_usd",
+        name_cz="Ropa Brent",
+        unit="USD/barel",
+        category="Komodity",
+        description="Severomořská lehká ropa Brent (ICE Futures Europe) v USD za barel (159 litrů). Klíčový světový referenční benchmark pro ropné trhy a hlavní determinant nákladové inflace a cen pohonných hmot.",
+        region="GLOBAL"
+    ),
+    "natgas_usd": IndicatorInfo(
+        code="natgas_usd",
+        name_cz="Zemní plyn (Henry Hub)",
+        unit="USD/MMBtu",
+        category="Komodity",
+        description="Referenční cena zemního plynu na americkém uzlu Henry Hub (NYMEX) v USD za milion britských termálních jednotek (MMBtu). Klíčový energetický vstup pro výrobu elektřiny, průmysl a vytápění.",
+        region="GLOBAL"
+    ),
+    "copper_usd": IndicatorInfo(
+        code="copper_usd",
+        name_cz="Měď (Doctor Copper)",
+        unit="USD/libra",
+        category="Komodity",
+        description="Referenční cena elektrolytické mědi na burze COMEX v USD za libru (cca 0,4536 kg). Proslulý 'Doctor Copper' – předstihový barometr globálního průmyslu, stavebnictví, energetické sítě a moderní elektromobility.",
+        region="GLOBAL"
+    ),
+    "silver_usd": IndicatorInfo(
+        code="silver_usd",
+        name_cz="Stříbro (Silver)",
+        unit="USD/oz",
+        category="Komodity",
+        description="Cena fyzického stříbra na burze COMEX v USD za trojskou unci. Kov s duálním charakterem: silná průmyslová poptávka (fotovoltaika, mikroelektronika, automotive) kombinovaná s investiční funkcí drahého kovu.",
+        region="GLOBAL"
     )
 }
 
@@ -881,6 +925,7 @@ CZ_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() i
 EU_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.region == "EU"}
 US_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.region == "US"}
 MARKET_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.category in ("Akciové trhy", "Tržní sentiment a riziko")}
+COMMODITY_INDICATORS: Dict[str, IndicatorInfo] = {k: v for k, v in INDICATORS.items() if v.category == "Komodity"}
 
 
 class DataLoader:
@@ -1332,11 +1377,15 @@ class DataLoader:
         return pd.DataFrame(records)
 
     # =========================================================================
-    # 5. LIVE API: YAHOO FINANCE (Akciové indexy S&P 500, NASDAQ, Euro Stoxx 50)
+    # 5. LIVE API: YAHOO FINANCE & PSE (Denní akciové indexy + Měsíční komodity)
     # =========================================================================
 
-    def fetch_stock_indices(self) -> pd.DataFrame:
-        """Stáhne historické kurzy hlavních světových akciových indexů z Yahoo Finance."""
+    def fetch_stock_indices(self, interval: str = "1d") -> pd.DataFrame:
+        """
+        Stáhne denní historické kurzy hlavních světových a českých akciových indexů:
+        - S&P 500 (^GSPC), NASDAQ Composite (^IXIC), Euro Stoxx 50 (^STOXX50E), VIX (^VIX) z Yahoo Finance
+        - Index PX (Pražská burza / BCPP) přímo z oficiálního REST API Burzy cenných papírů Praha
+        """
         tickers = {
             "sp500_index": "%5EGSPC",
             "nasdaq_index": "%5EIXIC",
@@ -1346,7 +1395,7 @@ class DataLoader:
         dfs = []
         for col_name, sym in tickers.items():
             try:
-                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=12y&interval=1mo"
+                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=12y&interval={interval}"
                 r = requests.get(url, headers=self.headers, timeout=self.timeout)
                 if r.status_code == 200:
                     res = r.json().get("chart", {}).get("result")
@@ -1359,20 +1408,75 @@ class DataLoader:
             except Exception as e:
                 logger.warning("Chyba při stahování indexu %s (%s): %s", col_name, sym, e)
 
+        # Stažení Indexu PX přímo z oficiálního API Burzy cenných papírů Praha (PSE / BCPP)
+        try:
+            url_px = "https://www.pse.cz/api/index-chart?indexName=PX&period=MAX"
+            r_px = requests.get(url_px, headers=self.headers, timeout=self.timeout)
+            if r_px.status_code == 200:
+                data_px = r_px.json()
+                vals_px = data_px.get("data", {}).get("value", [])
+                if vals_px:
+                    df_px = pd.DataFrame(vals_px, columns=["ts", "px_index"])
+                    df_px["date"] = pd.to_datetime(df_px["ts"], unit="ms").dt.floor("D")
+                    df_px = df_px.drop(columns=["ts"]).drop_duplicates("date").dropna()
+                    dfs.append(df_px)
+        except Exception as e:
+            logger.warning("Chyba při stahování Indexu PX z PSE API: %s", e)
+
         if not dfs:
-            raise ValueError("Nepodařilo se stáhnout žádné akciové indexy z Yahoo Finance.")
+            raise ValueError("Nepodařilo se stáhnout žádné akciové indexy z Yahoo Finance ani PSE.")
 
         res_df = dfs[0]
         for d in dfs[1:]:
             res_df = pd.merge(res_df, d, on="date", how="outer")
-        return res_df.sort_values("date").reset_index(drop=True)
+        return res_df.sort_values("date").reset_index(drop=True).ffill().bfill()
+
+    def fetch_commodity_prices(self) -> pd.DataFrame:
+        """
+        Stáhne měsíční historické kurzy 5 hlavních světových komodit z Yahoo Finance:
+        - Zlato (Gold Futures GC=F, USD/oz)
+        - Ropa Brent (Brent Crude BZ=F, USD/barel)
+        - Zemní plyn (Natural Gas Henry Hub NG=F, USD/MMBtu)
+        - Měď (Doctor Copper HG=F, USD/lb)
+        - Stříbro (Silver Futures SI=F, USD/oz)
+        """
+        commodity_tickers = {
+            "gold_usd": "GC=F",
+            "oil_brent_usd": "BZ=F",
+            "natgas_usd": "NG=F",
+            "copper_usd": "HG=F",
+            "silver_usd": "SI=F"
+        }
+        dfs = []
+        for col_name, sym in commodity_tickers.items():
+            try:
+                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=12y&interval=1mo"
+                r = requests.get(url, headers=self.headers, timeout=self.timeout)
+                if r.status_code == 200:
+                    res = r.json().get("chart", {}).get("result")
+                    if res and "timestamp" in res[0]:
+                        ts = pd.to_datetime(res[0]["timestamp"], unit="s").tz_localize(None).floor("D")
+                        quotes = res[0]["indicators"]["quote"][0].get("close", [])
+                        if quotes and len(quotes) == len(ts):
+                            sdf = pd.DataFrame({"date": ts, col_name: quotes}).dropna().drop_duplicates("date")
+                            dfs.append(sdf)
+            except Exception as e:
+                logger.warning("Chyba při stahování komodity %s (%s): %s", col_name, sym, e)
+
+        if not dfs:
+            raise ValueError("Nepodařilo se stáhnout data komodit z Yahoo Finance.")
+
+        res_df = dfs[0]
+        for d in dfs[1:]:
+            res_df = pd.merge(res_df, d, on="date", how="outer")
+        return res_df.sort_values("date").reset_index(drop=True).ffill().bfill()
 
     # =========================================================================
     # 6. HISTORICKÝ FALLBACK MODEL (2015–2026: ČR, EU a USA)
     # =========================================================================
 
     def generate_fallback_daily_fx(self) -> pd.DataFrame:
-        """Vygeneruje souvislý denní dataset devizových kurzů 2015–2026 včetně PLN a GBP."""
+        """Vygeneruje souvislý denní dataset devizových kurzů a akciových trhů 2015–2026 včetně PLN a GBP."""
         dates_d = pd.date_range("2015-01-01", "2026-10-10", freq="B")
         np.random.seed(101)
         n = len(dates_d)
@@ -1403,6 +1507,18 @@ class DataLoader:
 
         dxy = 50.14348112 * (eur_usd ** -0.576) * (usd_jpy ** 0.136) * (gbp_usd ** -0.119) * (usd_chf ** 0.036)
 
+        # Simulace denních akciových indexů pro fallback model
+        sp_daily = 2050.0 + np.cumsum(np.random.normal(1.85, 22.0, n))
+        sp_daily = np.clip(sp_daily, 1800.0, 7900.0)
+        nq_daily = 4700.0 + np.cumsum(np.random.normal(7.2, 75.0, n))
+        nq_daily = np.clip(nq_daily, 4200.0, 27500.0)
+        sx_daily = 3150.0 + np.cumsum(np.random.normal(1.0, 25.0, n))
+        sx_daily = np.clip(sx_daily, 2400.0, 6300.0)
+        px_daily = 950.0 + np.cumsum(np.random.normal(0.55, 8.5, n))
+        px_daily = np.clip(px_daily, 690.0, 2650.0)
+        vix_daily = 14.5 + np.random.normal(0, 2.5, n)
+        vix_daily = np.clip(vix_daily, 9.5, 65.0)
+
         return pd.DataFrame({
             "date": dates_d,
             "eur_czk": np.round(eur_base, 4),
@@ -1417,7 +1533,12 @@ class DataLoader:
             "usd_pln": np.round(usd_pln, 4),
             "usd_jpy": np.round(usd_jpy, 3),
             "usd_chf": np.round(usd_chf, 4),
-            "dxy_index": np.round(dxy, 2)
+            "dxy_index": np.round(dxy, 2),
+            "sp500_index": np.round(sp_daily, 2),
+            "nasdaq_index": np.round(nq_daily, 2),
+            "stoxx50_index": np.round(sx_daily, 2),
+            "px_index": np.round(px_daily, 2),
+            "vix_index": np.round(vix_daily, 2)
         })
 
     def generate_fallback_dataset(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -1425,7 +1546,7 @@ class DataLoader:
         Generuje realistická historická data pro ČR, EU i USA za období 2015–2026.
         Vrací trojici (df_monthly, df_quarterly, df_daily_fx).
         """
-        dates_m = pd.date_range("2015-01-01", "2026-10-01", freq=OFFSET_MONTH_END)
+        dates_m = pd.date_range("2015-01-01", "2026-10-31", freq=OFFSET_MONTH_END)
         n_m = len(dates_m)
 
         # ---------------------------------------------------------------------
@@ -2147,6 +2268,72 @@ class DataLoader:
             else: px = 1690 + (mo / 12) * 30
             px_series.append(round(px, 1))
 
+        # Fallback série pro 5 hlavních komodit (Zlato, Ropa Brent, Plyn, Měď, Stříbro)
+        gold_series = []
+        brent_series = []
+        natgas_series = []
+        copper_series = []
+        silver_series = []
+
+        for d in dates_m:
+            yr, mo = d.year, d.month
+            if yr == 2015: au = 1200 - (mo * 10)
+            elif yr <= 2018: au = 1250 + (yr - 2016) * 40 + (mo * 3)
+            elif yr == 2019: au = 1350 + (mo / 12) * 170
+            elif yr == 2020: au = 1580 + (mo / 12) * 320
+            elif yr == 2021: au = 1800 + (mo % 4) * 20
+            elif yr == 2022: au = 1820 - (mo / 12) * 50
+            elif yr == 2023: au = 1920 + (mo / 12) * 140
+            elif yr == 2024: au = 2080 + (mo / 12) * 600
+            elif yr == 2025: au = 2750 + (mo / 12) * 750
+            else: au = 3600 + (mo / 10) * 580
+            gold_series.append(round(au, 2))
+
+            if yr == 2015: br = 55 - (mo * 1.5)
+            elif yr == 2016: br = 35 + (mo * 1.5)
+            elif yr in (2017, 2018): br = 54 + (yr - 2017) * 15 + (mo * 0.8)
+            elif yr == 2019: br = 64 + (mo % 3) * 2
+            elif yr == 2020: br = 60 if mo < 3 else (25 if mo in (3, 4) else 42 + (mo - 5) * 1.2)
+            elif yr == 2021: br = 55 + (mo / 12) * 22
+            elif yr == 2022: br = 85 + (mo * 3 if mo <= 6 else 105 - (mo - 6) * 4)
+            elif yr == 2023: br = 82 + (mo % 4) * 2
+            elif yr == 2024: br = 80 - (mo / 12) * 6
+            elif yr == 2025: br = 76 + (mo / 12) * 12
+            else: br = 92 + (mo / 10) * 14
+            brent_series.append(round(br, 2))
+
+            if yr in (2015, 2016): ng = 2.6 + (mo % 3) * 0.2
+            elif yr in (2017, 2018, 2019): ng = 2.8 + (mo % 4) * 0.15
+            elif yr == 2020: ng = 1.9 + (mo / 12) * 0.6
+            elif yr == 2021: ng = 2.7 + (mo / 12) * 2.5
+            elif yr == 2022: ng = 4.5 + (mo * 0.6 if mo <= 8 else 8.5 - (mo - 8) * 1.5)
+            elif yr == 2023: ng = 2.8 - (mo / 12) * 0.4
+            elif yr == 2024: ng = 2.1 + (mo / 12) * 0.5
+            elif yr == 2025: ng = 2.6 + (mo / 12) * 0.4
+            else: ng = 3.0 + (mo / 10) * 0.32
+            natgas_series.append(round(ng, 3))
+
+            if yr in (2015, 2016): cu = 2.4 + (mo * 0.03)
+            elif yr in (2017, 2018, 2019): cu = 2.8 + (mo % 3) * 0.1
+            elif yr == 2020: cu = 2.6 if mo < 4 else 3.1 + (mo - 4) * 0.08
+            elif yr == 2021: cu = 4.1 + (mo % 3) * 0.15
+            elif yr == 2022: cu = 4.4 - (mo / 12) * 0.7
+            elif yr == 2023: cu = 3.8 + (mo % 3) * 0.08
+            elif yr == 2024: cu = 4.0 + (mo / 12) * 0.8
+            elif yr == 2025: cu = 4.8 + (mo / 12) * 0.9
+            else: cu = 5.9 + (mo / 10) * 0.82
+            copper_series.append(round(cu, 3))
+
+            if yr in (2015, 2016, 2017, 2018): ag = 16.0 + (mo % 4) * 0.5
+            elif yr == 2019: ag = 16.5 + (mo / 12) * 1.5
+            elif yr == 2020: ag = 15.5 if mo < 4 else 21.0 + (mo - 4) * 0.5
+            elif yr in (2021, 2022): ag = 23.5 - (mo / 12) * 2.0
+            elif yr == 2023: ag = 23.0 + (mo % 3) * 0.8
+            elif yr == 2024: ag = 24.5 + (mo / 12) * 6.5
+            elif yr == 2025: ag = 32.0 + (mo / 12) * 14.0
+            else: ag = 48.0 + (mo / 10) * 11.3
+            silver_series.append(round(ag, 2))
+
         # ---------------------------------------------------------------------
         # E. DENNÍ DEVÍZOVÝ DATASET A MĚSÍČNÍ ALIGNMENT
         # ---------------------------------------------------------------------
@@ -2267,7 +2454,13 @@ class DataLoader:
             "px_index": px_series,
             "stoxx50_index": stoxx50_series,
             "sp500_index": sp500_series,
-            "nasdaq_index": nasdaq_series
+            "nasdaq_index": nasdaq_series,
+            # Komodity
+            "gold_usd": gold_series,
+            "oil_brent_usd": brent_series,
+            "natgas_usd": natgas_series,
+            "copper_usd": copper_series,
+            "silver_usd": silver_series
         }
         df_monthly = pd.DataFrame(df_monthly_data)
 
@@ -2358,7 +2551,8 @@ class DataLoader:
             "repo_rate", "discount_rate", "lombard_rate", "ecb_deposit_rate",
             "fed_funds_upper", "fed_funds_lower", "eur_czk", "usd_czk",
             "pln_czk", "gbp_czk", "eur_usd", "dxy_index",
-            "px_index", "stoxx50_index", "sp500_index", "nasdaq_index", "vix_index"
+            "px_index", "stoxx50_index", "sp500_index", "nasdaq_index", "vix_index",
+            "gold_usd", "oil_brent_usd", "natgas_usd", "copper_usd", "silver_usd"
         ]:
             if col_last in agg_rules:
                 agg_rules[col_last] = "last"
@@ -2486,13 +2680,21 @@ class DataLoader:
             logger.warning("Chyba US Treasury: %s", e)
             status_info["endpoints"]["U.S. Treasury"] = f"⚠️ Fallback ({type(e).__name__})"
 
-        # Yahoo Finance Akciové indexy (S&P 500, NASDAQ, Euro Stoxx 50)
+        # Yahoo Finance Akciové indexy (S&P 500, NASDAQ, Euro Stoxx 50) + BCPP (PX)
         try:
-            live_components["stocks"] = self.fetch_stock_indices()
-            status_info["endpoints"]["Akciové trhy (S&P 500, NASDAQ, Euro Stoxx 50)"] = "🟢 OK (Live Yahoo Finance)"
+            live_components["stocks"] = self.fetch_stock_indices(interval="1d")
+            status_info["endpoints"]["Akciové trhy (S&P 500, NASDAQ, Euro Stoxx 50, Index PX)"] = "🟢 OK (Live Denní data Yahoo/PSE)"
         except Exception as e:
             logger.warning("Chyba Akciové indexy: %s", e)
             status_info["endpoints"]["Akciové trhy"] = f"⚠️ Fallback ({type(e).__name__})"
+
+        # Yahoo Finance Komodity (Zlato, Ropa Brent, Plyn, Měď, Stříbro)
+        try:
+            live_components["commodities"] = self.fetch_commodity_prices()
+            status_info["endpoints"]["Komodity (Zlato, Ropa Brent, Plyn, Měď, Stříbro)"] = "🟢 OK (Live Měsíční data Yahoo)"
+        except Exception as e:
+            logger.warning("Chyba Komodity: %s", e)
+            status_info["endpoints"]["Komodity"] = f"⚠️ Fallback ({type(e).__name__})"
 
         # Sloučení komponent do finální matice
         final_df = base_df.copy()
@@ -2570,9 +2772,26 @@ class DataLoader:
         if "stocks" in live_components:
             df_st = live_components["stocks"]
             st_cols = [c for c in df_st.columns if c != "date"]
+            # 1. Sloučení denních akciových indexů do společného denního datasetu df_daily_fx
+            df_daily_fx = pd.merge(df_daily_fx, df_st, on="date", how="outer").sort_values("date").reset_index(drop=True)
+            df_daily_fx = df_daily_fx.ffill().bfill()
+
+            # 2. Agregace denních akciových indexů do měsíčního final_df
             df_st_agg = df_st.set_index("date").resample(OFFSET_MONTH_END if frequency == "M" else OFFSET_QUARTER_END).last().reset_index()
             final_df = pd.merge(final_df, df_st_agg, on="date", how="left", suffixes=("", "_live"))
             for col in st_cols:
+                live_c = f"{col}_live"
+                if live_c in final_df.columns:
+                    final_df[col] = final_df[live_c].combine_first(final_df[col])
+                    final_df = final_df.drop(columns=[live_c])
+                final_df[col] = final_df[col].ffill().bfill()
+
+        if "commodities" in live_components:
+            df_com = live_components["commodities"]
+            com_cols = [c for c in df_com.columns if c != "date"]
+            df_com_agg = df_com.set_index("date").resample(OFFSET_MONTH_END if frequency == "M" else OFFSET_QUARTER_END).last().reset_index()
+            final_df = pd.merge(final_df, df_com_agg, on="date", how="left", suffixes=("", "_live"))
+            for col in com_cols:
                 live_c = f"{col}_live"
                 if live_c in final_df.columns:
                     final_df[col] = final_df[live_c].combine_first(final_df[col])
@@ -2590,7 +2809,7 @@ class DataLoader:
 
         if all_success and live_components:
             status_info["mode"] = "LIVE"
-            status_info["status_badge"] = "🟢 Živá data (ČNB Denní kurzy & Sazby, Eurostat & US Treasury)"
+            status_info["status_badge"] = "🟢 Živá data (ČNB Denní kurzy & Sazby, Eurostat, US Treasury, Yahoo/PSE & Komodity)"
         elif live_components:
             status_info["mode"] = "PARTIAL_LIVE"
             status_info["status_badge"] = "🟡 Kombinovaný režim (Částečná Live API + Fallback)"
@@ -2617,7 +2836,7 @@ try:
         frequency: str = "M",
         fred_api_key: Optional[str] = None,
         force_fallback: bool = False,
-        _cache_bust: str = "v2026_10_10_daily_eu_cz_us_v4"
+        _cache_bust: str = "v2026_10_13_daily_stocks_commodities_v1"
     ) -> Tuple[pd.DataFrame, Dict[str, Any], pd.DataFrame]:
         loader = DataLoader()
         return loader.load_macro_data(
@@ -2631,7 +2850,7 @@ except ImportError:
         frequency: str = "M",
         fred_api_key: Optional[str] = None,
         force_fallback: bool = False,
-        _cache_bust: str = "v2026_10_10_daily_eu_cz_us_v4"
+        _cache_bust: str = "v2026_10_13_daily_stocks_commodities_v1"
     ) -> Tuple[pd.DataFrame, Dict[str, Any], pd.DataFrame]:
         loader = DataLoader()
         return loader.load_macro_data(

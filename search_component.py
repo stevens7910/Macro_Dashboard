@@ -552,6 +552,35 @@ INDICATOR_NAVIGATION_REGISTRY: Dict[str, Dict[str, Any]] = {
         "region": "US", "main_tab": "Fiskál & Svět", "sub_tab_id": "debt",
         "sub_tab_label": "Veřejný dluh", "anchor": "chart_us_deficit",
         "aliases": ["schodek usa", "deficit usa", "us federal deficit", "rozpocet bily dum"]
+    },
+
+    # -------------------------------------------------------------------------
+    # 🪙 HLAVNÍ GLOBÁLNÍ KOMODITY (COMMODITIES)
+    # -------------------------------------------------------------------------
+    "gold_usd": {
+        "region": "US", "main_tab": "Komodity", "sub_tab_id": "gold",
+        "sub_tab_label": "🟡 Zlato (Gold)", "anchor": "chart_single_gold",
+        "aliases": ["zlato", "gold", "drahé kovy", "cena zlata", "gc=f", "trojska unce", "bezpecny pristav"]
+    },
+    "oil_brent_usd": {
+        "region": "US", "main_tab": "Komodity", "sub_tab_id": "oil_brent",
+        "sub_tab_label": "🛢️ Ropa Brent", "anchor": "chart_single_oil_brent",
+        "aliases": ["ropa", "ropa brent", "crude oil", "brent", "bz=f", "energie", "barel ropy", "opec"]
+    },
+    "natgas_usd": {
+        "region": "US", "main_tab": "Komodity", "sub_tab_id": "natgas",
+        "sub_tab_label": "🔥 Zemní plyn (Henry Hub)", "anchor": "chart_single_natgas",
+        "aliases": ["zemni plyn", "plyn", "natural gas", "henry hub", "ng=f", "lng", "mmbtu", "energie"]
+    },
+    "copper_usd": {
+        "region": "US", "main_tab": "Komodity", "sub_tab_id": "copper",
+        "sub_tab_label": "🏗️ Měď (Doctor Copper)", "anchor": "chart_single_copper",
+        "aliases": ["med", "měď", "doctor copper", "copper", "hg=f", "prumyslovy kov", "elektrifikace", "stavebnictvi"]
+    },
+    "silver_usd": {
+        "region": "US", "main_tab": "Komodity", "sub_tab_id": "silver",
+        "sub_tab_label": "⚪ Stříbro (Silver)", "anchor": "chart_single_silver",
+        "aliases": ["stribro", "stříbro", "silver", "si=f", "drahe kovy", "fotovoltaika", "solar"]
     }
 }
 
@@ -676,6 +705,8 @@ def handle_indicator_search_navigation() -> None:
         st.session_state["sub_tab_real_selected"] = sub_tab_label
     elif "Akciové" in main_tab_str or "Trhy" in main_tab_str:
         st.session_state["sub_tab_stocks_selected"] = sub_tab_label
+    elif "Komodity" in main_tab_str:
+        st.session_state["sub_tab_commodities_selected"] = sub_tab_label
     elif "Fiskál" in main_tab_str or "Veřejné finance" in main_tab_str:
         st.session_state["sub_tab_public_selected"] = sub_tab_label
 
