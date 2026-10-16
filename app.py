@@ -47,6 +47,7 @@ EU_INDICATORS = getattr(dl_module, "EU_INDICATORS", {k: v for k, v in INDICATORS
 US_INDICATORS = getattr(dl_module, "US_INDICATORS", {k: v for k, v in INDICATORS.items() if v.region == "US"})
 MARKET_INDICATORS = getattr(dl_module, "MARKET_INDICATORS", {k: v for k, v in INDICATORS.items() if v.category == "Akciové trhy"})
 get_cached_macro_data = getattr(dl_module, "get_cached_macro_data")
+get_cached_cz_topic_news = getattr(dl_module, "get_cached_cz_topic_news", lambda: {})
 
 try:
     import glossary_data as glossary_module
@@ -1228,31 +1229,47 @@ if st.session_state.get("current_view") == "glossary":
 last_row = df.iloc[-1]
 prev_row = df.iloc[-2] if len(df) > 1 else last_row
 
+def safe_prev_lagged(col_name: str, curr_val: float, max_lag: int = 3) -> float:
+    """
+    Vrátí předchozí publikovanou hodnotu pro měsíční/kvartální indikátory se zpožděním publikace,
+    aby při forward-fillu do aktuálního neuzavřeného měsíce nebyla delta uměle nulová.
+    """
+    if len(df) <= 1 or col_name not in df.columns:
+        return curr_val
+    v_prev = safe_metric(prev_row, col_name, curr_val)
+    if abs(v_prev - curr_val) > 1e-6:
+        return v_prev
+    for lag_idx in range(2, min(max_lag + 2, len(df) + 1)):
+        cand_val = safe_metric(df.iloc[-lag_idx], col_name, curr_val)
+        if abs(cand_val - curr_val) > 1e-6:
+            return cand_val
+    return v_prev
+
 date_str = last_row.get("date").strftime("%d. %m. %Y") if hasattr(last_row.get("date"), "strftime") else "Aktuální"
 
 # --- Hodnoty pro ČR ---
-repo_curr = safe_metric(last_row, "repo_rate", 3.75)
+repo_curr = safe_metric(last_row, "repo_rate", 3.50)
 repo_prev = safe_metric(prev_row, "repo_rate", repo_curr)
 repo_delta = repo_curr - repo_prev
-disc_curr = safe_metric(last_row, "discount_rate", 2.75)
-lomb_curr = safe_metric(last_row, "lombard_rate", 4.75)
-prib3m_curr = safe_metric(last_row, "pribor_3m", 3.90)
+disc_curr = safe_metric(last_row, "discount_rate", 2.50)
+lomb_curr = safe_metric(last_row, "lombard_rate", 4.50)
+prib3m_curr = safe_metric(last_row, "pribor_3m", 3.50)
 
-cpi_cz_curr = safe_metric(last_row, "cpi_yoy", 2.3)
-cpi_cz_prev = safe_metric(prev_row, "cpi_yoy", cpi_cz_curr)
+cpi_cz_curr = safe_metric(last_row, "cpi_yoy", 2.6)
+cpi_cz_prev = safe_prev_lagged("cpi_yoy", cpi_cz_curr, max_lag=3)
 cpi_cz_delta = cpi_cz_curr - cpi_cz_prev
-core_cpi_cz_curr = safe_metric(last_row, "cpi_core_yoy", 2.4)
+core_cpi_cz_curr = safe_metric(last_row, "cpi_core_yoy", 2.6)
 
-gdp_cz_curr = safe_metric(last_row, "gdp_growth_real", 1.2)
-gdp_cz_prev = safe_metric(prev_row, "gdp_growth_real", gdp_cz_curr)
+gdp_cz_curr = safe_metric(last_row, "gdp_growth_real", 2.6)
+gdp_cz_prev = safe_prev_lagged("gdp_growth_real", gdp_cz_curr, max_lag=4)
 gdp_cz_delta = gdp_cz_curr - gdp_cz_prev
 nom_cz_val = safe_metric(last_row, "gdp_nominal_czk_bn", 1950.0)
 
-retail_cz_curr = safe_metric(last_row, "retail_sales_yoy", 2.6)
-ind_cz_curr = safe_metric(last_row, "industrial_prod_yoy", 1.2)
+retail_cz_curr = safe_metric(last_row, "retail_sales_yoy", 4.1)
+ind_cz_curr = safe_metric(last_row, "industrial_prod_yoy", 1.6)
 
 une_cz_curr = safe_metric(last_row, "unemployment_rate", 2.8)
-une_cz_prev = safe_metric(prev_row, "unemployment_rate", une_cz_curr)
+une_cz_prev = safe_prev_lagged("unemployment_rate", une_cz_curr, max_lag=3)
 une_cz_delta = une_cz_curr - une_cz_prev
 
 eur_cz_curr = safe_metric(last_row, "eur_czk", 25.10)
@@ -1261,37 +1278,37 @@ pln_cz_curr = safe_metric(last_row, "pln_czk", 5.85)
 gbp_cz_curr = safe_metric(last_row, "gbp_czk", 30.10)
 
 czgb10_curr = safe_metric(last_row, "czgb_10y", 4.10)
-czgb2_curr = safe_metric(last_row, "czgb_2y", 3.70)
+czgb2_curr = safe_metric(last_row, "czgb_2y", 3.55)
 cz_spread_curr = safe_metric(last_row, "czgb_spread_10y_2y", round(czgb10_curr - czgb2_curr, 2))
 irs10_curr = safe_metric(last_row, "irs_10y", 3.95)
-debt_cz_pct = safe_metric(last_row, "public_debt_gdp_pct", 44.0)
-deficit_cz_curr = safe_metric(last_row, "budget_deficit_czk_bn", -65.0)
-px_curr = safe_metric(last_row, "px_index", 1680.0)
+debt_cz_pct = safe_metric(last_row, "public_debt_gdp_pct", 43.6)
+deficit_cz_curr = safe_metric(last_row, "budget_deficit_czk_bn", -60.0)
+px_curr = safe_metric(last_row, "px_index", 2600.0)
 
 # --- Hodnoty pro EU (Eurozóna) ---
-ecb_dep_curr = safe_metric(last_row, "ecb_deposit_rate", 3.00)
+ecb_dep_curr = safe_metric(last_row, "ecb_deposit_rate", 2.00)
 ecb_dep_prev = safe_metric(prev_row, "ecb_deposit_rate", ecb_dep_curr)
 ecb_dep_delta = ecb_dep_curr - ecb_dep_prev
-ecb_refi_curr = safe_metric(last_row, "ecb_refi_rate", 3.15)
-ecb_lend_curr = safe_metric(last_row, "ecb_lending_rate", 3.40)
-euribor3m_curr = safe_metric(last_row, "euribor_3m", 2.95)
-estr_curr = safe_metric(last_row, "estr_rate", 2.92)
+ecb_refi_curr = safe_metric(last_row, "ecb_refi_rate", 2.15)
+ecb_lend_curr = safe_metric(last_row, "ecb_lending_rate", 2.40)
+euribor3m_curr = safe_metric(last_row, "euribor_3m", 2.05)
+estr_curr = safe_metric(last_row, "estr_rate", 1.92)
 
-cpi_eu_curr = safe_metric(last_row, "eu_cpi_yoy", 2.2)
-cpi_eu_prev = safe_metric(prev_row, "eu_cpi_yoy", cpi_eu_curr)
+cpi_eu_curr = safe_metric(last_row, "eu_cpi_yoy", 2.1)
+cpi_eu_prev = safe_prev_lagged("eu_cpi_yoy", cpi_eu_curr, max_lag=3)
 cpi_eu_delta = cpi_eu_curr - cpi_eu_prev
-core_cpi_eu_curr = safe_metric(last_row, "eu_core_cpi_yoy", 2.7)
+core_cpi_eu_curr = safe_metric(last_row, "eu_core_cpi_yoy", 2.3)
 
-gdp_eu_curr = safe_metric(last_row, "eu_gdp_growth_real", 0.9)
-gdp_eu_prev = safe_metric(prev_row, "eu_gdp_growth_real", gdp_eu_curr)
+gdp_eu_curr = safe_metric(last_row, "eu_gdp_growth_real", 1.6)
+gdp_eu_prev = safe_prev_lagged("eu_gdp_growth_real", gdp_eu_curr, max_lag=4)
 gdp_eu_delta = gdp_eu_curr - gdp_eu_prev
 nom_eu_val = safe_metric(last_row, "eu_gdp_nominal_eur_bn", 3800.0)
 
-retail_eu_curr = safe_metric(last_row, "eu_retail_sales_yoy", 1.4)
-ind_eu_curr = safe_metric(last_row, "eu_industrial_prod_yoy", -0.8)
+retail_eu_curr = safe_metric(last_row, "eu_retail_sales_yoy", 1.6)
+ind_eu_curr = safe_metric(last_row, "eu_industrial_prod_yoy", 0.5)
 
-une_eu_curr = safe_metric(last_row, "eu_unemployment_rate", 5.9)
-une_eu_prev = safe_metric(prev_row, "eu_unemployment_rate", une_eu_curr)
+une_eu_curr = safe_metric(last_row, "eu_unemployment_rate", 5.8)
+une_eu_prev = safe_prev_lagged("eu_unemployment_rate", une_eu_curr, max_lag=3)
 une_eu_delta = une_eu_curr - une_eu_prev
 
 eur_usd_curr = safe_metric(last_row, "eur_usd", 1.0850)
@@ -1299,7 +1316,7 @@ eur_pln_curr = safe_metric(last_row, "eur_pln", 4.30)
 eur_gbp_curr = safe_metric(last_row, "eur_gbp", 0.85)
 
 bund10_curr = safe_metric(last_row, "bund_10y", 2.35)
-bund2_curr = safe_metric(last_row, "bund_2y", 2.20)
+bund2_curr = safe_metric(last_row, "bund_2y", 2.10)
 bund_spread_curr = safe_metric(last_row, "bund_spread_10y_2y", round(bund10_curr - bund2_curr, 2))
 debt_eu_pct = safe_metric(last_row, "eu_public_debt_gdp_pct", 88.6)
 debt_eu_nom = safe_metric(last_row, "eu_public_debt_eur_bn", 13200.0)
@@ -1307,21 +1324,21 @@ deficit_eu_curr = safe_metric(last_row, "eu_budget_deficit_eur_bn", -110.0)
 stoxx50_curr = safe_metric(last_row, "stoxx50_index", 5150.0)
 
 # --- Hodnoty pro USA ---
-fed_upper_curr = safe_metric(last_row, "fed_funds_upper", 4.50)
+fed_upper_curr = safe_metric(last_row, "fed_funds_upper", 3.50)
 fed_upper_prev = safe_metric(prev_row, "fed_funds_upper", fed_upper_curr)
 fed_upper_delta = fed_upper_curr - fed_upper_prev
-fed_lower_curr = safe_metric(last_row, "fed_funds_lower", 4.25)
-fed_effr_curr = safe_metric(last_row, "fed_effective_rate", 4.33)
-sofr_curr = safe_metric(last_row, "sofr_rate", 4.31)
-us3m_curr = safe_metric(last_row, "us_3m", 4.40)
+fed_lower_curr = safe_metric(last_row, "fed_funds_lower", 3.25)
+fed_effr_curr = safe_metric(last_row, "fed_effective_rate", 3.33)
+sofr_curr = safe_metric(last_row, "sofr_rate", 3.31)
+us3m_curr = safe_metric(last_row, "us_3m", 3.40)
 
-cpi_us_curr = safe_metric(last_row, "us_cpi_yoy", 2.6)
-cpi_us_prev = safe_metric(prev_row, "us_cpi_yoy", cpi_us_curr)
+cpi_us_curr = safe_metric(last_row, "us_cpi_yoy", 2.3)
+cpi_us_prev = safe_prev_lagged("us_cpi_yoy", cpi_us_curr, max_lag=3)
 cpi_us_delta = cpi_us_curr - cpi_us_prev
-core_cpi_us_curr = safe_metric(last_row, "us_core_cpi_yoy", 3.2)
+core_cpi_us_curr = safe_metric(last_row, "us_core_cpi_yoy", 2.6)
 
-gdp_us_curr = safe_metric(last_row, "us_gdp_growth_real", 2.8)
-gdp_us_prev = safe_metric(prev_row, "us_gdp_growth_real", gdp_us_curr)
+gdp_us_curr = safe_metric(last_row, "us_gdp_growth_real", 2.0)
+gdp_us_prev = safe_prev_lagged("us_gdp_growth_real", gdp_us_curr, max_lag=4)
 gdp_us_delta = gdp_us_curr - gdp_us_prev
 nom_us_val = safe_metric(last_row, "us_gdp_nominal_usd_bn", 28500.0)
 
@@ -1329,7 +1346,7 @@ retail_us_curr = safe_metric(last_row, "us_retail_sales_yoy", 3.1)
 ind_us_curr = safe_metric(last_row, "us_industrial_prod_yoy", 1.5)
 
 une_us_curr = safe_metric(last_row, "us_unemployment_rate", 4.1)
-une_us_prev = safe_metric(prev_row, "us_unemployment_rate", une_us_curr)
+une_us_prev = safe_prev_lagged("us_unemployment_rate", une_us_curr, max_lag=3)
 une_us_delta = une_us_curr - une_us_prev
 
 dxy_curr = safe_metric(last_row, "dxy_index", 101.50)
@@ -1349,54 +1366,55 @@ sp500_curr = safe_metric(last_row, "sp500_index", 6100.0)
 nasdaq_curr = safe_metric(last_row, "nasdaq_index", 20100.0)
 
 # Předstihové & Sentiment metriky
-cz_pmi_curr = safe_metric(last_row, "cz_pmi_manufacturing", 48.5)
-cz_pmi_prev = safe_metric(prev_row, "cz_pmi_manufacturing", cz_pmi_curr)
-cz_conf_curr = safe_metric(last_row, "cz_confidence_composite", 96.0)
-cz_conf_prev = safe_metric(prev_row, "cz_confidence_composite", cz_conf_curr)
+cz_pmi_curr = safe_metric(last_row, "cz_pmi_manufacturing", 49.6)
+cz_pmi_prev = safe_prev_lagged("cz_pmi_manufacturing", cz_pmi_curr, max_lag=3)
+cz_conf_curr = safe_metric(last_row, "cz_confidence_composite", 100.2)
+cz_conf_prev = safe_prev_lagged("cz_confidence_composite", cz_conf_curr, max_lag=3)
 
 eu_ifo_curr = safe_metric(last_row, "eu_ifo_business_climate", 89.5)
-eu_ifo_prev = safe_metric(prev_row, "eu_ifo_business_climate", eu_ifo_curr)
+eu_ifo_prev = safe_prev_lagged("eu_ifo_business_climate", eu_ifo_curr, max_lag=3)
 eu_pmi_curr = safe_metric(last_row, "eu_composite_pmi", 51.0)
-eu_pmi_prev = safe_metric(prev_row, "eu_composite_pmi", eu_pmi_curr)
+eu_pmi_prev = safe_prev_lagged("eu_composite_pmi", eu_pmi_curr, max_lag=3)
 
 us_ism_mfg_curr = safe_metric(last_row, "us_ism_manufacturing", 50.5)
-us_ism_mfg_prev = safe_metric(prev_row, "us_ism_manufacturing", us_ism_mfg_curr)
+us_ism_mfg_prev = safe_prev_lagged("us_ism_manufacturing", us_ism_mfg_curr, max_lag=3)
 us_ism_srv_curr = safe_metric(last_row, "us_ism_services", 53.6)
-us_ism_srv_prev = safe_metric(prev_row, "us_ism_services", us_ism_srv_curr)
+us_ism_srv_prev = safe_prev_lagged("us_ism_services", us_ism_srv_curr, max_lag=3)
 us_mich_curr = safe_metric(last_row, "us_michigan_sentiment", 78.5)
-us_mich_prev = safe_metric(prev_row, "us_michigan_sentiment", us_mich_curr)
+us_mich_prev = safe_prev_lagged("us_michigan_sentiment", us_mich_curr, max_lag=3)
 
 # Trh práce & Mzdy metriky
-cz_nom_wage_curr = safe_metric(last_row, "cz_nominal_wage_yoy", 7.2)
-cz_nom_wage_prev = safe_metric(prev_row, "cz_nominal_wage_yoy", cz_nom_wage_curr)
-cz_real_wage_curr = safe_metric(last_row, "cz_real_wage_yoy", 4.5)
-cz_real_wage_prev = safe_metric(prev_row, "cz_real_wage_yoy", cz_real_wage_curr)
+cz_nom_wage_curr = safe_metric(last_row, "cz_nominal_wage_yoy", 6.9)
+cz_nom_wage_prev = safe_prev_lagged("cz_nominal_wage_yoy", cz_nom_wage_curr, max_lag=4)
+cz_real_wage_curr = safe_metric(last_row, "cz_real_wage_yoy", 4.2)
+cz_real_wage_prev = safe_prev_lagged("cz_real_wage_yoy", cz_real_wage_curr, max_lag=4)
 
 eu_wages_curr = safe_metric(last_row, "eu_negotiated_wages_yoy", 4.2)
-eu_wages_prev = safe_metric(prev_row, "eu_negotiated_wages_yoy", eu_wages_curr)
+eu_wages_prev = safe_prev_lagged("eu_negotiated_wages_yoy", eu_wages_curr, max_lag=4)
 
 us_earn_curr = safe_metric(last_row, "us_hourly_earnings_yoy", 3.9)
-us_earn_prev = safe_metric(prev_row, "us_hourly_earnings_yoy", us_earn_curr)
+us_earn_prev = safe_prev_lagged("us_hourly_earnings_yoy", us_earn_curr, max_lag=3)
 
-# Bankovní sektor & Měnová zásoba metriky
-cz_mort_rate_curr = safe_metric(last_row, "cz_mortgage_rate", 4.85)
-cz_mort_rate_prev = safe_metric(prev_row, "cz_mortgage_rate", cz_mort_rate_curr)
-cz_mort_vol_curr = safe_metric(last_row, "cz_mortgage_volume_czk_bn", 21.5)
-cz_corp_loans_curr = safe_metric(last_row, "cz_corporate_loans_yoy", 6.8)
-cz_corp_loans_prev = safe_metric(prev_row, "cz_corporate_loans_yoy", cz_corp_loans_curr)
-cz_m2_curr = safe_metric(last_row, "cz_m2_growth_yoy", 6.8)
-cz_m2_prev = safe_metric(prev_row, "cz_m2_growth_yoy", cz_m2_curr)
+# Bankovní sektor & Měnová zásoba metriky (ČBA Hypomonitor & ČNB ARAD)
+cz_mort_rate_curr = safe_metric(last_row, "cz_mortgage_rate", 5.10)
+cz_mort_rate_prev = safe_prev_lagged("cz_mortgage_rate", cz_mort_rate_curr, max_lag=3)
+cz_mort_vol_curr = safe_metric(last_row, "cz_mortgage_volume_czk_bn", 28.0)
+cz_mort_vol_prev = safe_prev_lagged("cz_mortgage_volume_czk_bn", cz_mort_vol_curr, max_lag=3)
+cz_corp_loans_curr = safe_metric(last_row, "cz_corporate_loans_yoy", 13.3)
+cz_corp_loans_prev = safe_prev_lagged("cz_corporate_loans_yoy", cz_corp_loans_curr, max_lag=3)
+cz_m2_curr = safe_metric(last_row, "cz_m2_growth_yoy", 5.5)
+cz_m2_prev = safe_prev_lagged("cz_m2_growth_yoy", cz_m2_curr, max_lag=3)
 
 # Vnější rovnováha metriky
-cz_ca_curr = safe_metric(last_row, "cz_current_account_gdp_pct", 1.5)
-cz_trade_bal_curr = safe_metric(last_row, "cz_trade_balance_czk_bn", 17.5)
-cz_trade_bal_prev = safe_metric(prev_row, "cz_trade_balance_czk_bn", cz_trade_bal_curr)
+cz_ca_curr = safe_metric(last_row, "cz_current_account_gdp_pct", 1.6)
+cz_trade_bal_curr = safe_metric(last_row, "cz_trade_balance_czk_bn", 21.8)
+cz_trade_bal_prev = safe_prev_lagged("cz_trade_balance_czk_bn", cz_trade_bal_curr, max_lag=3)
 
 # Kreditní a rizikové spready metriky
 czgb_bund_sp_curr = safe_metric(last_row, "czgb_bund_spread_10y", round((czgb10_curr - bund10_curr) * 100, 1))
 cz_asw_curr = safe_metric(last_row, "cz_asw_10y_spread", round((czgb10_curr - irs10_curr) * 100, 1))
 eu_btp_sp_curr = safe_metric(last_row, "eu_btp_bund_spread", 132.0)
-eu_btp_sp_prev = safe_metric(prev_row, "eu_btp_bund_spread", eu_btp_sp_curr)
+eu_btp_sp_prev = safe_prev_lagged("eu_btp_bund_spread", eu_btp_sp_curr, max_lag=2)
 
 # Tržní sentiment & riziko (VIX)
 vix_curr = safe_metric(last_row, "vix_index", 15.2)
@@ -3865,25 +3883,36 @@ df_export_active["Datum"] = df_export_active["Datum"].dt.strftime("%d.%m.%Y")
 def build_dynamic_cz_news() -> Dict[str, Dict[str, str]]:
     """
     Sestaví 100% dynamické, validované finanční zpravodajství a analytický kontext
-    pro Českou republiku. Veškeré sazby, kurzy, čísla a směry trendů striktně
-    odpovídají aktuálním podkladovým datům a časové řadě.
+    pro Českou republiku propojené s živým odběrem nejaktuálnějších zpráv k danému
+    tématu/metrice (ČBA Monitor & Google News RSS seřazené striktně podle data publikace).
+    Veškeré sazby, kurzy, čísla a směry trendů odpovídají ověřeným primárním datům.
     """
+    try:
+        live_topic_news = get_cached_cz_topic_news()
+    except Exception:
+        live_topic_news = {}
+
     # 1. Měnové kurzy FX (EUR/CZK a USD/CZK)
     eur_chg_dir = "posílení" if eur_czk_delta < 0 else ("oslabení" if eur_czk_delta > 0 else "stagnace")
     eur_chg_str = f"denní {eur_chg_dir} o {abs(eur_czk_delta):.2f} Kč ({abs(eur_czk_pct):.2f} % d/d)" if abs(eur_czk_delta) >= 0.005 else "denní stabilizace (0,0 % d/d)"
     diff_cnb_ecb = round(repo_curr - ecb_dep_curr, 2)
 
-    # 2. Bankovní sektor & Hypotéky (ČBA Hypomonitor & ČNB)
+    # 2. Bankovní sektor & Hypotéky (ČBA Hypomonitor & ČNB ARAD)
     rate_chg = round(cz_mort_rate_curr - cz_mort_rate_prev, 2)
-    if rate_chg < -0.02:
-        mort_rate_trend = f"klesá na {cz_mort_rate_curr:.2f} % (pokles o {abs(rate_chg):.2f} p.b.)"
-    elif rate_chg > 0.02:
-        mort_rate_trend = f"roste na {cz_mort_rate_curr:.2f} % (nárůst o {rate_chg:.2f} p.b.)"
+    if rate_chg < -0.01:
+        mort_rate_trend = f"klesá na {cz_mort_rate_curr:.2f} % (pokles o {abs(rate_chg):.2f} p.b. z {cz_mort_rate_prev:.2f} %)"
+    elif rate_chg > 0.01:
+        mort_rate_trend = f"roste na {cz_mort_rate_curr:.2f} % (nárůst o {rate_chg:+.2f} p.b. z {cz_mort_rate_prev:.2f} %)"
     else:
-        mort_rate_trend = f"se stabilizuje na {cz_mort_rate_curr:.2f} %"
+        mort_rate_trend = f"setrvává na {cz_mort_rate_curr:.2f} %"
 
-    vol_chg = round(cz_mort_vol_curr - safe_metric(prev_row, "cz_mortgage_volume_czk_bn", cz_mort_vol_curr), 1)
-    vol_trend = f"objem nových úvěrů roste na {cz_mort_vol_curr:.1f} mld. Kč" if vol_chg >= 0 else f"objem činí {cz_mort_vol_curr:.1f} mld. Kč"
+    vol_chg = round(cz_mort_vol_curr - cz_mort_vol_prev, 1)
+    if vol_chg > 0.1:
+        vol_trend = f"objem nových hypoték bez refinancování roste na {cz_mort_vol_curr:.1f} mld. Kč ({vol_chg:+.1f} mld. Kč m/m)"
+    elif vol_chg < -0.1:
+        vol_trend = f"objem nových hypoték bez refinancování činí {cz_mort_vol_curr:.1f} mld. Kč ({vol_chg:+.1f} mld. Kč m/m)"
+    else:
+        vol_trend = f"objem nových hypoték bez refinancování dosahuje {cz_mort_vol_curr:.1f} mld. Kč"
 
     # 3. Měnová politika ČNB
     if repo_delta < -0.05:
@@ -3894,130 +3923,183 @@ def build_dynamic_cz_news() -> Dict[str, Dict[str, str]]:
         repo_title = f"Bankovní rada ČNB ponechává 2T repo sazbu na {repo_curr:.2f} %, PRIBOR 3M činí {prib3m_curr:.2f} %"
 
     # 4. HDP
-    gdp_dir = "zrychluje" if gdp_cz_delta > 0 else ("stagnuje" if gdp_cz_delta == 0 else "zpomaluje")
+    gdp_dir = "zrychluje" if gdp_cz_delta > 0 else ("drží tempo" if gdp_cz_delta == 0 else "zpomaluje")
 
-    return {
+    news_cards: Dict[str, Dict[str, str]] = {
         "rates": {
             "tag": "MĚNOVÁ POLITIKA ČNB & SAZBY",
-            "date": "Bankovní rada ČNB & Mezibankovní trh",
-            "source": "Česká národní banka (Tisková zpráva ČNB) / ČTK Byznys",
+            "date": f"Aktuální stav ({p('repo_rate', 'M')})",
+            "source": "Česká národní banka (ČNB) / ČBA Monitor",
             "title": repo_title,
-            "reason": f"Při meziroční inflaci {cpi_cz_curr:.1f} % se reálná repo sazba ČNB pohybuje na {real_repo_rate:+.2f} %, což ukotvuje měnové podmínky v restriktivním pásmu. Tříměsíční PRIBOR se nachází na {prib3m_curr:.2f} %.",
-            "context": f"ČNB udržuje mírně restriktivní měnovou politiku s cílem zabránit mzdově-inflačním tlakům ve službách. Kladná reálná repo sazba ({real_repo_rate:+.2f} %) podporuje stabilitu české měny a brání rozkolísání dlouhodobých inflačních očekávání."
+            "reason": f"Při meziroční inflaci {cpi_cz_curr:.1f} % se reálná repo sazba ČNB pohybuje na {real_repo_rate:+.2f} %, což ukotvuje měnové podmínky v kladném reálném pásmu. Tříměsíční PRIBOR se nachází na {prib3m_curr:.2f} %.",
+            "context": f"ČNB udržuje obezřetnou měnovou politiku s cílem tlumit přetrvávající cenové tlaky ve službách a na trhu nemovitostí. Kladná reálná repo sazba ({real_repo_rate:+.2f} %) podporuje stabilitu koruny."
         },
         "yield_curve": {
             "tag": "DLUHOPISOVÝ TRH & VÝNOSY",
-            "date": "Poslední aukce státních dluhopisů MF ČR & Sekundární trh",
-            "source": "Ministerstvo financí ČR / ČNB ARAD / Patria Finance",
+            "date": f"Aktuální stav ({p('czgb_10y', 'M')})",
+            "source": "Ministerstvo financí ČR / ČNB ARAD / Eurostat",
             "title": f"Výnosová křivka ČR: 10Y dluhopis CZGB na {czgb10_curr:.2f} %, sklon 10Y–2Y činí {cz_spread_curr:+.2f} p.b.",
-            "reason": f"Desetiletý vládní benchmark CZGB se obchoduje s výnosem {czgb10_curr:.2f} % ({czgb10_delta_bps:+.1f} bps d/d), zatímco 2letý dluhopis dosahuje {czgb2_curr:.2f} %. Rozpětí {cz_spread_curr:+.2f} p.b. reflektuje odeznění dřívější hluboké inverze.",
-            "context": f"Poptávka institucionálních investorů v aukcích MF ČR zůstává silná. Výnosový spread vůči německému Bundu činí {czgb_bund_sp_curr:.1f} bazických bodů a Asset Swap Spread (ASW) dosahuje {cz_asw_curr:.1f} bps."
+            "reason": f"Desetiletý vládní benchmark CZGB se obchoduje s výnosem {czgb10_curr:.2f} % ({czgb10_delta_bps:+.1f} bps), zatímco 2letý dluhopis dosahuje {czgb2_curr:.2f} %. Kladné rozpětí {cz_spread_curr:+.2f} p.b. potvrzuje kladný sklon křivky a vyšší delší korunové tržní sazby (IRS).",
+            "context": f"Vyšší výnosy na delším konci křivky a růst korunových úrokových swapů (10Y IRS na {irs10_curr:.2f} %) zároveň brání zlevňování dlouhodobých úvěrů a hypoték. Výnosový spread vůči německému Bundu činí {czgb_bund_sp_curr:.1f} bps."
         },
         "fx": {
             "tag": "DEVIZOVÝ TRH & KURZ KORUNY",
-            "date": "Denní kurzovní lístek ČNB / Mezibankovní devizový trh",
-            "source": "Česká národní banka (Fixing ČNB) / Hospodářské noviny Byznys",
+            "date": f"Denní fixing ČNB ({p('eur_czk', 'D')})",
+            "source": "Česká národní banka (Fixing ČNB) / Devizový trh",
             "title": f"Česká koruna se obchoduje na {daily_eur_czk:.2f} EUR/CZK, kurz vůči dolaru činí {daily_usd_czk:.2f} USD/CZK",
-            "reason": f"Oficiální denní kurz ČNB dosahuje {daily_eur_czk:.2f} Kč za euro ({eur_chg_str}). Koruně poskytuje oporu úrokový diferenciál ČNB vůči ECB ({diff_cnb_ecb:+.2f} p.b.) a přebytková bilance zahraničního obchodu.",
-            "context": f"Vůči americkému dolaru kurz činí {daily_usd_czk:.2f} USD/CZK a vůči zlotému {daily_pln_czk:.2f} PLN/CZK. Pevný kurz koruny efektivně tlumí dovezenou inflaci u dovážených energetických surovin a spotřebního zboží."
+            "reason": f"Oficiální denní kurz ČNB dosahuje {daily_eur_czk:.2f} Kč za euro ({eur_chg_str}). Koruně poskytuje oporu kladný úrokový diferenciál ČNB vůči ECB ({diff_cnb_ecb:+.2f} p.b.) a přebytková bilance zahraničního obchodu.",
+            "context": f"Vůči americkému dolaru kurz činí {daily_usd_czk:.2f} USD/CZK a vůči zlotému {daily_pln_czk:.2f} PLN/CZK. Stabilní kurz koruny pomáhá tlumit dováženou inflaci u surovin a energií."
         },
         "gdp": {
             "tag": "NÁRODNÍ ÚČTY & HOSPODÁŘSKÝ RŮST",
-            "date": "Kvartální národní účty ČSÚ",
-            "source": "Český statistický úřad (ČSÚ) / Analytici ČBA",
+            "date": f"Kvartální národní účty ČSÚ ({p('gdp_growth_real', 'Q')})",
+            "source": "Český statistický úřad (ČSÚ) / ČBA Monitor",
             "title": f"Česká ekonomika {gdp_dir}: Meziroční reálný růst HDP dosahuje {gdp_cz_curr:+.1f} %",
-            "reason": f"Hrubý domácí produkt vzrostl meziročně o {gdp_cz_curr:+.1f} % (změna {gdp_cz_delta:+.1f} p.b.). Hlavním tahounem hospodářského oživení je růst reálných mezd a spotřeba domácností doplněná čistým exportem.",
-            "context": "Po předchozím útlumu se česká ekonomika stabilně vrací k růstové dynamice. Domácí spotřeba kompenzuje utlumenější průmyslovou poptávku v Německu a dalších zemích eurozóny."
+            "reason": f"Hrubý domácí produkt vzrostl meziročně o {gdp_cz_curr:+.1f} % (změna {gdp_cz_delta:+.1f} p.b.). Hlavním tahounem hospodářského růstu je oživená spotřeba domácností podpořená reálným růstem mezd.",
+            "context": "Česká ekonomika vykazuje solidní růstovou dynamiku taženou domácí poptávkou a službami, která kompenzuje utlumenější průmyslovou poptávku v Německu."
         },
         "inflation": {
             "tag": "SPOTŘEBITELSKÉ CENY & INFLACE",
-            "date": "Indexy spotřebitelských cen ČSÚ",
-            "source": "Český statistický úřad (ČSÚ) / Měnová sekce ČNB / Patria.cz",
+            "date": f"Indexy spotřebitelských cen ČSÚ ({p('cpi_yoy', 'M')})",
+            "source": "Český statistický úřad (ČSÚ) / ČBA Monitor / ČNB",
             "title": f"Meziroční inflace v ČR činí {cpi_cz_curr:.1f} %, jádrová inflace dosahuje {core_cpi_cz_curr:.1f} %",
-            "reason": f"Spotřebitelská inflace CPI se nachází na úrovni {cpi_cz_curr:.1f} %, což je v tolerančním pásmu 2% cíle ČNB (1,0–3,0 %). Jádrová inflace očištěná o regulované ceny a pohonné hmoty činí {core_cpi_cz_curr:.1f} %.",
-            "context": "Zklidnění cen potravin a energií úspěšně srazilo celkovou inflaci z dvouciferných hodnot. ČNB se nyní zaměřuje na perzistenci cen ve službách (stravování, nájemné, rekreace), kde se odrážejí rostoucí mzdové náklady."
+            "reason": f"Spotřebitelská inflace CPI se nachází na úrovni {cpi_cz_curr:.1f} % ({cpi_cz_delta:+.1f} p.b. m/m), přičemž se drží v tolerančním pásmu ČNB (1,0–3,0 %). Jádrová inflace činí {core_cpi_cz_curr:.1f} %.",
+            "context": "Zatímco ceny energií a zboží působí protiinflačně, zvýšená dynamika přetrvává v sektoru služeb a u imputovaného nájemného, což vede ČNB k opatrnosti při dalším nastavování úrokových sazeb."
         },
         "retail_industry": {
             "tag": "KONJUNKTURA: SPOTŘEBA & PRŮMYSL",
-            "date": "Měsíční konjunkturální data ČSÚ",
-            "source": "Český statistický úřad (ČSÚ) / Svaz průmyslu a dopravy ČR",
+            "date": f"Měsíční konjunkturální data ČSÚ ({p('retail_sales_yoy', 'M')})",
+            "source": "Český statistický úřad (ČSÚ) / ČBA Monitor",
             "title": f"Maloobchodní tržby vykazují {retail_cz_curr:+.1f} % YoY, průmyslová produkce {ind_cz_curr:+.1f} % YoY",
-            "reason": f"Spotřebitelské tržby v maloobchodě rostou o {retail_cz_curr:+.1f} % díky vyšší kupní síle domácností. Průmyslová výroba dosahuje meziročního tempa {ind_cz_curr:+.1f} % tažena zejména automobilovým sektorem.",
-            "context": "Ekonomika vykazuje dvourychlostní profil: spotřebitelské odvětví a služby expandují, zatímco tradiční strojírenství a energeticky náročná odvětví čelí tlaku vysokých regulovaných nákladů a slabším německým zakázkám."
+            "reason": f"Spotřebitelské tržby v maloobchodě rostou meziročně o {retail_cz_curr:+.1f} % díky pokračujícímu růstu reálných mezd. Průmyslová produkce vykazuje meziroční změnu {ind_cz_curr:+.1f} %.",
+            "context": "Ekonomika si udržuje dvourychlostní charakter: sektor obchodu a služeb těží ze silné domácí spotřeby, zatímco průmysloví exportéři čelí kolísavé zahraniční poptávce."
         },
         "unemployment": {
             "tag": "TRH PRÁCE & ZAMĚSTNANOST",
-            "date": "Měsíční statistika MPSV a ČSÚ",
-            "source": "Ministerstvo práce a sociálních věcí (MPSV) / Eurostat",
-            "title": f"Míra nezaměstnanosti v ČR činí {une_cz_curr:.1f} %, Česko si drží přední příčky v EU",
-            "reason": f"Podíl nezaměstnaných osob dosahuje {une_cz_curr:.1f} %. Silná poptávka firem po kvalifikované pracovní síle udržuje počet uchazečů v rovnováze s počtem hlášených volných míst.",
-            "context": "Nízká nezaměstnanost a napjatý trh práce podporují vyjednávací sílu zaměstnanců, což vede k solidnímu růstu mezd, avšak zároveň představuje strukturální limit pro rychlejší expanzi některých výrobních kapacit."
+            "date": f"Měsíční statistika Eurostat / MPSV ({p('unemployment_rate', 'M')})",
+            "source": "Eurostat (ILO) / MPSV / ČBA Monitor",
+            "title": f"Míra nezaměstnanosti v ČR činí {une_cz_curr:.1f} %, Česko patří mezi země s nejnižší nezaměstnaností v EU",
+            "reason": f"Harmonizovaná míra nezaměstnanosti (ILO/Eurostat) dosahuje {une_cz_curr:.1f} % (změna {une_cz_delta:+.1f} p.b.). Trh práce vykazuje mírné ochlazování v průmyslu, které je však absorbováno sektorem služeb.",
+            "context": "Nízká míra nezaměstnanosti podporuje mzdové vyjednávání a spotřebitelský sentiment domácností."
         },
         "stocks_px": {
             "tag": "AKCIOVÉ TRHY & BCPP",
-            "date": "Obchodování Burzy cenných papírů Praha",
-            "source": "Burza cenných papírů Praha (BCPP / PSE) / Analytici Patria Finance",
-            "title": f"Index PX pražské burzy dosahuje {px_curr:,.0f} bodů s podporou bankovních titulů",
-            "reason": f"Index PX se nachází na hodnotě {px_curr:,.0f} bodů ({px_delta:+,.0f} b. za sledované období). Tahounem trhu jsou silně kapitalizované bankovní domy (Erste, KB, Moneta) a stabilní dividenda energetického gigantu ČEZ.",
-            "context": "Pražský parket láká investory nadstandardním dividendovým výnosem přes 7 % p.a. a nízkou volatilitou ve srovnání s technologickými indexy na západních trzích."
+            "date": f"Burza cenných papírů Praha ({daily_px_date})",
+            "source": "Burza cenných papírů Praha (BCPP / PSE)",
+            "title": f"Index PX pražské burzy se obchoduje na {px_curr:,.1f} bodech ({daily_px_pct_d:+.2f} % d/d)",
+            "reason": f"Index PX dosahuje {px_curr:,.1f} bodů (denní změna {px_delta:+,.1f} b.). Hlavní váhu v indexu drží finanční tituly (Erste Group, Komerční banka, Moneta Money Bank, VIG) a energetická skupina ČEZ.",
+            "context": "Pražská burza těží ze silné ziskovosti tuzemského bankovního sektoru, rostoucího objemu poskytnutých úvěrů a nadprůměrného dividendového výnosu."
         },
         "debt": {
             "tag": "FISKÁLNÍ POLITIKA & STÁTNÍ ROZPOČET",
-            "date": "Notifikace vládního dluhu a deficitu Eurostat / MF ČR",
-            "source": "Ministerstvo financí ČR / Český statistický úřad (ČSÚ)",
-            "title": f"Vládní dluh ČR dosahuje {debt_cz_pct:.1f} % HDP, výrazně pod průměrem EU",
-            "reason": f"Veřejné zadlužení České republiky činí {debt_cz_pct:.1f} % HDP, což s rezervou plní 60% maastrichtské konvergenční kritérium. Konsolidační balíček přispívá ke snižování strukturálního deficitu.",
-            "context": "I přes relativně nízký dluh vůči HDP (průměr eurozóny je 88 % HDP) zůstává úkolem vlády efektivní řízení výdajů na obsluhu státního dluhu a dlouhodobá parametrizace veřejných rozpočtů."
+            "date": f"Statistika vládního dluhu ({p('public_debt_gdp_pct', 'Q')})",
+            "source": "Ministerstvo financí ČR / Eurostat / ČSÚ",
+            "title": f"Vládní dluh ČR dosahuje {debt_cz_pct:.1f} % HDP, výrazně pod 60% maastrichtským limitem",
+            "reason": f"Veřejné zadlužení České republiky činí {debt_cz_pct:.1f} % HDP (nominálně cca {safe_metric(last_row, 'public_debt_czk_bn', 3820.0):,.1f} mld. Kč), což zůstává hluboko pod průměrem eurozóny ({debt_eu_pct:.1f} % HDP).",
+            "context": "Klíčovým fiskálním tématem zůstává udržení schodku státního rozpočtu v zákonných limitech a řízení nákladů na obsluhu státního dluhu při vyšších výnosech dluhopisů."
         },
         "intl_spread": {
             "tag": "DLUHOPISOVÉ SPREADY & RIZIKO",
-            "date": "Sekundární trh státních dluhopisů",
+            "date": f"Sekundární dluhopisový trh ({p('czgb_10y', 'M')})",
             "source": "Ministerstvo financí ČR / Deutsche Bundesbank / Eurostat",
             "title": f"Spread 10Y CZGB vs. 10Y Bund činí {czgb_bund_sp_curr:.1f} bps, Asset Swap Spread {cz_asw_curr:.1f} bps",
-            "reason": f"Rozpětí mezi výnosem 10Y českého dluhopisu ({czgb10_curr:.2f} %) a německého Bundu ({bund10_curr:.2f} %) činí {czgb_bund_sp_curr:.1f} bps. Kreditní prémie odráží rozdíl v sazbách ČNB a ECB i stabilitu korunového trhu.",
-            "context": "Nízké zadlužení ČR chrání korunové vládní dluhopisy před spekulativními výprodeji. Výnosová křivka CZGB si udržuje vysokou likviditu u domácích penzijních fondů a bank."
+            "reason": f"Rozpětí mezi výnosem 10Y českého dluhopisu ({czgb10_curr:.2f} %) a německého Bundu ({bund10_curr:.2f} %) činí {czgb_bund_sp_curr:.1f} bps. Spread odráží úrokový diferenciál mezi ČNB ({repo_curr:.2f} %) a ECB ({ecb_dep_curr:.2f} %).",
+            "context": "Vysoká důvěra investorů a nízký podíl cizoměnového dluhu chrání české státní dluhopisy před vnějšími šoky."
         },
         "leading": {
             "tag": "PŘEDSTIHOVÉ UKAZATELE & KONJUNKTURA",
-            "date": "Průzkum nákupních manažerů PMI & Konjunktura ČSÚ",
+            "date": f"Průzkum PMI & Konjunktura ČSÚ ({p('cz_pmi_manufacturing', 'M')})",
             "source": "S&P Global / Český statistický úřad (ČSÚ)",
             "title": f"Předstihové indikátory: PMI v průmyslu na {cz_pmi_curr:.1f} b., souhrnná důvěra ČSÚ na {cz_conf_curr:.1f} b.",
-            "reason": f"Průmyslový index nákupních manažerů PMI dosahuje {cz_pmi_curr:.1f} bodů. Konjunkturní šetření ČSÚ indikuje sentiment na úrovni {cz_conf_curr:.1f} bodů s patrným zlepšením spotřebitelského optimismu.",
-            "context": "Předstihové ukazatele potvrzují odraz tuzemského průmyslu ze dna a postupnou stabilizaci zakázkových knih, přestože export do Německa stále naráží na opatrnost evropských odběratelů."
+            "reason": f"Průmyslový index nákupních manažerů PMI dosahuje {cz_pmi_curr:.1f} b. ({cz_pmi_curr - cz_pmi_prev:+.1f} b. m/m). Konjunkturní indikátor důvěry ČSÚ činí {cz_conf_curr:.1f} b. ({cz_conf_curr - cz_conf_prev:+.1f} b. m/m).",
+            "context": "Zatímco důvěra spotřebitelů a podnikatelů ve službách se drží nad dlouhodobým průměrem (100 b.), zpracovatelský průmysl se postupně stabilizuje poblíž 50bodové hranice."
         },
         "wages": {
             "tag": "TRH PRÁCE & MZDOVÝ VÝVOJ",
-            "date": "Statistika průměrných mezd ČSÚ",
-            "source": "Český statistický úřad (ČSÚ) / Analytici ČNB",
-            "title": f"Růst mezd: Průměrná nominální mzda roste o {cz_nom_wage_curr:+.1f} %, reálná mzda posiluje o {cz_real_wage_curr:+.1f} %",
-            "reason": f"Při meziroční inflaci {cpi_cz_curr:.1f} % se nominální tempo růstu mezd ({cz_nom_wage_curr:+.1f} % YoY) přímo transformuje do reálného růstu kupní síly zaměstnanců o {cz_real_wage_curr:+.1f} % YoY.",
-            "context": "Návrat k reálnému růstu mezd po dvou letech propadu obnovuje životní standard domácností a pohání maloobchod. ČNB však pečlivě vyhodnocuje mzdovou dynamiku ve službách z hlediska sekundárních inflačních dopadů."
+            "date": f"Statistika průměrných mezd ČSÚ ({p('cz_nominal_wage_yoy', 'Q')})",
+            "source": "Český statistický úřad (ČSÚ) / ČBA Monitor",
+            "title": f"Růst mezd: Průměrná nominální mzda roste o {cz_nom_wage_curr:+.1f} % YoY, reálná mzda o {cz_real_wage_curr:+.1f} % YoY",
+            "reason": f"Při meziroční inflaci {cpi_cz_curr:.1f} % se nominální růst mezd ({cz_nom_wage_curr:+.1f} % YoY) promítá do solidního růstu reálné kupní síly zaměstnanců o {cz_real_wage_curr:+.1f} % YoY.",
+            "context": "Pokračující reálný růst výdělků je hlavním pilířem oživení spotřeby domácností, zároveň však ČNB sleduje mzdovou dynamiku jako potenciální proinflační faktor ve službách."
         },
         "banking": {
-            "tag": "BANKOVNÍ SEKTOR & ÚVĚROVÝ TRH",
-            "date": "Poslední ČBA Hypomonitor & Měnová statistika ČNB",
-            "source": "Česká bankovní asociace (ČBA Hypomonitor) / ČNB (ARAD)",
-            "title": f"Hypoteční trh ČR: Průměrná sazba {mort_rate_trend}, {vol_trend}",
-            "reason": f"Podle statistiky ČBA Hypomonitor a ČNB průměrná úroková sazba nových hypoték činí {cz_mort_rate_curr:.2f} %. Měsíční objem nově poskytnutých úvěrů na bydlení dosahuje {cz_mort_vol_curr:.1f} mld. Kč díky uvolnění odložené poptávky.",
-            "context": f"Meziroční růst korporátních úvěrů činí {cz_corp_loans_curr:+.1f} % YoY a peněžní agregát M2 roste tempem {cz_m2_curr:+.1f} % YoY. Tuzemské banky si zachovávají robustní kapitálovou přiměřenost a zdravé úvěrové portfolio."
+            "tag": "BANKOVNÍ SEKTOR & ČBA HYPOMONITOR",
+            "date": f"ČBA Hypomonitor & ČNB ARAD ({p('cz_mortgage_rate', 'M')})",
+            "source": "Česká bankovní asociace (ČBA Hypomonitor) / ČNB ARAD",
+            "title": f"ČBA Hypomonitor: Průměrná sazba nových hypoték {mort_rate_trend}, {vol_trend}",
+            "reason": (
+                f"Podle nejnovějších dat ČBA Hypomonitor a ČNB průměrná realizovaná úroková sazba nových hypoték činí {cz_mort_rate_curr:.2f} % p.a. "
+                f"(předchozí měsíc {cz_mort_rate_prev:.2f} %, změna {rate_chg:+.2f} p.b. m/m). "
+                f"Měsíční objem skutečně nově poskytnutých hypoték bez refinancování dosahuje {cz_mort_vol_curr:.1f} mld. Kč (předchozí měsíc {cz_mort_vol_prev:.1f} mld. Kč)."
+            ),
+            "context": (
+                f"Obrat v sazbách na trhu hypoték je tažen růstem tržních úrokových sazeb (delších korunových swapů IRS a výnosů státních dluhopisů). "
+                f"Objem firemních úvěrů meziročně roste o {cz_corp_loans_curr:+.1f} % YoY (tažen zejména cizoměnovými úvěry v eurech) a celkové vklady / M2 rostou o {cz_m2_curr:+.1f} % YoY."
+            )
         },
         "external": {
             "tag": "VNĚJŠÍ ROVNOVÁHA & ZAHRANIČNÍ OBCHOD",
-            "date": "Zahraniční obchod ČSÚ & Platební bilance ČNB",
-            "source": "Český statistický úřad (ČSÚ) / Česká národní banka (ČNB)",
-            "title": f"Vnější rovnováha: Obchodní bilance v přebytku {cz_trade_bal_curr:+.1f} mld. Kč, běžný účet činí {cz_ca_curr:+.1f} % HDP",
-            "reason": f"Zahraniční obchod ČSÚ vykazuje měsíční přebytek {cz_trade_bal_curr:+.1f} mld. Kč díky silnému exportu motorových vozidel a příznivým dovozním cenám energií. Běžný účet generuje saldo {cz_ca_curr:+.1f} % HDP.",
-            "context": "Kladná vnější bilance vytváří přirozený fundamentální polštář pro kurz české koruny a potvrzuje odolnost proexportně orientované ekonomiky vůči externím výkyvům."
+            "date": f"Zahraniční obchod ČSÚ & Platební bilance ČNB ({p('cz_trade_balance_czk_bn', 'M')})",
+            "source": "Český statistický úřad (ČSÚ) / ČBA Monitor / ČNB",
+            "title": f"Vnější rovnováha: Obchodní bilance v přebytku {cz_trade_bal_curr:+.1f} mld. Kč, běžný účet {cz_ca_curr:+.1f} % HDP",
+            "reason": f"Bilance zahraničního obchodu se zbožím (ČSÚ) dosahuje přebytku {cz_trade_bal_curr:+.1f} mld. Kč ({cz_trade_bal_curr - cz_trade_bal_prev:+.1f} mld. Kč m/m). Běžný účet platební bilance vykazuje kladné saldo {cz_ca_curr:+.1f} % HDP.",
+            "context": "Kladná obchodní bilance podpořená vývozem automobilového průmyslu a strojírenství dlouhodobě posiluje vnější rovnováhu české ekonomiky."
         }
     }
+
+    # Propojení s nejaktuálnějšími živými zprávami (seřazenými striktně od nejnovější)
+    for topic_key, card_data in news_cards.items():
+        live_item = live_topic_news.get(topic_key)
+        if live_item and isinstance(live_item, dict) and live_item.get("title"):
+            if live_item.get("date"):
+                card_data["date"] = str(live_item["date"])
+            if live_item.get("source"):
+                card_data["source"] = str(live_item["source"])
+            if live_item.get("url"):
+                card_data["url"] = str(live_item["url"])
+            card_data["live_headline"] = str(live_item["title"])
+            if live_item.get("description"):
+                card_data["live_perex"] = str(live_item["description"])
+
+    return news_cards
+
 
 CZ_NEWS = build_dynamic_cz_news()
 
 
 def render_cz_news_card(news_item: Optional[Dict[str, str]]):
-    """Vykreslí přehlednou kartu s nejnovější finanční zprávou a makroekonomickým kontextem pod metrikami."""
+    """Vykreslí přehlednou kartu s nejnovější ověřenou finanční zprávou, datem publikace, zdrojem a makroekonomickým kontextem."""
     if not news_item:
         return
+
+    url = news_item.get("url", "")
+    live_headline = news_item.get("live_headline", "")
+    live_perex = news_item.get("live_perex", "")
+    date_label = news_item.get("date", "")
+    source_label = news_item.get("source", "")
+
+    source_link_html = (
+        f'<span>•</span><a href="{url}" target="_blank" rel="noopener noreferrer" '
+        f'style="color:#2563eb;font-weight:600;text-decoration:none;">🔗 Zdrojový článek ↗</a>'
+        if url else ""
+    )
+
+    live_article_block = ""
+    if live_headline:
+        headline_inner = (
+            f'<a href="{url}" target="_blank" rel="noopener noreferrer" '
+            f'style="color:#0f172a;text-decoration:underline;text-decoration-color:#94a3b8;">{live_headline} ↗</a>'
+            if url else live_headline
+        )
+        perex_inner = f'<div style="margin-top:4px;color:#334155;font-size:0.83rem;">{live_perex}</div>' if live_perex else ""
+        live_article_block = (
+            f'<div class="news-section-item" style="border-left: 3px solid #2563eb; background: #f8fafc;">'
+            f'<span class="news-label" style="color:#1d4ed8;">📰 Nejnovější zpráva k tématu ({date_label} • {source_label}):</span>'
+            f'<span class="news-text" style="font-weight:650;color:#0f172a;">{headline_inner}</span>'
+            f'{perex_inner}'
+            f'</div>'
+        )
+
     st.markdown(
         f"""
         <div class="macro-news-card">
@@ -4027,15 +4109,17 @@ def render_cz_news_card(news_item: Optional[Dict[str, str]]):
                     <span>{news_item.get('tag', 'AKTUÁLNÍ ZPRÁVA')}</span>
                 </div>
                 <div class="macro-news-meta">
-                    <span>📅 {news_item.get('date', '')}</span>
+                    <span>📅 {date_label}</span>
                     <span>•</span>
-                    <span>🗞️ {news_item.get('source', '')}</span>
+                    <span>🗞️ {source_label}</span>
+                    {source_link_html}
                 </div>
             </div>
             <div class="macro-news-headline">{news_item.get('title', '')}</div>
             <div class="macro-news-content">
+                {live_article_block}
                 <div class="news-section-item">
-                    <span class="news-label">🔍 Důvod změny & klíčové faktory:</span>
+                    <span class="news-label">🔍 Ověřená data & hlavní faktory:</span>
                     <span class="news-text">{news_item.get('reason', '')}</span>
                 </div>
                 <div class="news-section-item">
@@ -4413,7 +4497,7 @@ with main_tab_markets:
             st.markdown('<div class="section-header">Bankovní sektor, hypoteční trh a měnová zásoba ČR</div>', unsafe_allow_html=True)
             col_bk1, col_bk2, col_bk3, col_bk4 = st.columns(4)
             col_bk1.metric("Nové hypotéky – průměrná sazba", f"{cz_mort_rate_curr:.2f} % p.a.", delta=f"{cz_mort_rate_curr - cz_mort_rate_prev:+.2f} p.b.", delta_color="inverse")
-            col_bk2.metric("Nové hypotéky – měsíční objem", f"{cz_mort_vol_curr:.1f} mld. Kč")
+            col_bk2.metric("Nové hypotéky – měsíční objem", f"{cz_mort_vol_curr:.1f} mld. Kč", delta=f"{cz_mort_vol_curr - cz_mort_vol_prev:+.1f} mld. Kč")
             col_bk3.metric("Korporátní úvěry (meziroční růst)", f"{cz_corp_loans_curr:+.1f} %", delta=f"{cz_corp_loans_curr - cz_corp_loans_prev:+.1f} p.b.")
             col_bk4.metric("Měnový agregát M2 (meziročně)", f"{cz_m2_curr:+.1f} %", delta=f"{cz_m2_curr - cz_m2_prev:+.1f} p.b.")
             render_cz_news_card(CZ_NEWS.get("banking"))

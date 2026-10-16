@@ -16,10 +16,17 @@ Poskytuje třídu DataLoader s podporou pro:
 
 from __future__ import annotations
 
+import html
+import json
 import logging
+import re
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
+from email.utils import parsedate_to_datetime
 from typing import Dict, List, Optional, Tuple, Any
+from urllib.parse import quote_plus
+
 
 import numpy as np
 import pandas as pd
@@ -947,21 +954,42 @@ class DataLoader:
     # =========================================================================
 
     def fetch_eurostat_cpi(self) -> pd.DataFrame:
-        """Stáhne meziroční inflaci (HICP) pro ČR z Eurostatu."""
-        url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/prc_hicp_manr?geo=CZ&coicop=CP00"
-        resp = requests.get(url, headers=self.headers, timeout=self.timeout)
+        """Stáhne meziroční celkovou (HICP) a jádrovou (Core HICP) inflaci pro ČR z Eurostatu."""
+        url_head = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/prc_hicp_manr?geo=CZ&coicop=CP00"
+        url_core = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/prc_hicp_manr?geo=CZ&coicop=TOT_X_NRG_FOOD"
+
+        resp = requests.get(url_head, headers=self.headers, timeout=self.timeout)
         resp.raise_for_status()
         data = resp.json()
         time_labels = list(data.get("dimension", {}).get("time", {}).get("category", {}).get("label", {}).values())
         values_dict = data.get("value", {})
+
+        core_map: Dict[str, float] = {}
+        try:
+            rc = requests.get(url_core, headers=self.headers, timeout=self.timeout)
+            if rc.status_code == 200:
+                dc = rc.json()
+                tc = list(dc.get("dimension", {}).get("time", {}).get("category", {}).get("label", {}).values())
+                vc = dc.get("value", {})
+                core_map = {tc[int(k)]: float(v) for k, v in vc.items() if int(k) < len(tc) and v is not None}
+        except Exception as e:
+            logger.warning("Chyba při stahování Core CPI ČR z Eurostatu: %s", e)
+
         records = []
         for idx, t_str in enumerate(time_labels):
             val = values_dict.get(str(idx))
             if val is not None:
-                records.append({"date": pd.to_datetime(t_str) + pd.offsets.MonthEnd(0), "cpi_yoy": float(val)})
+                row_rec: Dict[str, Any] = {
+                    "date": pd.to_datetime(t_str) + pd.offsets.MonthEnd(0),
+                    "cpi_yoy": float(val)
+                }
+                if t_str in core_map:
+                    row_rec["cpi_core_yoy"] = core_map[t_str]
+                records.append(row_rec)
         if not records:
             raise ValueError("Eurostat CPI vrátil prázdný dataset.")
         return pd.DataFrame(records).sort_values("date").drop_duplicates("date").reset_index(drop=True)
+
 
     def fetch_eurostat_ea_cpi(self) -> pd.DataFrame:
         """Stáhne celkovou (HICP) a jádrovou (Core HICP) inflaci Eurozóny z Eurostatu."""
@@ -1472,12 +1500,343 @@ class DataLoader:
         return res_df.sort_values("date").reset_index(drop=True).ffill().bfill()
 
     # =========================================================================
+    # 5b. LIVE API: ČBA Monitor (Hypomonitor, Úvěry, Vklady & Aktuální Zprávy)
+    # =========================================================================
+
+    @staticmethod
+    def _parse_cba_blade_series(html_text: str, series_index: int = 0) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        """Extrahuje časovou řadu a metadata z var blade_graphData na stránkách cbamonitor.cz."""
+        m = re.search(r"var\s+blade_graphData\s*=\s*(\{.*?\});?\s*</script>", html_text, re.DOTALL)
+        if not m:
+            return [], {}
+        raw_json = json.loads(m.group(1))
+        graph_data = raw_json.get("graph_data", [])
+        graph_params = raw_json.get("graph_params", {}) if isinstance(raw_json.get("graph_params"), dict) else {}
+        if not graph_data or series_index >= len(graph_data):
+            return [], graph_params
+
+        series_obj = graph_data[series_index]
+        pts = list(series_obj.values()) if isinstance(series_obj, dict) else (series_obj if isinstance(series_obj, list) else [])
+        records: List[Dict[str, Any]] = []
+        for pt in pts:
+            if not isinstance(pt, dict):
+                continue
+            x_str = pt.get("x")
+            y_str = pt.get("y")
+            if x_str and y_str is not None:
+                try:
+                    dt = pd.to_datetime(x_str, format="%m/%d/%Y", errors="coerce")
+                    if pd.isna(dt):
+                        dt = pd.to_datetime(x_str, errors="coerce")
+                    if pd.notna(dt):
+                        records.append({
+                            "date": dt + pd.offsets.MonthEnd(0),
+                            "value": float(y_str)
+                        })
+                except (ValueError, TypeError):
+                    continue
+        return records, graph_params
+
+    def fetch_cba_hypomonitor_and_banking(self) -> pd.DataFrame:
+        """
+        Stáhne živá měsíční data ČBA Hypomonitoru a bankovní statistiky ČNB z cbamonitor.cz:
+        - cz_mortgage_rate: Průměrná realizovaná úroková sazba nových hypoték bez refinancování (%)
+        - cz_mortgage_volume_czk_bn: Objem skutečně nových hypoték bez refinancování (mld. Kč)
+        - cz_corporate_loans_yoy: Meziroční dynamika úvěrů podnikům (% YoY)
+        - cz_m2_growth_yoy: Meziroční dynamika vkladů / peněžní zásoby (% YoY)
+        """
+        dfs: List[pd.DataFrame] = []
+
+        # 1. Úroková sazba nových hypoték (ČBA Hypomonitor + historie ČNB 2014–2019)
+        try:
+            url_rate = "https://www.cbamonitor.cz/statistika/prumerna-urokova-sazba-novych-hypotek"
+            r = requests.get(url_rate, headers=self.headers, timeout=self.timeout)
+            if r.status_code == 200:
+                recs_cba, _ = self._parse_cba_blade_series(r.text, series_index=0)
+                recs_cnb, _ = self._parse_cba_blade_series(r.text, series_index=1)
+                combined_rate: Dict[pd.Timestamp, float] = {}
+                for item in recs_cnb:
+                    combined_rate[item["date"]] = round(item["value"], 2)
+                for item in recs_cba:
+                    combined_rate[item["date"]] = round(item["value"], 2)
+                if combined_rate:
+                    df_r = pd.DataFrame([
+                        {"date": k, "cz_mortgage_rate": v} for k, v in combined_rate.items()
+                    ]).sort_values("date").drop_duplicates("date")
+                    dfs.append(df_r)
+        except Exception as e:
+            logger.warning("Chyba při stahování ČBA Hypomonitor sazeb: %s", e)
+
+        # 2. Objem skutečně nových hypoték bez refinancování (mld. Kč)
+        try:
+            url_vol = "https://www.cbamonitor.cz/statistika/pocet-objem-nove-poskytnutych-hypotek"
+            r = requests.get(url_vol, headers=self.headers, timeout=self.timeout)
+            if r.status_code == 200:
+                recs_vol, _ = self._parse_cba_blade_series(r.text, series_index=0)
+                if recs_vol:
+                    df_v = pd.DataFrame([
+                        {"date": item["date"], "cz_mortgage_volume_czk_bn": round(item["value"], 1)}
+                        for item in recs_vol
+                    ]).sort_values("date").drop_duplicates("date")
+                    dfs.append(df_v)
+        except Exception as e:
+            logger.warning("Chyba při stahování ČBA Hypomonitor objemů: %s", e)
+
+        # 3. Korporátní úvěry YoY (Úvěry podnikům z ČNB ARAD přes ČBA Monitor)
+        try:
+            url_loans = "https://www.cbamonitor.cz/statistika/mesicni-vyvoj-uveru-bankovniho-sektoru"
+            r = requests.get(url_loans, headers=self.headers, timeout=self.timeout)
+            if r.status_code == 200:
+                recs_corp, _ = self._parse_cba_blade_series(r.text, series_index=4)
+                if not recs_corp:
+                    recs_corp, _ = self._parse_cba_blade_series(r.text, series_index=0)
+                if recs_corp:
+                    df_l = pd.DataFrame([
+                        {"date": item["date"], "cz_corporate_loans_yoy": round(item["value"], 1)}
+                        for item in recs_corp
+                    ]).sort_values("date").drop_duplicates("date")
+                    dfs.append(df_l)
+        except Exception as e:
+            logger.warning("Chyba při stahování dynamiky korporátních úvěrů: %s", e)
+
+        # 4. Dynamika vkladů / M2 YoY
+        try:
+            url_dep = "https://www.cbamonitor.cz/statistika/dynamika-vkladu"
+            r = requests.get(url_dep, headers=self.headers, timeout=self.timeout)
+            if r.status_code == 200:
+                recs_dep, _ = self._parse_cba_blade_series(r.text, series_index=0)
+                if recs_dep:
+                    df_d = pd.DataFrame([
+                        {"date": item["date"], "cz_m2_growth_yoy": round(item["value"], 1)}
+                        for item in recs_dep
+                    ]).sort_values("date").drop_duplicates("date")
+                    dfs.append(df_d)
+        except Exception as e:
+            logger.warning("Chyba při stahování dynamiky vkladů: %s", e)
+
+        if not dfs:
+            raise ValueError("ČBA Monitor nevrátil žádná data pro bankovní sektor.")
+
+        res = dfs[0]
+        for d in dfs[1:]:
+            res = pd.merge(res, d, on="date", how="outer")
+        return res.sort_values("date").drop_duplicates("date").reset_index(drop=True)
+
+    def fetch_live_cz_topic_news(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Stáhne nejaktuálnější ověřené zprávy a analytické komentáře pro každou metriku/téma ČR.
+        Kombinuje:
+        1. Primární makroekonomické a hypoteční analýzy z ČBA Monitoru (cbamonitor.cz/aktualni-deni)
+           seřazené striktně sestupně podle data publikace.
+        2. Živé zpravodajství z Google News RSS (filtrované podle klíčových slov dané metriky
+           a seřazené sestupně podle přesného času publikace pubDate).
+        Vrací slovník {topic_key: {"title", "date", "source", "url", "summary", "pub_ts"}}.
+        """
+        cba_articles: List[Dict[str, Any]] = []
+        if BeautifulSoup is not None:
+            try:
+                resp = requests.get("https://www.cbamonitor.cz/aktualni-deni", headers=self.headers, timeout=6)
+                if resp.status_code == 200:
+                    soup = BeautifulSoup(resp.text, "html.parser")
+                    for card in soup.select("div[js-link-new-tab]"):
+                        url = (card.get("js-link-new-tab") or "").strip()
+                        h3 = card.find("h3")
+                        title = h3.get_text(" ", strip=True) if h3 else ""
+                        desc_el = card.find("p", attrs={"itemprop": "description"})
+                        desc = desc_el.get_text(" ", strip=True) if desc_el else ""
+                        date_text = ""
+                        pub_dt = datetime(2020, 1, 1)
+                        for sp in card.find_all("span"):
+                            txt = sp.get_text(" ", strip=True)
+                            m_dt = re.search(r"(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})", txt)
+                            if m_dt:
+                                d_i, m_i, y_i = int(m_dt.group(1)), int(m_dt.group(2)), int(m_dt.group(3))
+                                pub_dt = datetime(y_i, m_i, d_i, 12, 0)
+                                date_text = f"{d_i:02d}. {m_i:02d}. {y_i}"
+                                break
+                        if title and url:
+                            cba_articles.append({
+                                "title": title,
+                                "url": url,
+                                "date": date_text,
+                                "summary": desc,
+                                "source": "Česká bankovní asociace (ČBA Monitor)",
+                                "pub_dt": pub_dt
+                            })
+            except Exception as e:
+                logger.warning("Chyba při načítání aktualit z ČBA Monitoru: %s", e)
+
+        cba_articles.sort(key=lambda x: x["pub_dt"], reverse=True)
+
+        topic_configs: Dict[str, Dict[str, Any]] = {
+            "banking": {
+                "cba_keywords": ["hypomonitor", "hypote", "bankovní statistika", "úvěr"],
+                "rss_query": "hypotéky sazba ČBA Hypomonitor OR úvěry ČNB",
+                "rss_keywords": ["hypot", "hypomonitor", "sazb", "úvěr", "bank"],
+                "prefer_cba": True
+            },
+            "rates": {
+                "cba_keywords": ["čnb drží sazby", "sazby čnb", "repo", "bankovní rada", "jádrová inflace a energie nechávají"],
+                "rss_query": "ČNB úrokové sazby repo sazba bankovní rada",
+                "rss_keywords": ["čnb", "sazb", "repo", "bankovní rad", "michl", "měnov"],
+                "prefer_cba": True
+            },
+            "inflation": {
+                "cba_keywords": ["inflac", "spotřebitelsk"],
+                "rss_query": "inflace ČR ČSÚ spotřebitelské ceny",
+                "rss_keywords": ["inflac", "spotřebitelsk", "cen", "čsú"],
+                "prefer_cba": True
+            },
+            "gdp": {
+                "cba_keywords": ["růst české ekonomiky", "hdp", "hrubý domácí", "ekonomika ve"],
+                "rss_query": "HDP česká ekonomika růst ČSÚ",
+                "rss_keywords": ["hdp", "ekonomik", "růst", "čsú", "hrubý domácí"],
+                "prefer_cba": True
+            },
+            "wages": {
+                "cba_keywords": ["růst mezd", "mzd", "výdělk"],
+                "rss_query": "průměrná mzda ČR ČSÚ reálné mzdy",
+                "rss_keywords": ["mzd", "plat", "výdělk", "čsú"],
+                "prefer_cba": True
+            },
+            "leading": {
+                "cba_keywords": ["sentiment", "důvěr", "pmi"],
+                "rss_query": "PMI průmysl ČR OR důvěra v ekonomiku ČSÚ",
+                "rss_keywords": ["pmi", "důvěr", "sentiment", "průmysl", "nákupních manažerů"],
+                "prefer_cba": True
+            },
+            "retail_industry": {
+                "cba_keywords": ["průmysl", "maloobchod", "stavebnictví"],
+                "rss_query": "průmyslová produkce ČR OR maloobchodní tržby ČSÚ",
+                "rss_keywords": ["průmysl", "maloobchod", "tržb", "výrob", "čsú"],
+                "prefer_cba": True
+            },
+            "unemployment": {
+                "cba_keywords": ["nezaměstnanost", "trh práce"],
+                "rss_query": "nezaměstnanost ČR Úřad práce MPSV",
+                "rss_keywords": ["nezaměstnanost", "trh práce", "úřad práce", "volných míst"],
+                "prefer_cba": False
+            },
+            "stocks_px": {
+                "cba_keywords": [],
+                "rss_query": "pražská burza index PX",
+                "rss_keywords": ["pražská burza", "index px", "bcpp", "burz"],
+                "prefer_cba": False
+            },
+            "fx": {
+                "cba_keywords": ["korun", "kurz"],
+                "rss_query": "kurz koruny EUR CZK ČNB",
+                "rss_keywords": ["korun", "eur/czk", "dolar", "deviz", "měn"],
+                "prefer_cba": False
+            },
+            "yield_curve": {
+                "cba_keywords": ["výnosov", "dluhopis", "swap"],
+                "rss_query": "státní dluhopisy ČR výnosy MF ČR",
+                "rss_keywords": ["dluhopis", "výnos", "aukc", "státní", "mf čr"],
+                "prefer_cba": False
+            },
+            "debt": {
+                "cba_keywords": ["rozpočet", "dluh", "fiskál", "deficit"],
+                "rss_query": "státní rozpočet schodek ČR veřejný dluh Ministerstvo financí",
+                "rss_keywords": ["rozpoč", "schod", "dluh", "deficit", "ministerstvo financí"],
+                "prefer_cba": False
+            },
+            "external": {
+                "cba_keywords": ["zahraniční obchod", "export", "běžný účet"],
+                "rss_query": "zahraniční obchod ČR bilance ČSÚ export",
+                "rss_keywords": ["zahraniční obchod", "export", "vývoz", "bilanc", "běžný účet"],
+                "prefer_cba": False
+            },
+            "intl_spread": {
+                "cba_keywords": ["dluhopis", "výnos", "ecb", "fed"],
+                "rss_query": "české státní dluhopisy výnosy ČNB ECB",
+                "rss_keywords": ["dluhopis", "výnos", "čnb", "ecb", "sazb"],
+                "prefer_cba": False
+            }
+        }
+
+        results: Dict[str, Dict[str, Any]] = {}
+
+        for topic_key, cfg in topic_configs.items():
+            best_cba: Optional[Dict[str, Any]] = None
+            for art in cba_articles:
+                haystack = f"{art['title']} {art['summary']}".lower()
+                if any(kw in haystack for kw in cfg.get("cba_keywords", [])):
+                    best_cba = art
+                    break
+
+            best_rss: Optional[Dict[str, Any]] = None
+            if not (cfg.get("prefer_cba") and best_cba is not None):
+                q_str = cfg.get("rss_query", "")
+                if q_str:
+                    rss_url = f"https://news.google.com/rss/search?q={quote_plus(q_str)}&hl=cs&gl=CZ&ceid=CZ:cs"
+                    try:
+                        r_rss = requests.get(rss_url, headers=self.headers, timeout=4)
+                        if r_rss.status_code == 200:
+                            root = ET.fromstring(r_rss.content)
+                            rss_candidates: List[Dict[str, Any]] = []
+                            for item in root.findall("./channel/item"):
+                                raw_title = (item.findtext("title") or "").strip()
+                                link = (item.findtext("link") or "").strip()
+                                pub_raw = (item.findtext("pubDate") or "").strip()
+                                src_el = item.find("source")
+                                src_name = (src_el.text or "").strip() if src_el is not None else ""
+
+                                if " - " in raw_title and not src_name:
+                                    parts = raw_title.rsplit(" - ", 1)
+                                    clean_title, src_name = parts[0].strip(), parts[1].strip()
+                                elif " - " in raw_title and raw_title.endswith(f" - {src_name}"):
+                                    clean_title = raw_title[: -len(f" - {src_name}")].strip()
+                                else:
+                                    clean_title = raw_title
+
+                                clean_title = html.unescape(clean_title)
+                                req_kws = cfg.get("rss_keywords", [])
+                                if req_kws and not any(k in clean_title.lower() for k in req_kws):
+                                    continue
+
+                                try:
+                                    dt_parsed = parsedate_to_datetime(pub_raw).replace(tzinfo=None)
+                                except Exception:
+                                    dt_parsed = datetime(2020, 1, 1)
+
+                                rss_candidates.append({
+                                    "title": clean_title,
+                                    "url": link,
+                                    "date": dt_parsed.strftime("%d. %m. %Y"),
+                                    "summary": "",
+                                    "source": src_name or "Finanční zpravodajství ČR",
+                                    "pub_dt": dt_parsed
+                                })
+
+                            if rss_candidates:
+                                rss_candidates.sort(key=lambda x: x["pub_dt"], reverse=True)
+                                best_rss = rss_candidates[0]
+                    except Exception as e:
+                        logger.warning("Chyba při načítání RSS pro téma %s: %s", topic_key, e)
+
+            chosen = best_cba if (best_cba and (not best_rss or cfg.get("prefer_cba") or best_cba["pub_dt"] >= best_rss["pub_dt"])) else (best_rss or best_cba)
+            if chosen:
+                summary_txt = chosen.get("summary", "")
+                results[topic_key] = {
+                    "title": chosen["title"],
+                    "url": chosen["url"],
+                    "date": chosen["date"],
+                    "summary": summary_txt,
+                    "description": summary_txt,
+                    "source": chosen["source"],
+                    "pub_ts": chosen["pub_dt"].strftime("%Y-%m-%d")
+                }
+
+        return results
+
+    # =========================================================================
     # 6. HISTORICKÝ FALLBACK MODEL (2015–2026: ČR, EU a USA)
     # =========================================================================
 
     def generate_fallback_daily_fx(self) -> pd.DataFrame:
         """Vygeneruje souvislý denní dataset devizových kurzů a akciových trhů 2015–2026 včetně PLN a GBP."""
-        dates_d = pd.date_range("2015-01-01", "2026-10-10", freq="B")
+        dates_d = pd.date_range("2015-01-01", "2026-10-16", freq="B")
         np.random.seed(101)
         n = len(dates_d)
 
@@ -1596,9 +1955,11 @@ class DataLoader:
                 rates_24 = [6.25, 5.75, 5.75, 5.25, 4.75, 4.75, 4.50, 4.50, 4.25, 4.00, 4.00, 4.00]
                 rate = rates_24[mo - 1]
             elif yr == 2025:
-                rate = 3.75 if mo < 6 else 3.50
+                rates_25 = [4.00, 3.75, 3.75, 3.75, 3.50, 3.50, 3.50, 3.50, 3.50, 3.50, 3.50, 3.50]
+                rate = rates_25[mo - 1]
             else:
-                rate = 3.50
+                rates_26 = [3.50, 3.50, 3.50, 3.50, 3.50, 3.75, 3.75, 3.75, 3.75, 3.75, 3.75, 3.75]
+                rate = rates_26[min(mo - 1, 11)]
             repo_series.append(rate)
 
             # Inflace CPI & Jádrová inflace ČR
@@ -1629,14 +1990,25 @@ class DataLoader:
                 core_traj = [2.9, 2.8, 2.7, 2.6, 2.5, 2.2, 2.3, 2.3, 2.3, 2.4, 2.4, 2.4]
                 cpi, core = cpi_traj[mo - 1], core_traj[mo - 1]
             elif yr == 2025:
-                cpi, core = 2.4, 2.3
+                cpi_25 = [2.8, 2.7, 2.7, 2.5, 2.4, 2.2, 2.2, 2.1, 2.0, 2.1, 2.2, 2.3]
+                core_25 = [2.5, 2.5, 2.6, 2.6, 2.7, 2.7, 2.8, 2.8, 2.8, 2.8, 2.8, 2.9]
+                cpi, core = cpi_25[mo - 1], core_25[mo - 1]
             else:
-                cpi, core = 2.2, 2.2
+                cpi_26 = [2.1, 2.0, 2.1, 2.2, 2.1, 2.0, 1.8, 1.9, 2.5, 2.5, 2.5, 2.5]
+                core_26 = [2.8, 2.8, 2.9, 2.9, 3.0, 3.0, 3.0, 3.0, 2.9, 2.9, 2.9, 2.9]
+                cpi, core = cpi_26[min(mo - 1, 11)], core_26[min(mo - 1, 11)]
             cpi_series.append(round(cpi, 1))
             cpi_core_series.append(round(core, 1))
 
-            # Nezaměstnanost ČR
-            une = 2.8 if yr >= 2024 else (2.4 if yr >= 2018 else 4.0)
+            # Nezaměstnanost ČR (Eurostat SA % / MPSV)
+            if yr == 2025:
+                une_25 = [2.6, 2.7, 2.7, 2.7, 2.7, 2.7, 2.8, 2.8, 2.8, 2.8, 2.8, 2.9]
+                une = une_25[mo - 1]
+            elif yr >= 2026:
+                une_26 = [2.9, 2.9, 2.9, 3.0, 3.0, 3.0, 3.1, 3.1, 3.2, 3.2, 3.2, 3.2]
+                une = une_26[min(mo - 1, 11)]
+            else:
+                une = 2.7 if yr == 2024 else (2.4 if yr >= 2018 else 4.0)
             une_series.append(round(une, 1))
 
             # Spotřeba (Maloobchod) & Průmysl ČR
@@ -1654,8 +2026,14 @@ class DataLoader:
                 ret_cz, ind_cz = -2.1, -2.8
             elif yr == 2024:
                 ret_cz, ind_cz = 4.2, 0.5
+            elif yr == 2025:
+                ret_25 = [3.8, 4.1, 4.3, 4.0, 3.9, 4.2, 4.4, 4.0, 3.8, 3.9, 4.1, 4.2]
+                ind_25 = [0.8, 1.1, 1.5, 1.2, 1.8, 2.1, 1.9, 1.6, 2.0, 2.2, 2.4, 2.5]
+                ret_cz, ind_cz = ret_25[mo - 1], ind_25[mo - 1]
             else:
-                ret_cz, ind_cz = 3.2, 2.2
+                ret_26 = [3.9, 3.7, 4.0, 3.8, 3.6, 3.5, 3.8, 3.6, 3.7, 3.7, 3.7, 3.7]
+                ind_26 = [2.2, 2.4, 2.8, 2.5, 2.1, 2.3, 1.6, 2.0, 2.0, 2.0, 2.0, 2.0]
+                ret_cz, ind_cz = ret_26[min(mo - 1, 11)], ind_26[min(mo - 1, 11)]
             ret_cz_series.append(round(ret_cz, 1))
             ind_cz_series.append(round(ind_cz, 1))
 
@@ -1682,11 +2060,13 @@ class DataLoader:
                 cz_pmi = 43.5 + (mo / 12) * 2.5
                 cz_conf = 93.0 + (mo / 12) * 3.0
             elif yr == 2025:
-                cz_pmi = 47.5 + (mo / 12) * 2.0
-                cz_conf = 96.0 + (mo / 12) * 1.5
+                cz_pmi = 46.8 + (mo / 12) * 2.4
+                cz_conf = 96.5 + (mo / 12) * 2.0
             else:
-                cz_pmi = 50.2
-                cz_conf = 98.0
+                pmi_26 = [48.8, 49.2, 49.8, 50.1, 49.7, 49.4, 48.9, 49.3, 49.6, 49.6, 49.6, 49.6]
+                conf_26 = [98.6, 99.1, 99.5, 99.2, 98.8, 98.4, 98.1, 97.9, 97.5, 97.5, 97.5, 97.5]
+                cz_pmi = pmi_26[min(mo - 1, 11)]
+                cz_conf = conf_26[min(mo - 1, 11)]
             cz_pmi_series.append(round(cz_pmi, 1))
             cz_conf_series.append(round(cz_conf, 1))
 
@@ -1704,49 +2084,61 @@ class DataLoader:
             elif yr == 2023:
                 nom_w = 7.8
             elif yr == 2024:
-                nom_w = 7.2
+                nom_w = 7.1
             elif yr == 2025:
-                nom_w = 6.4
+                nom_w_25 = [6.8, 6.8, 6.8, 7.0, 7.0, 7.0, 6.9, 6.9, 6.9, 6.7, 6.7, 6.7]
+                nom_w = nom_w_25[mo - 1]
             else:
-                nom_w = 5.8
+                nom_w_26 = [6.1, 6.1, 6.1, 6.4, 6.4, 6.4, 6.5, 6.5, 6.4, 6.4, 6.4, 6.4]
+                nom_w = nom_w_26[min(mo - 1, 11)]
             real_w = round(nom_w - cpi, 1)
             cz_nom_wage_series.append(round(nom_w, 1))
             cz_real_wage_series.append(real_w)
 
-            # Bankovní sektor ČR: Hypotéky (sazba a objem) & Korporátní úvěry YoY
+            # Bankovní sektor ČR: Hypotéky (skutečná data ČBA Hypomonitor) & Korporátní úvěry YoY
             if yr <= 2017:
-                m_rate, m_vol, c_loans = 2.15, 18.5, 6.2
+                m_rate, m_vol, c_loans = 2.05, 18.5, 5.2
             elif yr in (2018, 2019):
-                m_rate, m_vol, c_loans = 2.85, 17.0, 5.5
+                m_rate, m_vol, c_loans = 2.65, 17.5, 5.8
             elif yr == 2020:
-                m_rate, m_vol, c_loans = 2.30, 21.0, 2.5
+                m_rate_20 = [2.36, 2.42, 2.42, 2.37, 2.29, 2.20, 2.14, 2.11, 2.08, 2.04, 1.99, 1.97]
+                m_vol_20 = [15.3, 16.0, 16.9, 16.3, 15.1, 19.7, 20.1, 17.7, 19.6, 21.7, 22.6, 22.9]
+                m_rate, m_vol, c_loans = m_rate_20[mo - 1], m_vol_20[mo - 1], 3.8
             elif yr == 2021:
-                m_rate, m_vol, c_loans = 2.50 + (mo / 12) * 1.1, 35.0 + (mo / 12) * 8.0, 5.0
+                m_rate_21 = [1.95, 1.95, 1.96, 2.00, 2.07, 2.13, 2.22, 2.32, 2.43, 2.54, 2.70, 3.00]
+                m_vol_21 = [20.7, 23.5, 35.2, 31.8, 34.0, 38.3, 32.0, 32.3, 30.2, 31.2, 35.9, 34.2]
+                m_rate, m_vol, c_loans = m_rate_21[mo - 1], m_vol_21[mo - 1], 1.8
             elif yr == 2022:
-                m_rate = 4.50 + (mo / 12) * 1.4
-                m_vol = 22.0 - (mo / 12) * 14.0
-                c_loans = 7.5 + (mo / 12) * 1.8
+                m_rate_22 = [3.39, 3.84, 4.15, 4.39, 4.64, 5.01, 5.42, 5.76, 5.83, 5.86, 5.96, 5.98]
+                m_vol_22 = [26.3, 20.8, 25.4, 14.2, 16.8, 15.7, 9.8, 8.2, 5.9, 6.1, 6.3, 6.5]
+                m_rate, m_vol, c_loans = m_rate_22[mo - 1], m_vol_22[mo - 1], 6.8
             elif yr == 2023:
-                m_rate = 5.85 - (mo / 12) * 0.3
-                m_vol = 9.5 + (mo / 12) * 2.5
-                c_loans = 6.2
+                m_rate_23 = [5.93, 5.90, 5.86, 5.89, 5.90, 5.86, 5.80, 5.78, 5.74, 5.71, 5.67, 5.65]
+                m_vol_23 = [5.3, 6.5, 10.3, 8.7, 10.4, 11.6, 9.5, 11.4, 11.3, 13.2, 13.4, 12.7]
+                m_rate, m_vol, c_loans = m_rate_23[mo - 1], m_vol_23[mo - 1], 5.1
             elif yr == 2024:
-                m_rate = 5.40 - (mo / 12) * 0.7
-                m_vol = 14.5 + (mo / 12) * 7.5
-                c_loans = 6.9
+                m_rate_24 = [5.54, 5.36, 5.19, 5.09, 5.06, 5.05, 5.07, 4.98, 4.96, 4.90, 4.85, 4.80]
+                m_vol_24 = [10.8, 13.0, 15.5, 19.0, 20.6, 21.0, 19.4, 25.7, 19.6, 21.7, 21.5, 19.7]
+                c_loans_24 = [9.2, 10.6, 10.7, 9.3, 8.3, 7.2, 6.9, 5.8, 6.8, 5.1, 6.2, 5.2]
+                m_rate, m_vol, c_loans = m_rate_24[mo - 1], m_vol_24[mo - 1], c_loans_24[mo - 1]
             elif yr == 2025:
-                m_rate = 4.40 - (mo / 12) * 0.5
-                m_vol = 23.0
-                c_loans = 6.3
+                m_rate_25 = [4.78, 4.72, 4.68, 4.65, 4.60, 4.56, 4.53, 4.52, 4.52, 4.48, 4.48, 4.49]
+                m_vol_25 = [18.7, 21.1, 27.1, 26.1, 27.3, 29.3, 29.8, 26.0, 29.5, 29.3, 28.1, 28.6]
+                c_loans_25 = [4.9, 4.4, 4.1, 4.9, 5.6, 5.9, 1.5, 3.2, 2.9, 1.9, 4.8, 5.1]
+                m_rate, m_vol, c_loans = m_rate_25[mo - 1], m_vol_25[mo - 1], c_loans_25[mo - 1]
             else:
-                m_rate = 3.85
-                m_vol = 25.0
-                c_loans = 5.9
+                # 2026 skutečná trajektorie ČBA Hypomonitor & ČNB ARAD (leden–září 2026)
+                m_rate_26 = [4.48, 4.46, 4.43, 4.52, 4.67, 4.79, 4.90, 5.00, 5.10, 5.10, 5.10, 5.10]
+                m_vol_26 = [27.1, 29.7, 40.3, 44.2, 38.1, 36.5, 30.8, 26.8, 28.0, 28.0, 28.0, 28.0]
+                c_loans_26 = [5.5, 6.9, 7.2, 7.6, 7.6, 9.6, 13.4, 13.3, 13.3, 13.3, 13.3, 13.3]
+                m_rate = m_rate_26[min(mo - 1, 11)]
+                m_vol = m_vol_26[min(mo - 1, 11)]
+                c_loans = c_loans_26[min(mo - 1, 11)]
             cz_mort_rate_series.append(round(m_rate, 2))
             cz_mort_vol_series.append(round(m_vol, 1))
             cz_corp_loans_series.append(round(c_loans, 1))
 
-            # Měnová zásoba ČR: M2 YoY
+            # Měnová zásoba / Dynamika vkladů ČR: M2 YoY
             if yr in (2015, 2016, 2017, 2018, 2019):
                 m2_val = 7.2 + 0.6 * np.cos(mo)
             elif yr == 2020:
@@ -1758,11 +2150,14 @@ class DataLoader:
             elif yr == 2023:
                 m2_val = 7.6
             elif yr == 2024:
-                m2_val = 6.8
+                m2_24 = [8.2, 7.2, 8.6, 8.4, 7.0, 6.5, 6.4, 6.6, 6.8, 7.6, 7.3, 7.8]
+                m2_val = m2_24[mo - 1]
             elif yr == 2025:
-                m2_val = 6.1
+                m2_25 = [5.7, 4.6, 4.1, 3.9, 5.3, 4.8, 4.3, 4.2, 3.6, 3.6, 3.2, 6.1]
+                m2_val = m2_25[mo - 1]
             else:
-                m2_val = 5.8
+                m2_26 = [5.5, 6.2, 5.6, 5.0, 5.1, 4.8, 4.7, 5.5, 5.5, 5.5, 5.5, 5.5]
+                m2_val = m2_26[min(mo - 1, 11)]
             cz_m2_series.append(round(m2_val, 1))
 
             # Vnější rovnováha ČR: Běžný účet k HDP a Bilance zahraničního obchodu ČSÚ
@@ -1785,13 +2180,16 @@ class DataLoader:
                 ca_pct = 1.5
                 tr_bal = 17.5 + 2.5 * np.cos(mo)
             elif yr == 2025:
-                ca_pct = 1.3
-                tr_bal = 16.0
+                ca_pct = 1.4
+                tr_bal = 16.5 + 2.0 * np.cos(mo)
             else:
-                ca_pct = 1.1
-                tr_bal = 15.0
+                ca_26 = [1.4, 1.4, 1.3, 1.2, 1.2, 1.1, 1.0, 1.1, 1.1, 1.1, 1.1, 1.1]
+                tb_26 = [17.2, 19.8, 22.4, 18.5, 16.2, 18.9, 12.4, 15.6, 16.8, 16.8, 16.8, 16.8]
+                ca_pct = ca_26[min(mo - 1, 11)]
+                tr_bal = tb_26[min(mo - 1, 11)]
             cz_ca_series.append(round(ca_pct, 1))
             cz_trade_bal_series.append(round(tr_bal, 1))
+
 
         repo_arr = np.array(repo_series)
         discount_arr = np.maximum(0.05, repo_arr - 1.0)
@@ -2467,33 +2865,33 @@ class DataLoader:
         # ---------------------------------------------------------------------
         # E. Kvartální HDP, Dluh a Saldo (ČR, EU i USA)
         # ---------------------------------------------------------------------
-        dates_q = pd.date_range("2015-01-01", "2026-07-01", freq=OFFSET_QUARTER_END)
+        dates_q = pd.date_range("2015-01-01", "2026-10-31", freq=OFFSET_QUARTER_END)
         q_records = []
 
         gdp_growth_map_cz = {
             2015: [5.5, 5.6, 5.2, 5.0], 2016: [2.8, 2.5, 2.3, 2.4], 2017: [5.0, 5.2, 5.4, 5.1],
             2018: [3.5, 3.2, 3.1, 2.9], 2019: [3.2, 3.1, 2.9, 2.7], 2020: [-1.8, -10.8, -5.0, -4.4],
             2021: [-2.1, 8.5, 3.9, 4.0], 2022: [4.2, 3.4, 1.6, 0.4], 2023: [-0.4, -0.6, -0.5, 0.3],
-            2024: [0.6, 0.8, 1.2, 1.6], 2025: [2.0, 2.3, 2.5, 2.6], 2026: [2.1, 1.8]
+            2024: [0.6, 0.8, 1.2, 1.6], 2025: [2.0, 2.4, 2.7, 2.6], 2026: [2.5, 2.6, 2.6, 2.6]
         }
         gdp_growth_map_eu = {
             2015: [2.1, 2.2, 2.1, 2.2], 2016: [1.9, 1.9, 1.9, 2.1], 2017: [2.6, 2.7, 2.9, 2.8],
             2018: [2.4, 2.2, 1.8, 1.7], 2019: [1.8, 1.7, 1.7, 1.4], 2020: [-3.2, -14.2, -4.1, -4.4],
             2021: [-1.2, 14.1, 4.2, 5.1], 2022: [5.4, 4.2, 2.5, 1.8], 2023: [1.2, 0.6, 0.1, 0.4],
-            2024: [0.5, 0.7, 0.9, 1.1], 2025: [1.4, 1.5, 1.6, 1.7], 2026: [1.5, 1.6]
+            2024: [0.5, 0.7, 0.9, 1.1], 2025: [1.4, 1.5, 1.6, 1.7], 2026: [1.5, 1.6, 1.6, 1.6]
         }
         gdp_growth_map_us = {
             2015: [3.3, 2.7, 2.4, 2.3], 2016: [1.6, 1.4, 1.9, 2.0], 2017: [2.0, 2.3, 2.3, 2.5],
             2018: [2.8, 3.0, 3.0, 2.6], 2019: [2.2, 2.4, 2.5, 2.6], 2020: [0.3, -8.6, -2.2, -1.8],
             2021: [1.2, 12.2, 4.9, 5.4], 2022: [3.6, 1.9, 1.7, 0.7], 2023: [1.7, 2.4, 2.9, 3.1],
-            2024: [2.9, 3.0, 2.8, 2.5], 2025: [2.2, 2.3, 2.4, 2.2], 2026: [2.1, 2.0]
+            2024: [2.9, 3.0, 2.8, 2.5], 2025: [2.2, 2.3, 2.4, 2.2], 2026: [2.1, 2.0, 2.0, 2.0]
         }
 
         fiscal_map_cz = {
             2015: (1673.0, 39.9, -62.8), 2016: (1613.0, 36.6, 61.8), 2017: (1625.0, 34.2, -6.2),
             2018: (1622.0, 32.1, 2.9), 2019: (1640.0, 30.0, -28.5), 2020: (2050.0, 37.7, -367.4),
             2021: (2466.0, 42.0, -419.7), 2022: (2895.0, 44.2, -360.4), 2023: (3111.0, 44.0, -288.5),
-            2024: (3340.0, 43.8, -282.0), 2025: (3580.0, 43.5, -241.0), 2026: (3820.0, 44.1, -220.0),
+            2024: (3340.0, 43.8, -282.0), 2025: (3580.0, 43.5, -241.0), 2026: (3820.0, 43.6, -240.0),
         }
 
         quarter_idx = 0
@@ -2501,9 +2899,9 @@ class DataLoader:
             yr = d.year
             q_num = (d.month - 1) // 3 + 1
 
-            growth_cz = gdp_growth_map_cz.get(yr, [2.0])[min(q_num - 1, 3)]
-            growth_eu = gdp_growth_map_eu.get(yr, [1.5])[min(q_num - 1, 3)]
-            growth_us = gdp_growth_map_us.get(yr, [2.2])[min(q_num - 1, 3)]
+            growth_cz = gdp_growth_map_cz.get(yr, [2.0])[min(q_num - 1, len(gdp_growth_map_cz.get(yr, [2.0])) - 1)]
+            growth_eu = gdp_growth_map_eu.get(yr, [1.5])[min(q_num - 1, len(gdp_growth_map_eu.get(yr, [1.5])) - 1)]
+            growth_us = gdp_growth_map_us.get(yr, [2.2])[min(q_num - 1, len(gdp_growth_map_us.get(yr, [2.2])) - 1)]
 
             nom_cz = 1150.0 + (quarter_idx * 24.5)
             nom_eu = 2800.0 + (quarter_idx * 38.0)
@@ -2597,13 +2995,13 @@ class DataLoader:
         live_components: Dict[str, pd.DataFrame] = {}
         all_success = True
 
-        # Eurostat ČR CPI
+        # Eurostat ČR CPI & Core
         try:
             live_components["cpi_cz"] = self.fetch_eurostat_cpi()
-            status_info["endpoints"]["Eurostat CPI (ČR)"] = "🟢 OK (Live)"
+            status_info["endpoints"]["Eurostat CPI & Jádrová (ČR)"] = "🟢 OK (Live)"
         except Exception as e:
             logger.warning("Chyba Eurostat CPI ČR: %s", e)
-            status_info["endpoints"]["Eurostat CPI (ČR)"] = f"⚠️ Fallback ({type(e).__name__})"
+            status_info["endpoints"]["Eurostat CPI & Jádrová (ČR)"] = f"⚠️ Fallback ({type(e).__name__})"
 
         # Eurostat EU CPI & Core
         try:
@@ -2653,6 +3051,16 @@ class DataLoader:
             logger.warning("Chyba ČNB PRIBOR: %s", e)
             status_info["endpoints"]["ČNB PRIBOR"] = f"⚠️ Fallback ({type(e).__name__})"
 
+        # ČBA Hypomonitor & Bankovní statistika ČNB ARAD (Hypotéky, Firemní úvěry, Vklady)
+        try:
+            df_cba = self.fetch_cba_hypomonitor_and_banking()
+            if not df_cba.empty:
+                live_components["cba_banking"] = df_cba
+                status_info["endpoints"]["ČBA Hypomonitor & ČNB ARAD (Hypotéky, Úvěry, Vklady)"] = "🟢 OK (Live cbamonitor.cz)"
+        except Exception as e:
+            logger.warning("Chyba ČBA Hypomonitor: %s", e)
+            status_info["endpoints"]["ČBA Hypomonitor & ČNB ARAD"] = f"⚠️ Fallback ({type(e).__name__})"
+
         # ČNB Denní devizové kurzy (EUR, USD, PLN, GBP, JPY, CHF & DXY)
         try:
             df_live_fx = self.fetch_cnb_fx_daily(start_year=2015, end_year=datetime.now().year)
@@ -2699,46 +3107,83 @@ class DataLoader:
         # Sloučení komponent do finální matice
         final_df = base_df.copy()
 
-        if "cpi_cz" in live_components:
-            df_c = live_components["cpi_cz"]
+        def _merge_live_columns(df_base: pd.DataFrame, df_live: pd.DataFrame, cols: List[str], agg_func: str = "mean") -> pd.DataFrame:
+            avail_cols = [c for c in cols if c in df_live.columns]
+            if not avail_cols:
+                return df_base
+            df_sub = df_live[["date"] + avail_cols].copy()
             if frequency == "Q":
-                df_c = df_c.set_index("date").resample(OFFSET_QUARTER_END).mean().reset_index()
-            final_df = pd.merge(final_df.drop(columns=["cpi_yoy"], errors="ignore"), df_c[["date", "cpi_yoy"]], on="date", how="left")
-            final_df["cpi_yoy"] = final_df["cpi_yoy"].ffill()
+                df_sub = df_sub.set_index("date").resample(OFFSET_QUARTER_END).agg(agg_func).reset_index()
+            merged = pd.merge(df_base, df_sub, on="date", how="left", suffixes=("", "_live"))
+            for c in avail_cols:
+                live_c = f"{c}_live"
+                if live_c in merged.columns:
+                    valid_live = merged.loc[merged[live_c].notna(), "date"]
+                    if not valid_live.empty:
+                        max_live_dt = valid_live.max()
+                        # Pro neuzavřené měsíce po posledním živém datu nepřebíráme fallback, ale ffillujeme poslední živou hodnotu
+                        merged.loc[merged["date"] > max_live_dt, c] = np.nan
+                    merged[c] = merged[live_c].combine_first(merged[c])
+                    merged = merged.drop(columns=[live_c])
+                merged[c] = merged[c].ffill().bfill()
+            return merged
+
+        if "cpi_cz" in live_components:
+            final_df = _merge_live_columns(final_df, live_components["cpi_cz"], ["cpi_yoy", "cpi_core_yoy"], agg_func="mean")
 
         if "cpi_ea" in live_components:
-            df_ea = live_components["cpi_ea"]
-            if frequency == "Q":
-                df_ea = df_ea.set_index("date").resample(OFFSET_QUARTER_END).mean().reset_index()
-            final_df = pd.merge(final_df.drop(columns=["eu_cpi_yoy", "eu_core_cpi_yoy"], errors="ignore"), df_ea[["date", "eu_cpi_yoy", "eu_core_cpi_yoy"]], on="date", how="left")
-            final_df["eu_cpi_yoy"] = final_df["eu_cpi_yoy"].ffill()
-            final_df["eu_core_cpi_yoy"] = final_df["eu_core_cpi_yoy"].ffill()
+            final_df = _merge_live_columns(final_df, live_components["cpi_ea"], ["eu_cpi_yoy", "eu_core_cpi_yoy"], agg_func="mean")
 
         if "unemployment" in live_components:
-            df_u = live_components["unemployment"]
-            if frequency == "Q":
-                df_u = df_u.set_index("date").resample(OFFSET_QUARTER_END).mean().reset_index()
-            final_df = pd.merge(final_df.drop(columns=["unemployment_rate", "eu_unemployment_rate"], errors="ignore"), df_u, on="date", how="left")
-            final_df["unemployment_rate"] = final_df["unemployment_rate"].ffill()
-            final_df["eu_unemployment_rate"] = final_df["eu_unemployment_rate"].ffill()
+            final_df = _merge_live_columns(final_df, live_components["unemployment"], ["unemployment_rate", "eu_unemployment_rate"], agg_func="mean")
+
+        if "gdp" in live_components:
+            df_g = live_components["gdp"].sort_values("date")
+            gdp_cols = [c for c in ["gdp_growth_real", "eu_gdp_growth_real"] if c in df_g.columns]
+            if gdp_cols:
+                if frequency == "M":
+                    df_g_m = pd.merge_asof(
+                        final_df[["date"]].sort_values("date"),
+                        df_g[["date"] + gdp_cols],
+                        on="date",
+                        direction="backward"
+                    )
+                    final_df = _merge_live_columns(final_df, df_g_m, gdp_cols, agg_func="mean")
+                else:
+                    final_df = _merge_live_columns(final_df, df_g, gdp_cols, agg_func="mean")
+
+        if "debt" in live_components:
+            df_d = live_components["debt"].sort_values("date")
+            debt_cols = [c for c in ["public_debt_gdp_pct", "eu_public_debt_gdp_pct"] if c in df_d.columns]
+            if debt_cols:
+                if frequency == "M":
+                    df_d_m = pd.merge_asof(
+                        final_df[["date"]].sort_values("date"),
+                        df_d[["date"] + debt_cols],
+                        on="date",
+                        direction="backward"
+                    )
+                    final_df = _merge_live_columns(final_df, df_d_m, debt_cols, agg_func="mean")
+                else:
+                    final_df = _merge_live_columns(final_df, df_d, debt_cols, agg_func="mean")
+
+        if "cba_banking" in live_components:
+            final_df = _merge_live_columns(
+                final_df,
+                live_components["cba_banking"],
+                ["cz_mortgage_rate", "cz_mortgage_volume_czk_bn", "cz_corporate_loans_yoy", "cz_m2_growth_yoy"],
+                agg_func="last"
+            )
 
         if "rates" in live_components:
             df_r = live_components["rates"]
             df_r_agg = df_r.set_index("date").resample(OFFSET_MONTH_END if frequency == "M" else OFFSET_QUARTER_END).last().reset_index()
-            final_df = pd.merge(final_df.drop(columns=["repo_rate", "discount_rate", "lombard_rate"], errors="ignore"),
-                                df_r_agg[["date", "repo_rate", "discount_rate", "lombard_rate"]], on="date", how="left")
-            final_df["repo_rate"] = final_df["repo_rate"].ffill()
-            final_df["discount_rate"] = final_df["discount_rate"].ffill()
-            final_df["lombard_rate"] = final_df["lombard_rate"].ffill()
+            final_df = _merge_live_columns(final_df, df_r_agg, ["repo_rate", "discount_rate", "lombard_rate"], agg_func="last")
 
         if "pribor" in live_components:
             df_p = live_components["pribor"]
             df_p_agg = df_p.set_index("date").resample(OFFSET_MONTH_END if frequency == "M" else OFFSET_QUARTER_END).mean().reset_index()
-            final_df = pd.merge(final_df.drop(columns=["pribor_1m", "pribor_3m", "pribor_6m"], errors="ignore"),
-                                df_p_agg[["date", "pribor_1m", "pribor_3m", "pribor_6m"]], on="date", how="left")
-            final_df["pribor_1m"] = final_df["pribor_1m"].ffill()
-            final_df["pribor_3m"] = final_df["pribor_3m"].ffill()
-            final_df["pribor_6m"] = final_df["pribor_6m"].ffill()
+            final_df = _merge_live_columns(final_df, df_p_agg, ["pribor_1m", "pribor_3m", "pribor_6m"], agg_func="mean")
 
         # Agregace denních devizových kurzů
         fx_cols_to_merge = [c for c in df_daily_fx.columns if c != "date"]
@@ -2748,12 +3193,7 @@ class DataLoader:
             final_df[c] = final_df[c].ffill().bfill()
 
         if "bond_10y" in live_components:
-            df_b = live_components["bond_10y"]
-            if frequency == "Q":
-                df_b = df_b.set_index("date").resample(OFFSET_QUARTER_END).mean().reset_index()
-            final_df = pd.merge(final_df.drop(columns=["czgb_10y", "bund_10y"], errors="ignore"), df_b, on="date", how="left")
-            final_df["czgb_10y"] = final_df["czgb_10y"].ffill()
-            final_df["bund_10y"] = final_df["bund_10y"].ffill()
+            final_df = _merge_live_columns(final_df, live_components["bond_10y"], ["czgb_10y", "bund_10y"], agg_func="mean")
 
         if "us_treasury" in live_components:
             df_u = live_components["us_treasury"]
@@ -2809,7 +3249,7 @@ class DataLoader:
 
         if all_success and live_components:
             status_info["mode"] = "LIVE"
-            status_info["status_badge"] = "🟢 Živá data (ČNB Denní kurzy & Sazby, Eurostat, US Treasury, Yahoo/PSE & Komodity)"
+            status_info["status_badge"] = "🟢 Živá data (ČNB, ČBA Hypomonitor, Eurostat, US Treasury, Yahoo/PSE & Komodity)"
         elif live_components:
             status_info["mode"] = "PARTIAL_LIVE"
             status_info["status_badge"] = "🟡 Kombinovaný režim (Částečná Live API + Fallback)"
@@ -2836,7 +3276,7 @@ try:
         frequency: str = "M",
         fred_api_key: Optional[str] = None,
         force_fallback: bool = False,
-        _cache_bust: str = "v2026_10_13_daily_stocks_commodities_v1"
+        _cache_bust: str = "v2026_10_16_cba_hypomonitor_live_news_v1"
     ) -> Tuple[pd.DataFrame, Dict[str, Any], pd.DataFrame]:
         loader = DataLoader()
         return loader.load_macro_data(
@@ -2845,12 +3285,19 @@ try:
             force_fallback=force_fallback
         )
 
+    @st.cache_data(ttl=1800, show_spinner=False)
+    def get_cached_cz_topic_news(
+        _cache_bust: str = "v2026_10_16_live_cz_news_v1"
+    ) -> Dict[str, Dict[str, Any]]:
+        loader = DataLoader()
+        return loader.fetch_live_cz_topic_news()
+
 except ImportError:
     def get_cached_macro_data(
         frequency: str = "M",
         fred_api_key: Optional[str] = None,
         force_fallback: bool = False,
-        _cache_bust: str = "v2026_10_13_daily_stocks_commodities_v1"
+        _cache_bust: str = "v2026_10_16_cba_hypomonitor_live_news_v1"
     ) -> Tuple[pd.DataFrame, Dict[str, Any], pd.DataFrame]:
         loader = DataLoader()
         return loader.load_macro_data(
@@ -2858,3 +3305,10 @@ except ImportError:
             fred_api_key=fred_api_key,
             force_fallback=force_fallback
         )
+
+    def get_cached_cz_topic_news(
+        _cache_bust: str = "v2026_10_16_live_cz_news_v1"
+    ) -> Dict[str, Dict[str, Any]]:
+        loader = DataLoader()
+        return loader.fetch_live_cz_topic_news()
+

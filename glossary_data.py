@@ -892,9 +892,9 @@ GLOSSARY_ITEMS: List[GlossaryItem] = [
             "úvěrování, marže komerčních bank a aktivitu na realitním trhu."
         ),
         practical_impact=(
-            "Přímo ukazuje dostupnost bydlení a oživení či zamrznutí realitního trhu. Při sazbách přes 6 % v roce 2022 objemy spadly na třetinu, při poklesu k 4,5 % se trh znovu probouzí."
+            "Přímo ukazuje dostupnost bydlení a oživení či zamrznutí realitního trhu. Při sazbách přes 6 % v letech 2022–2023 objemy spadly na třetinu, při poklesu k pásmu 4,6–5,1 % se hypoteční trh výrazně oživil."
         ),
-        primary_source="Česká bankovní asociace (ČBA Hypomonitor) & ČNB",
+        primary_source="Česká bankovní asociace (ČBA Hypomonitor / cbamonitor.cz) & ČNB ARAD",
         frequency="Měsíčně"
     ),
     GlossaryItem(
