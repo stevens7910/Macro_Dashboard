@@ -32,6 +32,10 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
+import importlib
+
+REQUIRED_MODULE_VERSION = "2026.10.16.v3"
+
 try:
     import data_loader as dl_module
 except (ImportError, ModuleNotFoundError):
@@ -40,6 +44,13 @@ except (ImportError, ModuleNotFoundError):
     except (ImportError, ModuleNotFoundError):
         import Macro_Dashboard.data_loader as dl_module
 
+if getattr(dl_module, "DATA_LOADER_VERSION", None) != REQUIRED_MODULE_VERSION:
+    try:
+        dl_module = importlib.reload(dl_module)
+        st.cache_data.clear()
+    except Exception:
+        pass
+
 DataLoader = getattr(dl_module, "DataLoader")
 INDICATORS = getattr(dl_module, "INDICATORS")
 CZ_INDICATORS = getattr(dl_module, "CZ_INDICATORS", {k: v for k, v in INDICATORS.items() if v.region == "CZ"})
@@ -47,7 +58,7 @@ EU_INDICATORS = getattr(dl_module, "EU_INDICATORS", {k: v for k, v in INDICATORS
 US_INDICATORS = getattr(dl_module, "US_INDICATORS", {k: v for k, v in INDICATORS.items() if v.region == "US"})
 MARKET_INDICATORS = getattr(dl_module, "MARKET_INDICATORS", {k: v for k, v in INDICATORS.items() if v.category == "Akciové trhy"})
 get_cached_macro_data = getattr(dl_module, "get_cached_macro_data")
-get_cached_cz_topic_news = getattr(dl_module, "get_cached_cz_topic_news", lambda: {})
+get_cached_cz_topic_news = getattr(dl_module, "get_cached_cz_topic_news", lambda cache_version=REQUIRED_MODULE_VERSION: {})
 
 try:
     import glossary_data as glossary_module
@@ -56,6 +67,12 @@ except (ImportError, ModuleNotFoundError):
         import macro_dashboard.glossary_data as glossary_module
     except (ImportError, ModuleNotFoundError):
         import Macro_Dashboard.glossary_data as glossary_module
+
+if getattr(glossary_module, "GLOSSARY_VERSION", None) != REQUIRED_MODULE_VERSION:
+    try:
+        glossary_module = importlib.reload(glossary_module)
+    except Exception:
+        pass
 
 render_glossary_view = getattr(glossary_module, "render_glossary_view", None)
 GLOSSARY_ITEMS = getattr(glossary_module, "GLOSSARY_ITEMS", [])
@@ -1118,12 +1135,20 @@ refresh_meta_slot = st.sidebar.empty()
 # 5. NAČTENÍ DAT S CACHOVÁNÍM
 # =============================================================================
 
-with st.spinner("Načítám data z ČNB, Eurostatu, Yahoo Finance a U.S. Treasury..."):
-    df_raw, status_info, df_daily_fx = get_cached_macro_data(
-        frequency=frequency_code,
-        fred_api_key=fred_key_input,
-        force_fallback=force_fallback
-    )
+with st.spinner("Načítám data z ČNB, ČBA Hypomonitoru, Eurostatu, Yahoo Finance a U.S. Treasury..."):
+    try:
+        df_raw, status_info, df_daily_fx = get_cached_macro_data(
+            frequency=frequency_code,
+            fred_api_key=fred_key_input,
+            force_fallback=force_fallback,
+            cache_version=REQUIRED_MODULE_VERSION
+        )
+    except TypeError:
+        df_raw, status_info, df_daily_fx = DataLoader().load_macro_data(
+            frequency=frequency_code,
+            fred_api_key=fred_key_input,
+            force_fallback=force_fallback
+        )
 
 if df_raw.empty:
     st.error("Nepodařilo se načíst žádná data. Zkuste aktivovat záložní fallback model v levém panelu.")
@@ -3888,9 +3913,22 @@ def build_dynamic_cz_news() -> Dict[str, Dict[str, str]]:
     Veškeré sazby, kurzy, čísla a směry trendů odpovídají ověřeným primárním datům.
     """
     try:
-        live_topic_news = get_cached_cz_topic_news()
+        live_topic_news = get_cached_cz_topic_news(cache_version=REQUIRED_MODULE_VERSION)
+    except TypeError:
+        try:
+            live_topic_news = get_cached_cz_topic_news()
+        except Exception:
+            live_topic_news = {}
     except Exception:
         live_topic_news = {}
+
+    if not live_topic_news:
+        try:
+            loader_inst = DataLoader()
+            if hasattr(loader_inst, "fetch_live_cz_topic_news"):
+                live_topic_news = loader_inst.fetch_live_cz_topic_news()
+        except Exception:
+            live_topic_news = {}
 
     # 1. Měnové kurzy FX (EUR/CZK a USD/CZK)
     eur_chg_dir = "posílení" if eur_czk_delta < 0 else ("oslabení" if eur_czk_delta > 0 else "stagnace")
@@ -4100,37 +4138,35 @@ def render_cz_news_card(news_item: Optional[Dict[str, str]]):
             f'</div>'
         )
 
-    st.markdown(
-        f"""
-        <div class="macro-news-card">
-            <div class="macro-news-top">
-                <div class="macro-news-tag">
-                    <span class="news-dot"></span>
-                    <span>{news_item.get('tag', 'AKTUÁLNÍ ZPRÁVA')}</span>
-                </div>
-                <div class="macro-news-meta">
-                    <span>📅 {date_label}</span>
-                    <span>•</span>
-                    <span>🗞️ {source_label}</span>
-                    {source_link_html}
-                </div>
-            </div>
-            <div class="macro-news-headline">{news_item.get('title', '')}</div>
-            <div class="macro-news-content">
-                {live_article_block}
-                <div class="news-section-item">
-                    <span class="news-label">🔍 Ověřená data & hlavní faktory:</span>
-                    <span class="news-text">{news_item.get('reason', '')}</span>
-                </div>
-                <div class="news-section-item">
-                    <span class="news-label">📊 Makroekonomický kontext:</span>
-                    <span class="news-text">{news_item.get('context', '')}</span>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
+    card_html = (
+        f'<div class="macro-news-card">'
+        f'<div class="macro-news-top">'
+        f'<div class="macro-news-tag">'
+        f'<span class="news-dot"></span>'
+        f'<span>{news_item.get("tag", "AKTUÁLNÍ ZPRÁVA")}</span>'
+        f'</div>'
+        f'<div class="macro-news-meta">'
+        f'<span>📅 {date_label}</span>'
+        f'<span>•</span>'
+        f'<span>🗞️ {source_label}</span>'
+        f'{source_link_html}'
+        f'</div>'
+        f'</div>'
+        f'<div class="macro-news-headline">{news_item.get("title", "")}</div>'
+        f'<div class="macro-news-content">'
+        f'{live_article_block}'
+        f'<div class="news-section-item">'
+        f'<span class="news-label">🔍 Ověřená data & hlavní faktory:</span>'
+        f'<span class="news-text">{news_item.get("reason", "")}</span>'
+        f'</div>'
+        f'<div class="news-section-item">'
+        f'<span class="news-label">📊 Makroekonomický kontext:</span>'
+        f'<span class="news-text">{news_item.get("context", "")}</span>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
     )
+    st.markdown(card_html, unsafe_allow_html=True)
 
 
 def get_indicators_catalog_df() -> pd.DataFrame:

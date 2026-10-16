@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 import streamlit as st
 
+GLOSSARY_VERSION = "2026.10.16.v3"
+
 
 @dataclass
 class GlossaryItem:
