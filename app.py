@@ -1423,34 +1423,49 @@ daily_usd_pln = safe_metric(last_daily_fx, "usd_pln", usd_pln_curr)
 # -----------------------------------------------------------------------------
 # Poslední denní data pro Akciové indexy (S&P 500, NASDAQ, Euro Stoxx 50, Index PX, VIX)
 # -----------------------------------------------------------------------------
-df_daily_has_stocks = not df_daily_fx.empty and "sp500_index" in df_daily_fx.columns
-df_st_valid = df_daily_fx.dropna(subset=["sp500_index"]) if df_daily_has_stocks else pd.DataFrame()
-last_daily_st = df_st_valid.iloc[-1] if not df_st_valid.empty else last_daily_fx
-prev_daily_st = df_st_valid.iloc[-2] if len(df_st_valid) > 1 else last_daily_st
+def _get_daily_index_stats(col_name: str, default_val: float) -> Tuple[float, float, float, float, str]:
+    """Vrátí (curr, prev, delta, pct, date_str) pro daný akciový index z denních (nebo měsíčních) dat."""
+    if not df_daily_fx.empty and col_name in df_daily_fx.columns:
+        valid_df = df_daily_fx.dropna(subset=[col_name])
+        if not valid_df.empty:
+            r_last = valid_df.iloc[-1]
+            r_prev = valid_df.iloc[-2] if len(valid_df) > 1 else r_last
+            curr_v = safe_metric(r_last, col_name, default_val)
+            prev_v = safe_metric(r_prev, col_name, curr_v)
+            chg_v = round(curr_v - prev_v, 2)
+            pct_v = round(((curr_v / prev_v) - 1.0) * 100.0, 2) if prev_v else 0.0
+            dt_val = r_last.get("date")
+            dt_s = dt_val.strftime("%d. %m. %Y") if (pd.notna(dt_val) and hasattr(dt_val, "strftime")) else date_str
+            return curr_v, prev_v, chg_v, pct_v, dt_s
 
-daily_sp500 = safe_metric(last_daily_st, "sp500_index", safe_metric(last_row, "sp500_index", 7805.0))
-prev_daily_sp500 = safe_metric(prev_daily_st, "sp500_index", daily_sp500)
-sp500_daily_delta = round(daily_sp500 - prev_daily_sp500, 2)
-sp500_daily_pct = round(((daily_sp500 / prev_daily_sp500) - 1.0) * 100.0, 2) if prev_daily_sp500 else 0.0
+    curr_v = safe_metric(last_row, col_name, default_val)
+    prev_v = safe_metric(prev_row, col_name, curr_v)
+    chg_v = round(curr_v - prev_v, 2)
+    pct_v = round(((curr_v / prev_v) - 1.0) * 100.0, 2) if prev_v else 0.0
+    dt_val = last_row.get("date") if hasattr(last_row, "get") else None
+    dt_s = dt_val.strftime("%d. %m. %Y") if (pd.notna(dt_val) and hasattr(dt_val, "strftime")) else date_str
+    return curr_v, prev_v, chg_v, pct_v, dt_s
 
-daily_nasdaq = safe_metric(last_daily_st, "nasdaq_index", safe_metric(last_row, "nasdaq_index", 27200.0))
-prev_daily_nasdaq = safe_metric(prev_daily_st, "nasdaq_index", daily_nasdaq)
-nasdaq_daily_delta = round(daily_nasdaq - prev_daily_nasdaq, 2)
-nasdaq_daily_pct = round(((daily_nasdaq / prev_daily_nasdaq) - 1.0) * 100.0, 2) if prev_daily_nasdaq else 0.0
 
-daily_stoxx50 = safe_metric(last_daily_st, "stoxx50_index", safe_metric(last_row, "stoxx50_index", 6167.0))
-prev_daily_stoxx50 = safe_metric(prev_daily_st, "stoxx50_index", daily_stoxx50)
-stoxx50_daily_delta = round(daily_stoxx50 - prev_daily_stoxx50, 2)
-stoxx50_daily_pct = round(((daily_stoxx50 / prev_daily_stoxx50) - 1.0) * 100.0, 2) if prev_daily_stoxx50 else 0.0
+daily_sp500, prev_daily_sp500, sp500_daily_delta, sp500_daily_pct, daily_sp500_date = _get_daily_index_stats("sp500_index", 7805.0)
+daily_sp500_chg_d = sp500_daily_delta
+daily_sp500_pct_d = sp500_daily_pct
 
-daily_px = safe_metric(last_daily_st, "px_index", safe_metric(last_row, "px_index", 2603.0))
-prev_daily_px = safe_metric(prev_daily_st, "px_index", daily_px)
-px_daily_delta = round(daily_px - prev_daily_px, 2)
-px_daily_pct = round(((daily_px / prev_daily_px) - 1.0) * 100.0, 2) if prev_daily_px else 0.0
+daily_nasdaq, prev_daily_nasdaq, nasdaq_daily_delta, nasdaq_daily_pct, daily_nasdaq_date = _get_daily_index_stats("nasdaq_index", 27200.0)
+daily_nasdaq_chg_d = nasdaq_daily_delta
+daily_nasdaq_pct_d = nasdaq_daily_pct
 
-daily_vix = safe_metric(last_daily_st, "vix_index", safe_metric(last_row, "vix_index", 15.2))
-prev_daily_vix = safe_metric(prev_daily_st, "vix_index", daily_vix)
-vix_daily_delta = round(daily_vix - prev_daily_vix, 2)
+daily_stoxx50, prev_daily_stoxx50, stoxx50_daily_delta, stoxx50_daily_pct, daily_stoxx50_date = _get_daily_index_stats("stoxx50_index", 6167.0)
+daily_stoxx50_chg_d = stoxx50_daily_delta
+daily_stoxx50_pct_d = stoxx50_daily_pct
+
+daily_px, prev_daily_px, px_daily_delta, px_daily_pct, daily_px_date = _get_daily_index_stats("px_index", 2603.0)
+daily_px_chg_d = px_daily_delta
+daily_px_pct_d = px_daily_pct
+
+daily_vix, prev_daily_vix, vix_daily_delta, vix_daily_pct, daily_vix_date = _get_daily_index_stats("vix_index", 15.2)
+daily_vix_chg_d = vix_daily_delta
+daily_vix_pct_d = vix_daily_pct
 
 # Zajištění konzistence proměnných napříč celým dashboardem
 sp500_curr = daily_sp500
@@ -1458,6 +1473,7 @@ nasdaq_curr = daily_nasdaq
 stoxx50_curr = daily_stoxx50
 px_curr = daily_px
 vix_curr = daily_vix
+
 
 # -----------------------------------------------------------------------------
 # Měsíční komodity (5 hlavních komodit včetně zlata)
