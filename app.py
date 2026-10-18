@@ -859,8 +859,213 @@ def format_delta_str(curr: Optional[float], prev: Optional[float], unit: str = "
     return f"{sign}{delta:,.2f} {unit}".replace(".", ",")
 
 
+MOBILE_MODE_CSS = """
+<style>
+    .main .block-container {
+        padding-top: 0.45rem !important;
+        padding-bottom: 2.6rem !important;
+        padding-left: 0.60rem !important;
+        padding-right: 0.60rem !important;
+        max-width: 560px !important;
+        margin: 0 auto !important;
+    }
+    .sa-header-container {
+        padding: 11px 12px !important;
+        margin-bottom: 10px !important;
+        border-radius: 10px !important;
+    }
+    .sa-header-top {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 6px !important;
+        padding-bottom: 8px !important;
+        margin-bottom: 10px !important;
+    }
+    .sa-header-title-box {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .sa-header-title {
+        font-size: 1.08rem !important;
+        line-height: 1.25 !important;
+    }
+    .sa-ticker-badge {
+        font-size: 0.68rem !important;
+        padding: 2px 6px !important;
+    }
+    .sa-header-meta {
+        font-size: 0.72rem !important;
+        flex-wrap: wrap !important;
+        line-height: 1.35 !important;
+    }
+    .sa-hero-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+    }
+    @media (max-width: 340px) {
+        .sa-hero-strip {
+            grid-template-columns: 1fr !important;
+        }
+    }
+    .sa-hero-item, a.sa-hero-item {
+        padding: 9px 10px !important;
+        border-radius: 8px !important;
+    }
+    .sa-hero-label {
+        font-size: 0.67rem !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        line-height: 1.22 !important;
+        margin-bottom: 4px !important;
+    }
+    .sa-hero-val {
+        font-size: 1.06rem !important;
+        font-weight: 800 !important;
+    }
+    .sa-hero-change-pos, .sa-hero-change-neg, .sa-hero-change-neutral {
+        font-size: 0.72rem !important;
+    }
+    .sa-hero-date {
+        font-size: 0.63rem !important;
+        white-space: normal !important;
+        line-height: 1.2 !important;
+    }
+    .sa-stats-card {
+        padding: 10px 12px !important;
+        margin-top: 6px !important;
+        margin-bottom: 10px !important;
+    }
+    .sa-stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+    }
+    .sa-stat-row {
+        padding: 7px 0 !important;
+        font-size: 0.83rem !important;
+        gap: 8px !important;
+    }
+    .sa-stat-label {
+        line-height: 1.25 !important;
+    }
+    .sa-stat-val {
+        font-size: 0.85rem !important;
+        white-space: nowrap !important;
+    }
+    div[data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    div[data-testid="stHorizontalBlock"] > div[data-testid="column"],
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
+        flex: 1 1 calc(50% - 8px) !important;
+        min-width: calc(50% - 8px) !important;
+    }
+    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:has([data-testid="stPlotlyChart"]),
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:has([data-testid="stPlotlyChart"]),
+    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:has([data-testid="stDataFrame"]),
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:has([data-testid="stDataFrame"]),
+    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:has([data-testid="stExpander"]),
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:has([data-testid="stExpander"]) {
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }
+    div[data-testid="stMetric"] {
+        padding: 8px 10px !important;
+        border-radius: 8px !important;
+    }
+    div[data-testid="stMetricLabel"] {
+        font-size: 0.74rem !important;
+        white-space: normal !important;
+        line-height: 1.22 !important;
+    }
+    div[data-testid="stMetricValue"] {
+        font-size: 1.08rem !important;
+        line-height: 1.2 !important;
+    }
+    div[data-testid="stMetricDelta"] {
+        font-size: 0.71rem !important;
+    }
+    .macro-news-card {
+        padding: 12px 12px !important;
+        border-radius: 9px !important;
+        margin: 8px 0 12px 0 !important;
+    }
+    .macro-news-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 5px !important;
+        margin-bottom: 8px !important;
+    }
+    .macro-news-meta {
+        font-size: 0.73rem !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .macro-news-headline {
+        font-size: 0.96rem !important;
+        line-height: 1.35 !important;
+        margin-bottom: 8px !important;
+    }
+    .macro-news-content {
+        font-size: 0.85rem !important;
+        line-height: 1.48 !important;
+        gap: 6px !important;
+    }
+    .news-section-item {
+        padding: 8px 10px !important;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 4px !important;
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        padding: 4px 4px !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+    }
+    .stTabs [data-baseweb="tab"] {
+        padding: 7px 11px !important;
+        font-size: 0.81rem !important;
+        min-height: 36px !important;
+        white-space: nowrap !important;
+    }
+</style>
+"""
+
+# Automatická mobilní optimalizace i pro přímé otevření na mobilním displeji (<= 768px)
+st.markdown(
+    MOBILE_MODE_CSS.replace("<style>", "<style>\n@media (max-width: 768px) {").replace("</style>", "}\n</style>"),
+    unsafe_allow_html=True
+)
+
+
 def render_plotly_chart(fig: go.Figure, key: Optional[str] = None) -> None:
     """Vykreslí Plotly graf s plnou kompatibilitou napříč verzemi a mobilní optimalizací."""
+    if st.session_state.get("ui_device_mode") == "📱 Mobil":
+        try:
+            curr_h = fig.layout.height or 420
+            mob_h = 460 if curr_h > 500 else 340
+            fig.update_layout(
+                height=mob_h,
+                margin=dict(l=4, r=4, t=28, b=52),
+                font=dict(size=11),
+                legend=dict(
+                    orientation="h",
+                    yanchor="top",
+                    y=-0.16,
+                    xanchor="center",
+                    x=0.5,
+                    font=dict(size=10),
+                    bgcolor="rgba(255,255,255,0.9)"
+                )
+            )
+            fig.update_xaxes(fixedrange=True, tickfont=dict(size=10), automargin=True)
+            fig.update_yaxes(fixedrange=True, tickfont=dict(size=10), title_text="", automargin=True)
+            if hasattr(fig.layout, "yaxis2") and fig.layout.yaxis2 is not None:
+                fig.layout.yaxis2.update(fixedrange=True, tickfont=dict(size=10), title_text="", automargin=True)
+        except Exception:
+            pass
+
     chart_config = {
         "scrollZoom": False,
         "displayModeBar": False,
@@ -883,8 +1088,15 @@ def render_dataframe(df_to_render: pd.DataFrame) -> None:
 
 
 # =============================================================================
-# 3. HLAVNÍ ZÁHLAVÍ & PŘEPÍNAČ EKONOMIKY (ČR vs. EU vs. USA)
+# 3. HLAVNÍ ZÁHLAVÍ & PŘEPÍNAČ EKONOMIKY (ČR vs. EU vs. USA) + REŽIM (PC vs. MOBIL)
 # =============================================================================
+
+if "ui_device_mode" not in st.session_state:
+    try:
+        q_view = str(st.query_params.get("view", "")).lower()
+    except Exception:
+        q_view = ""
+    st.session_state["ui_device_mode"] = "📱 Mobil" if q_view in ("mobil", "mobile", "m") else "💻 PC"
 
 st.markdown(
     """
@@ -903,25 +1115,50 @@ economy_options = ["🇨🇿 Česká republika", "🇪🇺 Evropská unie", "�
 if "macro_region_top_switch" not in st.session_state:
     st.session_state["macro_region_top_switch"] = "🇨🇿 Česká republika"
 
-if hasattr(st, "segmented_control"):
-    selected_economy = st.segmented_control(
-        "Zvolte ekonomiku:",
-        options=economy_options,
-        key="macro_region_top_switch",
-        label_visibility="collapsed"
-    )
-    if not selected_economy:
-        selected_economy = st.session_state.get("macro_region_top_switch", "🇨🇿 Česká republika")
-else:
-    def_idx = economy_options.index(st.session_state["macro_region_top_switch"]) if st.session_state.get("macro_region_top_switch") in economy_options else 0
-    selected_economy = st.radio(
-        "Zvolte ekonomiku:",
-        options=economy_options,
-        index=def_idx,
-        key="macro_region_top_switch",
-        horizontal=True,
-        label_visibility="collapsed"
-    )
+col_top_eco, col_top_dev = st.columns([3.4, 1.2])
+with col_top_eco:
+    if hasattr(st, "segmented_control"):
+        selected_economy = st.segmented_control(
+            "Zvolte ekonomiku:",
+            options=economy_options,
+            key="macro_region_top_switch",
+            label_visibility="collapsed"
+        )
+        if not selected_economy:
+            selected_economy = st.session_state.get("macro_region_top_switch", "🇨🇿 Česká republika")
+    else:
+        def_idx = economy_options.index(st.session_state["macro_region_top_switch"]) if st.session_state.get("macro_region_top_switch") in economy_options else 0
+        selected_economy = st.radio(
+            "Zvolte ekonomiku:",
+            options=economy_options,
+            index=def_idx,
+            key="macro_region_top_switch",
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+
+with col_top_dev:
+    if hasattr(st, "segmented_control"):
+        device_mode = st.segmented_control(
+            "Zobrazení:",
+            options=["💻 PC", "📱 Mobil"],
+            key="ui_device_mode",
+            label_visibility="collapsed"
+        )
+        if not device_mode:
+            device_mode = "💻 PC"
+    else:
+        device_mode = st.radio(
+            "Zobrazení:",
+            options=["💻 PC", "📱 Mobil"],
+            key="ui_device_mode",
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+
+is_mobile_mode = (device_mode == "📱 Mobil")
+if is_mobile_mode:
+    st.markdown(MOBILE_MODE_CSS, unsafe_allow_html=True)
 
 is_cz = (selected_economy == "🇨🇿 Česká republika")
 is_eu = (selected_economy == "🇪🇺 Evropská unie")
@@ -1217,6 +1454,53 @@ end_filter_date = max(max_macro_date, max_fx_date)
 
 df = df_raw[(df_raw["date"] >= start_filter_date) & (df_raw["date"] <= max_macro_date)].copy().sort_values("date").reset_index(drop=True)
 df_daily_fx_filtered = df_daily_fx[(df_daily_fx["date"] >= start_filter_date) & (df_daily_fx["date"] <= max_fx_date)].copy().sort_values("date").reset_index(drop=True)
+
+if is_mobile_mode:
+    def _set_mobile_horizon_main(h_val: str) -> None:
+        st.session_state["sb_horizon_seg"] = h_val
+        st.session_state["sb_horizon_rad"] = h_val
+
+    def _set_mobile_freq_main(f_val: str) -> None:
+        st.session_state["sb_freq_seg"] = f_val
+        st.session_state["sb_freq_rad"] = f_val
+
+    with st.expander(f"⚙️ Rychlé nastavení & Glosář  ({horizon_option} • {freq_choice} • k {latest_macro_str})", expanded=False):
+        m_col1, m_col2 = st.columns(2)
+        is_gl_mob = (st.session_state.get("current_view") == "glossary")
+        if m_col1.button("📊 Makro Monitor", use_container_width=True, type="secondary" if is_gl_mob else "primary", key="mob_top_btn_monitor"):
+            st.session_state["current_view"] = "monitor"
+            st.rerun()
+        if m_col2.button("📖 Glosář pojmů", use_container_width=True, type="primary" if is_gl_mob else "secondary", key="mob_top_btn_glossary"):
+            st.session_state["current_view"] = "glossary"
+            st.rerun()
+
+        st.markdown("<div style='font-size:0.75rem;font-weight:700;color:#475569;margin:6px 0 4px 0;'>📅 ČASOVÝ HORIZONT GRAFŮ:</div>", unsafe_allow_html=True)
+        h_cols = st.columns(4)
+        for idx_h, h_opt in enumerate(["1R", "3R", "5R", "Od 2015"]):
+            h_cols[idx_h].button(
+                h_opt,
+                key=f"mob_q_h_{h_opt}",
+                use_container_width=True,
+                type="primary" if horizon_option == h_opt else "secondary",
+                on_click=_set_mobile_horizon_main,
+                args=(h_opt,)
+            )
+
+        st.markdown("<div style='font-size:0.75rem;font-weight:700;color:#475569;margin:6px 0 4px 0;'>⏱️ FREKVENCE DAT:</div>", unsafe_allow_html=True)
+        f_cols = st.columns(2)
+        for idx_f, f_opt in enumerate(["Měsíční", "Kvartální"]):
+            f_cols[idx_f].button(
+                f"📅 {f_opt}" if f_opt == "Měsíční" else f"📊 {f_opt}",
+                key=f"mob_q_f_{f_opt}",
+                use_container_width=True,
+                type="primary" if freq_choice == f_opt else "secondary",
+                on_click=_set_mobile_freq_main,
+                args=(f_opt,)
+            )
+
+        if st.button("🔄 Obnovit živá data (Vymazat cache)", use_container_width=True, key="mob_top_btn_refresh"):
+            st.cache_data.clear()
+            st.rerun()
 
 if df.empty:
     st.warning("Pro vybraný časový filtr nejsou k dispozici žádné záznamy. Zvolte prosím širší rozsah.")
