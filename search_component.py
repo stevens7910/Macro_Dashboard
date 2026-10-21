@@ -1564,3 +1564,100 @@ def render_scroll_anchor_effect() -> None:
         components.html(script, height=1, width=1)
     except Exception:
         pass
+
+
+# =============================================================================
+# 5. BILINGUAL (CS / EN) LOCALIZATION FOR SEARCH BAR & COMMAND PALETTE
+# =============================================================================
+
+_orig_build_indicator_search_catalog = build_indicator_search_catalog
+_orig_render_indicator_search_bar = render_indicator_search_bar
+
+
+def build_indicator_search_catalog() -> list[dict[str, Any]]:
+    """Returns localized indicator catalog (CS or EN) with bilingual search tokens."""
+    items = _orig_build_indicator_search_catalog()
+    try:
+        from i18n import is_en, tr, INDICATOR_I18N
+        en_mode = is_en()
+    except Exception:
+        return items
+
+    reg_names_en = {"CZ": "Czech Republic", "EU": "European Union", "US": "United States"}
+    for item in items:
+        code = item.get("code", "")
+        en_meta = INDICATOR_I18N.get(code, {})
+        en_name = en_meta.get("name", "")
+        en_cat = en_meta.get("category", "")
+        en_unit = en_meta.get("unit", "")
+        # Always index both Czech and English terms so search works in both languages
+        extra_tokens = normalize_czech_text(f"{en_name} {en_cat} {en_unit}")
+        if extra_tokens:
+            item["searchText"] = f"{item.get('searchText', '')} {extra_tokens}".strip()
+
+        if en_mode:
+            if en_name:
+                item["name"] = en_name
+            if en_cat:
+                item["category"] = en_cat
+            if en_unit:
+                item["unit"] = en_unit
+            reg = item.get("region", "CZ")
+            item["regionName"] = reg_names_en.get(reg, reg)
+            if item.get("regionBadge") == "ČR":
+                item["regionBadge"] = "CZ"
+            item["mainTab"] = tr(item.get("mainTab", ""))
+            item["subTabLabel"] = tr(item.get("subTabLabel", ""))
+    return items
+
+
+def _translate_search_html_en(html_str: str) -> str:
+    """Translates Search Bar & Command Palette HTML/JS literals into English."""
+    replacements = [
+        ("Hledat indikátor... (např. CPI, repo, Bund, PRIBOR)", "Search indicator... (e.g. CPI, repo, Bund, PRIBOR)"),
+        ('title="Vymazat"', 'title="Clear"'),
+        ("posun • <kbd>↵</kbd> přejít • <kbd>esc</kbd> zavřít", "navigate • <kbd>↵</kbd> go • <kbd>esc</kbd> close"),
+        ("</span> ukazatelů", "</span> indicators"),
+        ("💡 Rychlé tipy & hledané pojmy:", "💡 Quick Tips & Popular Searches:"),
+        (">2T Repo sazba<", ">2W Repo Rate<"),
+        (">Inflace CPI<", ">CPI Inflation<"),
+        (">Hypotéky<", ">Mortgages<"),
+        (">Mzdy<", ">Wages<"),
+        ("Žádný indikátor nebyl nalezen.", "No matching indicator found."),
+        (
+            "Zkuste zadat jiný výraz (např. <strong>CPI</strong>, <strong>repo</strong>, <strong>Bund</strong>, <strong>PRIBOR</strong>, <strong>HDP</strong>, <strong>hypotéky</strong> nebo <strong>VIX</strong>).",
+            "Try another search term (e.g. <strong>CPI</strong>, <strong>repo</strong>, <strong>Bund</strong>, <strong>PRIBOR</strong>, <strong>GDP</strong>, <strong>mortgage</strong>, or <strong>VIX</strong>).",
+        ),
+        ("🇨🇿 Česká republika", "🇨🇿 Czech Republic"),
+        ("🇪🇺 Evropská unie", "🇪🇺 European Union"),
+        ("🇺🇸 Spojené státy", "🇺🇸 United States"),
+    ]
+    for cs_s, en_s in replacements:
+        html_str = html_str.replace(cs_s, en_s)
+    return html_str
+
+
+def render_indicator_search_bar() -> None:
+    """Renders the indicator search bar in Czech or English depending on active language."""
+    try:
+        from i18n import is_en
+        en_mode = is_en()
+    except Exception:
+        en_mode = False
+
+    if not en_mode:
+        return _orig_render_indicator_search_bar()
+
+    import streamlit.components.v1 as components
+    orig_sb_html = getattr(st.sidebar, "html", None)
+    orig_comp_html = components.html
+
+    try:
+        if orig_sb_html is not None:
+            st.sidebar.html = lambda body, *a, **kw: orig_sb_html(_translate_search_html_en(str(body)), *a, **kw)
+        components.html = lambda html, *a, **kw: orig_comp_html(_translate_search_html_en(str(html)), *a, **kw)
+        return _orig_render_indicator_search_bar()
+    finally:
+        if orig_sb_html is not None:
+            st.sidebar.html = orig_sb_html
+        components.html = orig_comp_html

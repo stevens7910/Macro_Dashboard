@@ -1281,3 +1281,745 @@ def render_glossary_view(active_filter_category: Optional[str] = None):
             """,
             unsafe_allow_html=True
         )
+
+
+
+# =============================================================================
+# BILINGUAL (CS / EN) GLOSSARY TRANSLATIONS & RENDERER
+# =============================================================================
+
+GLOSSARY_I18N_EN: Dict[str, Dict[str, str]] = {
+    "2T Repo sazba ČNB": {
+        "term": "CNB 2W Repo Rate",
+        "category": "Monetary Policy & Interest Rates",
+        "region": "CZ",
+        "simple_explanation": "The key interest rate in the Czech Republic. It represents the interest rate the Czech National Bank (CNB) pays commercial banks when they deposit excess liquidity at the CNB for two weeks (2W). When the CNB raises this rate, banks increase interest rates on loans and mortgages while paying more on savings accounts; when the CNB cuts it, borrowing becomes cheaper.",
+        "economic_meaning": "Primary monetary policy transmission rate of the CNB. Through two-week repurchase operations (repo tenders), the central bank absorbs excess liquidity from the interbank market against collateral. It directly anchors short-term money market rates (PRIBOR), discount factors, and credit creation.",
+        "practical_impact": "Directly determines yields on household savings accounts and shapes mortgage and corporate loan pricing. Higher repo rates cool consumption and inflation; rate cuts stimulate investment and economic growth.",
+        "primary_source": "Czech National Bank (CNB) – Bank Board Decisions (8x per year)",
+        "frequency": "8x per year (scheduled CNB monetary policy meetings)",
+    },
+    "Diskontní sazba ČNB": {
+        "term": "CNB Discount Rate",
+        "category": "Monetary Policy & Interest Rates",
+        "region": "CZ",
+        "simple_explanation": "The floor of interest rates in the Czech Republic. It is the interest rate commercial banks earn when they deposit money overnight with the CNB (deposit facility). Interbank rates never fall below this level because banks have no reason to lend to anyone for less than the risk-free overnight rate paid by the CNB.",
+        "economic_meaning": "Forms the lower bound of the CNB's standing facilities interest rate corridor, typically set 100 basis points (1.00 pp) below the 2W repo rate.",
+        "practical_impact": "Serves as the technical floor for overnight liquidity in the Czech banking sector and as a statutory reference rate for late-payment interest under Czech law.",
+        "primary_source": "Czech National Bank (CNB)",
+        "frequency": "8x per year (alongside the repo rate)",
+    },
+    "Lombardní sazba ČNB": {
+        "term": "CNB Lombard Rate",
+        "category": "Monetary Policy & Interest Rates",
+        "region": "CZ",
+        "simple_explanation": "The ceiling of interest rates in the Czech Republic. If a commercial bank runs short of liquidity and needs to borrow overnight from the CNB against securities collateral, it pays the Lombard rate. Because this acts as an emergency credit line, market rates do not exceed this ceiling.",
+        "economic_meaning": "Represents the upper bound of the central bank's interest rate corridor (marginal lending facility), typically anchored 100 basis points (1.00 pp) above the 2W repo rate.",
+        "practical_impact": "Caps overnight money market volatility and ensures smooth settlement across the CERTIS interbank payment system.",
+        "primary_source": "Czech National Bank (CNB)",
+        "frequency": "8x per year (alongside the repo rate)",
+    },
+    "PRIBOR (Prague Interbank Offered Rate)": {
+        "term": "PRIBOR (Prague Interbank Offered Rate)",
+        "category": "Monetary Policy & Interest Rates",
+        "region": "CZ",
+        "simple_explanation": "The interest rate at which banks in the Prague interbank market lend Czech koruna (CZK) funds to each other. The 3-month PRIBOR (PRIBOR 3M) is the most important tenor and serves as the direct benchmark for corporate loans, credit lines, and floating-rate mortgages.",
+        "economic_meaning": "Key reference benchmark of the Czech money market, reflecting market expectations of the CNB repo rate over the given tenor plus a credit and liquidity risk premium.",
+        "practical_impact": "Rising 3M PRIBOR immediately increases monthly interest expenses on floating-rate corporate loans; falling PRIBOR relieves corporate cash flow.",
+        "primary_source": "Czech National Bank (CNB) & Czech Financial Benchmark Facility (CFBF)",
+        "frequency": "Daily fixing (business days around 13:00 CET)",
+    },
+    "Depozitní sazba ECB (Deposit Facility Rate - DFR)": {
+        "term": "ECB Deposit Facility Rate (DFR)",
+        "category": "Monetary Policy & Interest Rates",
+        "region": "EU",
+        "simple_explanation": "The most important interest rate across the entire Eurozone. It determines the interest the European Central Bank (ECB) in Frankfurt pays commercial banks for overnight euro deposits. Given abundant excess reserves in the European banking system, this rate effectively steers the price of credit across all euro-area countries.",
+        "economic_meaning": "Primary operational anchor of Eurosystem monetary policy. In an environment of structural excess liquidity, the Deposit Facility Rate acts as the de facto anchor for short-term EUR money market rates.",
+        "practical_impact": "Shapes the strength of the euro and the cost of EUR-denominated corporate loans, which many Czech exporters also use to finance operations.",
+        "primary_source": "European Central Bank (ECB)",
+        "frequency": "ECB Governing Council meetings (every 6 weeks)",
+    },
+    "EURIBOR (Euro Interbank Offered Rate)": {
+        "term": "EURIBOR (Euro Interbank Offered Rate)",
+        "category": "Monetary Policy & Interest Rates",
+        "region": "EU",
+        "simple_explanation": "The European equivalent of PRIBOR—the average interest rate at which leading European banks lend euros to one another. Most mortgages and corporate loans across the Eurozone (as well as EUR loans taken by Czech exporters) are directly indexed to 3M or 6M EURIBOR.",
+        "economic_meaning": "Primary EU Benchmark Regulation (BMR) money market reference rate underlying trillions of euros in loans, floating-rate notes, and EUR interest rate swaps.",
+        "practical_impact": "For Czech companies borrowing in euros, 3M EURIBOR is the base component of their financing cost.",
+        "primary_source": "European Money Markets Institute (EMMI) & ECB",
+        "frequency": "Daily fixing at 11:00 CET",
+    },
+    "€STR (Euro Short-Term Rate)": {
+        "term": "€STR (Euro Short-Term Rate)",
+        "category": "Monetary Policy & Interest Rates",
+        "region": "EU",
+        "simple_explanation": "The official overnight risk-free euro interest rate calculated daily by the ECB from actual wholesale money market transactions. It replaced EONIA and serves as the cleanest gauge of the overnight cost of money in the Eurozone.",
+        "economic_meaning": "Overnight risk-free rate (RFR) for the euro based on unsecured wholesale borrowing transactions, forming the foundation of the EUR OIS discount curve.",
+        "practical_impact": "Used by banks and institutional funds to price derivatives and anchor Eurozone money markets.",
+        "primary_source": "European Central Bank (ECB)",
+        "frequency": "Daily at 08:00 CET for the previous business day",
+    },
+    "Fed Funds Target Range": {
+        "term": "Fed Funds Target Range",
+        "category": "Monetary Policy & Interest Rates",
+        "region": "USA",
+        "simple_explanation": "The target interest rate range of the U.S. central bank (Federal Reserve / Fed), quoted as a 25 bps band (e.g., 3.25% – 3.50%). Because the U.S. dollar is the world's primary reserve currency, the Fed Funds rate is the single most influential interest rate for global financial markets.",
+        "economic_meaning": "Target corridor set by the Federal Open Market Committee (FOMC) for overnight interbank lending of reserve balances, enforced via Interest on Reserve Balances (IORB) and the ON RRP facility.",
+        "practical_impact": "Fed rate hikes attract global capital into USD assets and tighten global financial conditions; rate cuts boost global liquidity, equities, and commodities.",
+        "primary_source": "Federal Reserve Board (FOMC)",
+        "frequency": "8x per year (FOMC meetings)",
+    },
+    "SOFR (Secured Overnight Financing Rate)": {
+        "term": "SOFR (Secured Overnight Financing Rate)",
+        "category": "Monetary Policy & Interest Rates",
+        "region": "USA",
+        "simple_explanation": "The modern U.S. dollar overnight risk-free rate that replaced USD LIBOR. It measures the cost of borrowing cash overnight collateralized by U.S. Treasury securities.",
+        "economic_meaning": "Transaction-based benchmark backed by over $1 trillion in daily U.S. Treasury repo volume, serving as the global standard for USD loans, floating-rate notes, and derivatives.",
+        "practical_impact": "Reflects immediate funding liquidity on Wall Street and underpins modern USD financial contracts.",
+        "primary_source": "Federal Reserve Bank of New York (NY Fed)",
+        "frequency": "Every business day at 08:00 EST",
+    },
+    "Výnos do splatnosti (Yield to Maturity - YTM)": {
+        "term": "Yield to Maturity (YTM)",
+        "category": "Bonds & Yield Curves",
+        "region": "Global",
+        "simple_explanation": "The total annualized percentage return an investor earns by buying a bond at today's market price and holding it until maturity. A fundamental rule of finance applies: when a bond's price falls, its yield to maturity rises (and vice versa).",
+        "economic_meaning": "Internal rate of return (IRR) equating the present value of all future bond cash flows (coupons and principal) to its current market price.",
+        "practical_impact": "Determines the cost of borrowing for governments and corporations across the economy.",
+        "primary_source": "Stock Exchanges, Ministries of Finance, Bloomberg, Refinitiv",
+        "frequency": "Continuous market trading",
+    },
+    "10letý státní dluhopis (10Y Benchmark)": {
+        "term": "10-Year Government Bond Yield (10Y Benchmark)",
+        "category": "Bonds & Yield Curves",
+        "region": "Global",
+        "simple_explanation": "The gold standard of financial markets. The 10-year government bond yield (10Y CZGB in Czechia, 10Y Bund in Germany, 10Y Treasury in the US) shows the annual return investors demand to lend money to the government for 10 years. It serves as the primary benchmark for fixed-rate mortgages and corporate valuations.",
+        "economic_meaning": "Anchor point of the sovereign yield curve reflecting long-term inflation expectations, expected monetary policy path, and the term premium. Used as the risk-free rate (Rf) in DCF valuation models.",
+        "practical_impact": "When 10Y bond yields rise, long-term funding costs increase and 5- to 10-year mortgage fixations become more expensive.",
+        "primary_source": "MoF CZ / Deutsche Bundesbank / U.S. Treasury",
+        "frequency": "Daily market quotes",
+    },
+    "Výnosová křivka & Normální sklon": {
+        "term": "Yield Curve & Normal Slope",
+        "category": "Bonds & Yield Curves",
+        "region": "Global",
+        "simple_explanation": "A chart plotting government bond yields across maturities from shortest (1M/1Y) to longest (10Y/30Y). In a healthy expanding economy, the curve slopes upward ('normal slope'): lending money for longer requires a higher interest rate to compensate for inflation and future uncertainty.",
+        "economic_meaning": "Term structure of interest rates. A positive slope reflects a positive term premium compensating investors for duration risk.",
+        "practical_impact": "A positively sloped curve enables banks to profitably transform short-term deposits into long-term loans, supporting healthy credit growth.",
+        "primary_source": "CNB, ECB, and U.S. Department of the Treasury",
+        "frequency": "Continuous updates",
+    },
+    "Inverze výnosové křivky (Inverted Yield Curve)": {
+        "term": "Inverted Yield Curve",
+        "category": "Bonds & Yield Curves",
+        "region": "Global",
+        "simple_explanation": "An unusual market anomaly where short-term bonds (e.g., 2-year) pay higher yields than long-term bonds (10-year). This occurs when the central bank hikes short-term rates sharply to fight inflation, but investors expect the economy to slow into a recession and force future rate cuts. Historically, it is the most reliable leading indicator of a recession.",
+        "economic_meaning": "Negative spread between long- and short-dated yields (10Y − 2Y < 0), signaling market expectations of monetary policy easing due to macroeconomic slowdown.",
+        "practical_impact": "Compresses bank net interest margins (NIM), tightening credit standards and slowing lending to the real economy.",
+        "primary_source": "Financial markets, St. Louis Fed (FRED)",
+        "frequency": "Monitored daily",
+    },
+    "Spread 10Y − 2Y": {
+        "term": "10Y − 2Y Yield Curve Spread",
+        "category": "Bonds & Yield Curves",
+        "region": "Global",
+        "simple_explanation": "The difference between the 10-year and 2-year government bond yield expressed in percentage points or basis points (100 bps = 1.00%). Positive values indicate a normal upward-sloping curve; negative values indicate yield curve inversion.",
+        "economic_meaning": "Standard quantitative gauge of yield curve steepness. Re-steepening ('un-inversion') from negative back above zero often precedes the onset of a recession as central banks begin cutting short-term rates.",
+        "practical_impact": "Key macro signal for asset allocation between equities, fixed income, and cash.",
+        "primary_source": "Calculated from MoF CZ, Bundesbank, and U.S. Treasury data",
+        "frequency": "Daily data",
+    },
+    "Sovereign Credit Spread (CZGB vs. Bund)": {
+        "term": "Sovereign Credit Spread (CZGB vs. Bund)",
+        "category": "Bonds & Yield Curves",
+        "region": "CZ & EU",
+        "simple_explanation": "The extra yield the Czech government must pay on its 10-year bond compared to Germany's 10-year Bund (Europe's safest benchmark). It reflects the interest rate differential between the CNB and ECB as well as currency and fiscal risk perceptions.",
+        "economic_meaning": "Yield differential (YTM_CZGB − YTM_Bund) in basis points, capturing the CZK-EUR interest rate differential, currency risk premium, and sovereign creditworthiness.",
+        "practical_impact": "Measures international investor confidence in Czech public finances. A narrow spread keeps state debt servicing costs low.",
+        "primary_source": "MoF CZ & Deutsche Bundesbank",
+        "frequency": "Daily calculation",
+    },
+    "Úrokové swapy (CZK IRS)": {
+        "term": "Interest Rate Swaps (CZK IRS)",
+        "category": "Bonds & Yield Curves",
+        "region": "CZ",
+        "simple_explanation": "An interbank contract exchanging a floating interest rate (PRIBOR) for a fixed rate over a multi-year period (e.g., 5Y or 10Y IRS). Czech banks directly price fixed-rate mortgages off the CZK IRS curve.",
+        "economic_meaning": "Over-the-counter derivative instrument used for asset-liability management (ALM), representing the market's expected path of interbank rates over the swap tenor.",
+        "practical_impact": "When 5Y or 10Y CZK IRS rates rise, commercial banks raise fixed mortgage interest rates within days or weeks.",
+        "primary_source": "Interbank OTC Derivatives Market",
+        "frequency": "Continuous interbank quotes",
+    },
+    "Měnový kurz EUR/CZK & USD/CZK": {
+        "term": "EUR/CZK & USD/CZK Exchange Rates",
+        "category": "Exchange Rates & FX Market",
+        "region": "CZ",
+        "simple_explanation": "The price of one euro or U.S. dollar in Czech koruna. When EUR/CZK falls (e.g., from 25.50 to 25.00 CZK), the koruna strengthens—making imported goods, fuel, electronics, and foreign travel cheaper for Czech households, while reducing CZK revenues for exporters.",
+        "economic_meaning": "Nominal bilateral exchange rate. In a small open export-oriented economy where exports exceed 70% of GDP, the exchange rate channel is a powerful component of overall monetary conditions.",
+        "practical_impact": "A stronger koruna dampens imported inflation; a weaker koruna boosts exporter price competitiveness but raises import costs.",
+        "primary_source": "Czech National Bank (CNB Daily FX Fixing)",
+        "frequency": "Daily official CNB fixing at 14:30 CET",
+    },
+    "Dolarový index (DXY / U.S. Dollar Index)": {
+        "term": "U.S. Dollar Index (DXY)",
+        "category": "Exchange Rates & FX Market",
+        "region": "US & Global",
+        "simple_explanation": "An index measuring the overall strength of the U.S. dollar against a basket of six major world currencies (led by the euro at 57.6% weight, followed by JPY, GBP, CAD, SEK, and CHF). When DXY rises, the dollar is strengthening globally.",
+        "economic_meaning": "Geometrically weighted index of USD value established in 1973 (base = 100), acting as a global barometer of USD liquidity and risk aversion.",
+        "practical_impact": "A strong dollar (high DXY) puts downward pressure on USD-denominated commodities (gold, oil, copper) and emerging-market currencies.",
+        "primary_source": "Intercontinental Exchange (ICE)",
+        "frequency": "Real-time / daily settlement",
+    },
+    "Úrokový diferenciál (Interest Rate Differential)": {
+        "term": "Interest Rate Differential",
+        "category": "Exchange Rates & FX Market",
+        "region": "Global",
+        "simple_explanation": "The difference in policy interest rates between two central banks (e.g., CNB rate minus ECB rate). International investors favor currencies offering higher yields ('carry trade'), so a positive interest rate differential supports the Czech koruna.",
+        "economic_meaning": "Core variable in Uncovered Interest Rate Parity (UIP), driving short-term cross-border capital flows and forward FX points.",
+        "practical_impact": "If the CNB cuts rates faster than the ECB or Fed, the koruna loses its yield advantage and may face depreciation pressure.",
+        "primary_source": "Central bank policy rates (CNB vs. ECB vs. Fed)",
+        "frequency": "Continuous across central bank meetings",
+    },
+    "Hrubý domácí produkt (HDP / GDP)": {
+        "term": "Gross Domestic Product (GDP)",
+        "category": "Economic Growth & GDP",
+        "region": "Global",
+        "simple_explanation": "The total monetary value of all final goods and services produced within a country over a given period (typically a quarter or a year). It is the comprehensive scorecard of an economy's size and performance.",
+        "economic_meaning": "Aggregate macroeconomic output measured via production (value added), expenditure (C + I + G + NX), or income approaches.",
+        "practical_impact": "Growing GDP translates into job creation, higher corporate earnings, rising wages, and stronger government tax revenues.",
+        "primary_source": "CZSO (CZ) / Eurostat (EU) / U.S. BEA (US)",
+        "frequency": "Quarterly (flash estimate and revised national accounts)",
+    },
+    "Reálný vs. Nominální růst HDP": {
+        "term": "Real vs. Nominal GDP Growth",
+        "category": "Economic Growth & GDP",
+        "region": "Global",
+        "simple_explanation": "Nominal GDP measures output at current market prices, so it rises even if prices simply inflate without more goods being produced. Real GDP strips out inflation to measure the true physical growth in goods and services produced.",
+        "economic_meaning": "Nominal GDP is valued at current prices, whereas Real GDP is chain-linked at constant prices using the GDP deflator to isolate volume growth.",
+        "practical_impact": "Only real GDP growth delivers genuine improvements in living standards and societal wealth.",
+        "primary_source": "Statistical offices (CZSO, Eurostat, BEA)",
+        "frequency": "Quarterly",
+    },
+    "Hospodářská recese (Technická recese)": {
+        "term": "Economic Recession (Technical Recession)",
+        "category": "Economic Growth & GDP",
+        "region": "Global",
+        "simple_explanation": "A period when economic output contracts instead of growing. A 'technical recession' is defined as two consecutive quarters of negative quarter-on-quarter real GDP growth.",
+        "economic_meaning": "Contractionary phase of the business cycle characterized by a negative output gap, declining investment, rising unemployment, and disinflationary pressure.",
+        "practical_impact": "During recessions, central banks typically cut interest rates and governments deploy fiscal stimulus to restore growth.",
+        "primary_source": "Official national accounts statistics / NBER (US)",
+        "frequency": "Evaluated quarterly",
+    },
+}
+
+GLOSSARY_I18N_EN.update({
+    "Spotřebitelská inflace (CPI Headline)": {
+        "term": "Headline Consumer Inflation (CPI)",
+        "category": "Inflation & Price Level",
+        "region": "Global",
+        "simple_explanation": "The rate at which everyday prices rise. Statisticians track a 'consumer basket' of hundreds of goods and services bought by a typical household—food, housing, utilities, transport, and clothing. YoY inflation of 2.5% means a basket costing 100 last year costs 102.50 today.",
+        "economic_meaning": "Consumer Price Index (CPI / HICP) measuring the weighted change in the price level of household consumption goods and services. Primary target metric for inflation-targeting central banks.",
+        "practical_impact": "High inflation erodes uninvested cash savings and purchasing power; low and stable inflation enables predictable financial planning.",
+        "primary_source": "CZSO (CZ) / Eurostat (HICP in EU) / BLS (USA)",
+        "frequency": "Monthly (around the 10th of the following month)",
+    },
+    "Jádrová inflace (Core CPI / Core HICP)": {
+        "term": "Core Inflation (Core CPI / Core HICP)",
+        "category": "Inflation & Price Level",
+        "region": "Global",
+        "simple_explanation": "Underlying inflation that strips out volatile food and energy prices (fuel, electricity, gas) and tax changes. It reveals persistent domestic price pressures in services, housing, and wages.",
+        "economic_meaning": "Measure of trend inflation excluding exogenous supply shocks and regulated price adjustments, serving as the primary guide for medium-term monetary policy.",
+        "practical_impact": "If core inflation remains sticky, central banks keep interest rates elevated even if headline inflation temporarily dips due to cheaper oil.",
+        "primary_source": "CNB / Eurostat / U.S. Bureau of Labor Statistics",
+        "frequency": "Monthly",
+    },
+    "Inflační cíl (2,0 %)": {
+        "term": "Inflation Target (2.0%)",
+        "category": "Inflation & Price Level",
+        "region": "Global",
+        "simple_explanation": "The 2.0% annual inflation rate targeted by modern central banks (CNB, ECB, Fed). Mild inflation around 2% acts as 'lubricant' for the economy, encouraging investment and preventing harmful deflation.",
+        "economic_meaning": "Nominal anchor for medium-term inflation expectations under an Inflation Targeting regime (CNB target: 2.0% with a ±1 pp tolerance band of 1.0%–3.0%).",
+        "practical_impact": "When inflation exceeds the target, central banks hike rates; when inflation falls below target, they cut rates.",
+        "primary_source": "Monetary policy strategy of CNB / ECB / Fed",
+        "frequency": "Long-term strategic target",
+    },
+    "Reálná úroková míra (Real Interest Rate)": {
+        "term": "Real Interest Rate",
+        "category": "Inflation & Price Level",
+        "region": "Global",
+        "simple_explanation": "The true return on money after subtracting inflation (nominal interest rate minus inflation, per the Fisher equation). If your savings account pays 4.0% and inflation is 2.5%, your real interest rate is +1.5% (your purchasing power grows).",
+        "economic_meaning": "Ex-ante or ex-post real cost of capital (r = i − π), governing intertemporal consumption and investment decisions.",
+        "practical_impact": "Positive real rates reward savers and restrain excessive borrowing; negative real rates erode cash savings.",
+        "primary_source": "Analytical calculation from interest rate and CPI data",
+        "frequency": "Continuous",
+    },
+    "Maloobchodní tržby (Retail Sales YoY)": {
+        "term": "Retail Sales (YoY)",
+        "category": "Real Economy & Business Cycle",
+        "region": "Global",
+        "simple_explanation": "Tracks total household spending in physical and online stores. When households feel confident and real wages grow, retail sales expand; when uncertainty rises, consumers cut back on discretionary spending.",
+        "economic_meaning": "Year-on-year real change in retail trade turnover (deflated for price changes), acting as a key monthly proxy for household consumption (~50–70% of GDP).",
+        "practical_impact": "Strong retail sales signal resilient domestic demand, while sharp drops warn of economic cooling.",
+        "primary_source": "CZSO / Eurostat / U.S. Census Bureau",
+        "frequency": "Monthly",
+    },
+    "Průmyslová produkce (Industrial Production YoY)": {
+        "term": "Industrial Production (YoY)",
+        "category": "Real Economy & Business Cycle",
+        "region": "Global",
+        "simple_explanation": "Measures real output across factories, mines, and power plants. Crucial for the Czech Republic, one of Europe's most industrialized economies (led by automotive manufacturing and engineering).",
+        "economic_meaning": "Industrial Production Index (IPI) at constant prices covering manufacturing, mining, and utilities, highly correlated with German industrial demand and exports.",
+        "practical_impact": "Key indicator of manufacturing health, export momentum, and industrial employment.",
+        "primary_source": "CZSO / Eurostat / Federal Reserve (G.17)",
+        "frequency": "Monthly",
+    },
+    "Míra nezaměstnanosti (Metodika ILO)": {
+        "term": "Unemployment Rate (ILO Methodology)",
+        "category": "Labor Market & Employment",
+        "region": "Global",
+        "simple_explanation": "Internationally comparable percentage of the labor force that is jobless, actively seeking work, and immediately available to start. The Czech Republic consistently ranks among the countries with the lowest unemployment in the EU.",
+        "economic_meaning": "Share of unemployed persons in the economically active population based on the Labour Force Survey (LFS) under International Labour Organization (ILO) standards.",
+        "practical_impact": "Low unemployment gives workers strong bargaining power for wage increases but creates labor shortages for employers.",
+        "primary_source": "Eurostat / CZSO (LFS) / U.S. BLS",
+        "frequency": "Monthly",
+    },
+    "Podíl nezaměstnaných osob (MPSV ČR)": {
+        "term": "Share of Unemployed Persons (MoLSA CZ)",
+        "category": "Labor Market & Employment",
+        "region": "CZ",
+        "simple_explanation": "National administrative unemployment rate published monthly by the Czech Ministry of Labor and Social Affairs (MoLSA), measuring registered job applicants aged 15–64 relative to the total population of the same age.",
+        "economic_meaning": "Administrative labor market indicator capturing registered reachable job seekers at Czech Labor Offices.",
+        "practical_impact": "Provides granular monthly insight into regional labor markets and job vacancy ratios across Czech districts.",
+        "primary_source": "Ministry of Labor and Social Affairs CZ (MoLSA)",
+        "frequency": "Monthly",
+    },
+    "Index PX (Pražská burza)": {
+        "term": "PX Index (Prague Stock Exchange)",
+        "category": "Equity Markets & Stock Indices",
+        "region": "CZ",
+        "simple_explanation": "The official benchmark index of the Prague Stock Exchange (PSE), tracking leading Czech blue-chip companies—primarily banks (Erste Group, Komercni banka, Moneta), energy utility CEZ, and Colt CZ. Known for high dividend yields.",
+        "economic_meaning": "Free-float market-capitalization-weighted price index of the Prague Stock Exchange (established in 1994 with a base of 1,000 points).",
+        "practical_impact": "Core benchmark for domestic equity investors and Czech pension funds.",
+        "primary_source": "Prague Stock Exchange (PSE / BCPP)",
+        "frequency": "Real-time on trading days (09:00–16:20 CET)",
+    },
+    "Euro Stoxx 50": {
+        "term": "Euro Stoxx 50",
+        "category": "Equity Markets & Stock Indices",
+        "region": "EU",
+        "simple_explanation": "The flagship blue-chip stock index of the Eurozone, comprising 50 sector-leading corporations across 8 euro-area countries (including ASML, SAP, LVMH, Siemens, TotalEnergies, and Allianz).",
+        "economic_meaning": "Free-float market-cap-weighted index managed by STOXX Ltd. (Deutsche Börse Group) with a 10% component cap.",
+        "practical_impact": "Primary benchmark for European equity ETFs and corporate earnings sentiment in the Eurozone.",
+        "primary_source": "STOXX Ltd. / Deutsche Börse",
+        "frequency": "Real-time during European trading hours",
+    },
+    "S&P 500": {
+        "term": "S&P 500",
+        "category": "Equity Markets & Stock Indices",
+        "region": "US & Global",
+        "simple_explanation": "The world's most closely watched stock market index, tracking 500 of the largest publicly traded U.S. corporations (Apple, Microsoft, Nvidia, Amazon, Alphabet, Berkshire Hathaway, etc.) and representing ~80% of total U.S. equity market value.",
+        "economic_meaning": "Float-adjusted market-cap-weighted index maintained by S&P Dow Jones Indices requiring positive trailing 4-quarter GAAP earnings and high liquidity.",
+        "practical_impact": "Cornerstone of global investment portfolios and retirement funds worldwide.",
+        "primary_source": "S&P Dow Jones Indices",
+        "frequency": "Real-time during NYSE / NASDAQ trading hours",
+    },
+    "NASDAQ Composite": {
+        "term": "NASDAQ Composite",
+        "category": "Equity Markets & Stock Indices",
+        "region": "US & Global",
+        "simple_explanation": "A broad index of over 3,000 stocks listed on the NASDAQ exchange, heavily weighted toward technology, semiconductors, software, AI, internet platforms, and biotech.",
+        "economic_meaning": "Market-capitalization-weighted index with high exposure to long-duration growth equities, exhibiting higher sensitivity (beta) to interest rate changes.",
+        "practical_impact": "Barometer of global technology innovation, AI investment, and investor risk appetite.",
+        "primary_source": "NASDAQ OMX Group",
+        "frequency": "Real-time (15:30–22:00 CET)",
+    },
+    "Normalizované srovnání výkonnosti (Báze = 100)": {
+        "term": "Normalized Performance Comparison (Rebase = 100)",
+        "category": "Equity Markets & Stock Indices",
+        "region": "Global",
+        "simple_explanation": "A mathematical method to fairly compare assets with very different nominal point levels (e.g., PX at 2,600 pts vs. NASDAQ at 27,000 pts). All series are rescaled to 100 at the start of the selected period so relative percentage gains are immediately visible.",
+        "economic_meaning": "Time-series indexing: Index_t = (Price_t / Price_t0) × 100, eliminating scale bias across asset classes.",
+        "practical_impact": "Essential analytical tool for comparing cumulative returns across indices, currencies, and commodities.",
+        "primary_source": "Financial analysis standard",
+        "frequency": "Computed dynamically for any selected time horizon",
+    },
+    "Veřejný vládní dluh k HDP (% HDP)": {
+        "term": "General Government Debt to GDP (% GDP)",
+        "category": "Public Finance & Government Debt",
+        "region": "Global",
+        "simple_explanation": "Measures a country's total public debt relative to the size of its annual economic output (GDP). Czechia's debt (~44% of GDP) remains well below the Eurozone average (~88% of GDP) and the US (>120% of GDP).",
+        "economic_meaning": "Consolidated general government gross debt (ESA 2010 methodology in the EU) divided by nominal annual GDP—the premier gauge of sovereign fiscal sustainability.",
+        "practical_impact": "Countries with lower debt-to-GDP ratios enjoy higher credit ratings and spend less tax revenue on debt interest payments.",
+        "primary_source": "MoF CZ / Eurostat (EDP) / U.S. Treasury",
+        "frequency": "Quarterly notifications and annual revisions",
+    },
+    "Maastrichtská konvergenční kritéria": {
+        "term": "Maastricht Convergence Criteria",
+        "category": "Public Finance & Government Debt",
+        "region": "EU & CZ",
+        "simple_explanation": "EU fiscal discipline rules established by the Maastricht Treaty, setting two famous thresholds: (1) Public debt must not exceed 60% of GDP, and (2) Annual government budget deficit must not exceed 3% of GDP.",
+        "economic_meaning": "Fiscal and monetary convergence rules enshrined in the Stability and Growth Pact (SGP) and required for Eurozone accession.",
+        "practical_impact": "Anchors fiscal discipline across EU member states and safeguards sovereign debt sustainability.",
+        "primary_source": "European Commission & EU Council",
+        "frequency": "Semi-annual and annual fiscal surveillance",
+    },
+    "Saldo státního rozpočtu (Deficit / Přebytek)": {
+        "term": "State Budget Balance (Deficit / Surplus)",
+        "category": "Public Finance & Government Debt",
+        "region": "Global",
+        "simple_explanation": "The difference between government revenues (taxes, duties) and expenditures. When spending exceeds revenue, the government runs a budget deficit that must be financed by issuing government bonds.",
+        "economic_meaning": "Net lending (+) or net borrowing (−) of the government sector, comprising a structural component and a cyclical component.",
+        "practical_impact": "Persistent structural deficits increase public debt and require future fiscal consolidation.",
+        "primary_source": "Ministry of Finance CZ / Eurostat / U.S. Treasury",
+        "frequency": "Monthly cash execution & quarterly national accounts",
+    },
+    "Náklady na obsluhu státního dluhu": {
+        "term": "Government Debt Servicing Costs",
+        "category": "Public Finance & Government Debt",
+        "region": "Global",
+        "simple_explanation": "The annual interest payments the state must pay to holders of its government bonds. Higher interest rates and larger debt volumes directly increase these mandatory budget expenses.",
+        "economic_meaning": "General government interest expenditure, determined by total debt stock and the weighted average yield of the sovereign bond portfolio.",
+        "practical_impact": "Higher debt service costs crowd out productive public spending on infrastructure, education, and healthcare.",
+        "primary_source": "Ministry of Finance CZ (Debt Management Report)",
+        "frequency": "Quarterly and annual MoF reports",
+    },
+    "PMI v průmyslu ČR (S&P Global)": {
+        "term": "CZ Manufacturing PMI (S&P Global)",
+        "category": "Leading Indicators & Sentiment",
+        "region": "CZ",
+        "simple_explanation": "Monthly survey of purchasing managers in Czech manufacturing companies tracking new orders, output, employment, supplier delivery times, and inventories. 50.0 is the dividing line: above 50 signals expansion, below 50 contraction.",
+        "economic_meaning": "Diffusion index compiled by S&P Global from weighted sub-indices (New Orders 30%, Output 25%, Employment 20%, Suppliers' Delivery Times 15%, Stocks of Purchases 10%), leading hard industrial data by 1–2 months.",
+        "practical_impact": "Provides the earliest monthly signal of turning points in Czech manufacturing and export demand.",
+        "primary_source": "S&P Global Czech Republic Manufacturing PMI",
+        "frequency": "Monthly (first business day of the month)",
+    },
+    "Důvěra podnikatelů a spotřebitelů (ČSÚ)": {
+        "term": "Business & Consumer Confidence (CZSO)",
+        "category": "Leading Indicators & Sentiment",
+        "region": "CZ",
+        "simple_explanation": "Official monthly survey by the Czech Statistical Office among thousands of Czech businesses and households gauging economic expectations, hiring plans, and household financial outlook (long-term average = 100 points).",
+        "economic_meaning": "Composite Economic Sentiment Indicator harmonized with European Commission methodology (80% business confidence across industry, construction, retail, and services; 20% consumer confidence).",
+        "practical_impact": "Rising confidence precedes stronger retail sales and corporate investment; falling confidence signals precautionary saving.",
+        "primary_source": "Czech Statistical Office (CZSO – Business Cycle Surveys)",
+        "frequency": "Monthly (around the 24th of the month)",
+    },
+    "Průměrná hrubá mzda nominálně (YoY)": {
+        "term": "Average Gross Nominal Wage (YoY)",
+        "category": "Labor Market & Wages",
+        "region": "CZ",
+        "simple_explanation": "The year-on-year percentage increase in the average gross monthly paycheck of Czech employees before deducting inflation and taxes.",
+        "economic_meaning": "Nominal YoY growth of full-time equivalent (FTE) average gross monthly earnings in the Czech national economy.",
+        "practical_impact": "Rapid nominal wage growth boosts household income but is closely watched by the CNB as a driver of services inflation.",
+        "primary_source": "Czech Statistical Office (CZSO)",
+        "frequency": "Quarterly",
+    },
+    "Průměrná reálná mzda (YoY)": {
+        "term": "Average Real Wage (YoY)",
+        "category": "Labor Market & Wages",
+        "region": "CZ",
+        "simple_explanation": "Wage growth adjusted for inflation—showing whether employees can actually buy more goods and services with their paycheck than a year ago.",
+        "economic_meaning": "Ratio of the nominal wage index to the Consumer Price Index (CPI), measuring changes in real household purchasing power.",
+        "practical_impact": "Positive real wage growth is the primary engine of household consumption recovery.",
+        "primary_source": "Czech Statistical Office (CZSO)",
+        "frequency": "Quarterly",
+    },
+    "Nové hypotéky – objem a průměrná sazba": {
+        "term": "New Mortgages – Volume & Average Rate",
+        "category": "Banking Sector & Loans",
+        "region": "CZ",
+        "simple_explanation": "Monthly volume (in CZK billions) of newly originated residential mortgages in Czechia (excluding refinancing) and their average realized interest rate.",
+        "economic_meaning": "CBA Hypomonitor and CNB ARAD statistics on new household housing loans, capturing monetary policy pass-through and housing market activity.",
+        "practical_impact": "Direct barometer of housing affordability and real estate market momentum.",
+        "primary_source": "Czech Banking Association (CBA Hypomonitor) & CNB ARAD",
+        "frequency": "Monthly",
+    },
+    "Korporátní úvěry – meziroční růst": {
+        "term": "Corporate Loans – YoY Growth",
+        "category": "Banking Sector & Loans",
+        "region": "CZ",
+        "simple_explanation": "Year-on-year percentage change in total bank loans extended to non-financial corporations in the Czech Republic (including both CZK and EUR loans).",
+        "economic_meaning": "Credit growth to non-financial corporations from CNB monetary statistics, reflecting corporate investment appetite and bank lending standards.",
+        "practical_impact": "High CZK interest rates have prompted many Czech exporters to borrow in EUR ('euroization' of corporate credit).",
+        "primary_source": "Czech National Bank (ARAD – Monetary Statistics)",
+        "frequency": "Monthly",
+    },
+    "Měnový agregát M2 (YoY)": {
+        "term": "M2 Money Supply (YoY)",
+        "category": "Monetary Policy & Money Supply",
+        "region": "CZ",
+        "simple_explanation": "Year-on-year growth of the total money supply in the Czech economy—including physical cash, checking accounts, and savings/term deposits up to 2 years.",
+        "economic_meaning": "Broad money aggregate M2 (M1 currency and overnight deposits + deposits with agreed maturity up to 2 years and redeemable at notice up to 3 months).",
+        "practical_impact": "Rapid M2 expansion signals abundant liquidity and potential medium-term inflationary pressures.",
+        "primary_source": "Czech National Bank (Monetary Statistics)",
+        "frequency": "Monthly",
+    },
+    "Běžný účet platební bilance (k HDP)": {
+        "term": "Current Account Balance (% GDP)",
+        "category": "External Balance & International Trade",
+        "region": "CZ",
+        "simple_explanation": "The country's comprehensive external balance sheet with the rest of the world as a percentage of GDP—combining trade in goods and services, investment income (dividends), and EU transfers.",
+        "economic_meaning": "Current Account Balance to GDP (representing national savings minus investment, S − I).",
+        "practical_impact": "A current account surplus supports the stability and appreciation of the Czech koruna.",
+        "primary_source": "Czech National Bank (Balance of Payments) & CZSO",
+        "frequency": "Quarterly and monthly",
+    },
+    "Bilance zahraničního obchodu ČSÚ": {
+        "term": "Foreign Trade Balance (CZSO)",
+        "category": "External Balance & International Trade",
+        "region": "CZ",
+        "simple_explanation": "Monthly difference between the value of Czech goods exported abroad (cars, machinery, electronics) and goods imported into Czechia (oil, gas, components) in CZK billions.",
+        "economic_meaning": "Monthly merchandise trade balance compiled by the CZSO under the national concept.",
+        "practical_impact": "A structural trade surplus is a key pillar of Czech GDP growth and koruna demand.",
+        "primary_source": "Czech Statistical Office (CZSO – External Trade)",
+        "frequency": "Monthly (around the 6th of the month)",
+    },
+    "Kreditní spread 10Y CZGB vs. 10Y Bund": {
+        "term": "10Y CZGB vs. 10Y Bund Credit Spread",
+        "category": "Bond Market & Spreads",
+        "region": "CZ & EU",
+        "simple_explanation": "Yield difference in basis points (100 bps = 1.00%) between the 10-year Czech government bond (CZGB) and the 10-year German Bund.",
+        "economic_meaning": "Sovereign yield spread reflecting the CNB-ECB policy rate differential, inflation premium, and sovereign risk.",
+        "practical_impact": "Tracks relative borrowing costs of the Czech state versus the Eurozone core.",
+        "primary_source": "MoF CZ / Deutsche Bundesbank / Eurostat",
+        "frequency": "Daily and monthly",
+    },
+    "Asset Swap Spread (ASW 10Y CZK)": {
+        "term": "Asset Swap Spread (10Y CZK ASW)",
+        "category": "Bond Market & Spreads",
+        "region": "CZ",
+        "simple_explanation": "The spread in basis points between the 10-year Czech government bond yield (CZGB) and the 10-year CZK interest rate swap (IRS) rate, indicating whether government bonds are cheap or rich relative to the swap curve.",
+        "economic_meaning": "Asset Swap (ASW) spread measuring the sovereign bond yield premium over the interbank CZK IRS curve.",
+        "practical_impact": "Key relative-value metric for fixed-income portfolio managers, bank treasuries, and primary dealers.",
+        "primary_source": "Interbank Swap Market & MoF CZ",
+        "frequency": "Daily and monthly",
+    },
+    "Německý Ifo index podnikatelského klimatu": {
+        "term": "German Ifo Business Climate Index",
+        "category": "Leading Indicators & Sentiment",
+        "region": "EU",
+        "simple_explanation": "The premier monthly business sentiment survey of Germany's economy, based on responses from ~9,000 German firms. Because Germany is Czechia's largest trading partner, the Ifo index is a critical leading indicator for Czech exporters.",
+        "economic_meaning": "Ifo Geschäftsklimaindex combining assessments of current business conditions and 6-month expectations across German industry, services, trade, and construction.",
+        "practical_impact": "Rises and falls in the German Ifo index directly foreshadow order book trends for Czech industrial suppliers.",
+        "primary_source": "Ifo Institute Munich",
+        "frequency": "Monthly (around the 25th of the month)",
+    },
+    "Composite PMI Eurozóny": {
+        "term": "Eurozone Composite PMI",
+        "category": "Leading Indicators & Sentiment",
+        "region": "EU",
+        "simple_explanation": "Combined Purchasing Managers' Index across both manufacturing and services in the 20-country Eurozone. Readings above 50 signal economic expansion; readings below 50 signal contraction.",
+        "economic_meaning": "HCOB / S&P Global Eurozone Composite Output Index based on surveys of over 5,000 euro-area companies, serving as a reliable real-time nowcast of Eurozone GDP growth.",
+        "practical_impact": "Closely watched by the ECB Governing Council and EUR/USD traders.",
+        "primary_source": "S&P Global & Hamburg Commercial Bank (HCOB)",
+        "frequency": "Monthly (flash around the 22nd, final at month start)",
+    },
+    "Sjednané mzdy v Eurozóně (ECB YoY)": {
+        "term": "Eurozone Negotiated Wages (ECB YoY)",
+        "category": "Labor Market & Wages",
+        "region": "EU",
+        "simple_explanation": "Official ECB indicator tracking year-on-year wage growth agreed in collective bargaining agreements across Eurozone countries.",
+        "economic_meaning": "Euro Area Negotiated Wage Growth indicator compiled by the ECB, serving as a primary gauge of domestic wage-push inflation persistence in services.",
+        "practical_impact": "Elevated negotiated wage growth (>3.5–4.0%) makes the ECB more cautious about cutting interest rates.",
+        "primary_source": "European Central Bank (ECB Statistical Data Warehouse)",
+        "frequency": "Quarterly",
+    },
+    "Rizikový spread Itálie vs. Německo (10Y BTP - Bund)": {
+        "term": "Italy vs. Germany Risk Spread (10Y BTP - Bund)",
+        "category": "Bond Market & Spreads",
+        "region": "EU",
+        "simple_explanation": "The yield difference in basis points between Italy's 10-year government bond (BTP) and Germany's 10-year Bund—the classic barometer of financial stress and fragmentation risk in the Eurozone.",
+        "economic_meaning": "BTP-Bund 10Y sovereign spread in bps, measuring fiscal and credit risk premia in the southern Eurozone periphery.",
+        "practical_impact": "Sharp widening above 200–250 bps can trigger ECB intervention via the Transmission Protection Instrument (TPI).",
+        "primary_source": "MTS / Bloomberg / Deutsche Bundesbank & Banca d'Italia",
+        "frequency": "Daily and monthly",
+    },
+    "ISM Index ve výrobě (Manufacturing PMI)": {
+        "term": "US ISM Manufacturing PMI",
+        "category": "Leading Indicators & Sentiment",
+        "region": "USA",
+        "simple_explanation": "The flagship monthly survey of U.S. manufacturing purchasing managers by the Institute for Supply Management. Readings above 50 indicate industrial expansion; readings below 50 indicate contraction.",
+        "economic_meaning": "Diffusion index tracking new orders, production, employment, supplier deliveries, and inventories across 300+ U.S. industrial firms.",
+        "practical_impact": "Immediate market mover for the U.S. dollar, Wall Street equities, and global Treasury yields.",
+        "primary_source": "Institute for Supply Management (ISM)",
+        "frequency": "Monthly (first business day of the month)",
+    },
+    "ISM Index ve službách (Services PMI)": {
+        "term": "US ISM Services PMI",
+        "category": "Leading Indicators & Sentiment",
+        "region": "USA",
+        "simple_explanation": "Monthly survey of purchasing executives in the U.S. services sector (finance, healthcare, IT, retail, logistics), which accounts for over 75% of total U.S. GDP.",
+        "economic_meaning": "ISM Non-Manufacturing / Services PMI measuring business activity, new orders, employment, and prices in the U.S. services economy (50 = expansion threshold).",
+        "practical_impact": "Demonstrates the resilience of the U.S. consumer and services economy.",
+        "primary_source": "Institute for Supply Management (ISM)",
+        "frequency": "Monthly (third business day of the month)",
+    },
+    "Spotřebitelský sentiment (Univ. of Michigan)": {
+        "term": "US Consumer Sentiment (Univ. of Michigan)",
+        "category": "Leading Indicators & Sentiment",
+        "region": "USA",
+        "simple_explanation": "Renowned monthly survey by the University of Michigan measuring how U.S. households view their personal finances, business conditions, and 1-year / 5-year inflation expectations.",
+        "economic_meaning": "University of Michigan Consumer Sentiment Index (MCSI), closely monitored by the Federal Reserve for household inflation expectations.",
+        "practical_impact": "Because consumer spending drives ~70% of U.S. GDP, swings in consumer sentiment directly impact future U.S. growth.",
+        "primary_source": "University of Michigan (Surveys of Consumers)",
+        "frequency": "Monthly (preliminary mid-month, final month-end)",
+    },
+    "Průměrná hodinová mzda USA (Average Hourly Earnings YoY)": {
+        "term": "US Average Hourly Earnings (YoY)",
+        "category": "Labor Market & Wages",
+        "region": "USA",
+        "simple_explanation": "Year-on-year percentage growth in the average hourly pay of U.S. private-sector employees, released monthly alongside Nonfarm Payrolls (NFP).",
+        "economic_meaning": "Average Hourly Earnings of All Private Nonfarm Employees (YoY) published by the U.S. Bureau of Labor Statistics.",
+        "practical_impact": "Key indicator of U.S. labor market tightness and wage-driven inflation pressures for the Fed.",
+        "primary_source": "U.S. Bureau of Labor Statistics (BLS – Employment Situation)",
+        "frequency": "Monthly (first Friday of the month)",
+    },
+    "Index volatility VIX": {
+        "term": "Cboe Volatility Index (VIX)",
+        "category": "Market Sentiment & Risk",
+        "region": "US & Global",
+        "simple_explanation": "Wall Street's famous 'Fear Index'. It measures the market's expectation of 30-day volatility on the S&P 500 index derived from option prices. Readings below 15 signal market calm; readings above 30 signal acute market stress and panic.",
+        "economic_meaning": "Cboe Volatility Index (VIX) representing annualized 30-day implied volatility derived from S&P 500 index call and put options.",
+        "practical_impact": "Primary barometer of global risk aversion, portfolio hedging demand, and market stress.",
+        "primary_source": "Chicago Board Options Exchange (Cboe) & Yahoo Finance",
+        "frequency": "Daily / real-time",
+    },
+})
+
+_orig_render_glossary_view = render_glossary_view
+
+
+def render_glossary_view(active_filter_category: Optional[str] = None):
+    """Renders the Explanatory Glossary in Czech or English depending on active language."""
+    try:
+        from i18n import is_en
+        en_mode = is_en()
+    except Exception:
+        en_mode = False
+
+    if not en_mode:
+        return _orig_render_glossary_view(active_filter_category=active_filter_category)
+
+    st.markdown(
+        """
+        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 10px; padding: 18px 22px; color: white; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <div style="font-size: 1.40rem; font-weight: 800; letter-spacing: -0.02em;">📖 Macroeconomic & Financial Explanatory Glossary</div>
+                    <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 4px;">Clear, economically rigorous, and practical guide to all monitored indicators for both laymen and investors</div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Build localized items list
+    en_items: List[GlossaryItem] = []
+    for it in GLOSSARY_ITEMS:
+        tr_item = GLOSSARY_I18N_EN.get(it.term)
+        if tr_item:
+            en_items.append(
+                GlossaryItem(
+                    term=tr_item["term"],
+                    category=tr_item["category"],
+                    region=tr_item["region"],
+                    simple_explanation=tr_item["simple_explanation"],
+                    economic_meaning=tr_item["economic_meaning"],
+                    practical_impact=tr_item["practical_impact"],
+                    primary_source=tr_item["primary_source"],
+                    frequency=tr_item["frequency"],
+                )
+            )
+        else:
+            en_items.append(it)
+
+    col_search, col_cat, col_reg = st.columns([2.0, 1.5, 1.2])
+    with col_search:
+        search_kw = st.text_input(
+            "🔍 Search glossary (term, explanation, impact):",
+            placeholder="e.g. repo, inflation, yield curve, spread, DXY, PRIBOR...",
+            key="glossary_search_kw_en",
+        )
+
+    categories = ["All Categories"] + sorted(list(set(item.category for item in en_items)))
+    with col_cat:
+        selected_cat = st.selectbox(
+            "Term Category:",
+            categories,
+            index=0,
+            key="glossary_select_cat_en",
+        )
+
+    regions = ["All Regions", "CZ", "EU", "USA", "Global"]
+    with col_reg:
+        selected_reg = st.selectbox(
+            "Region / Country:",
+            regions,
+            key="glossary_select_reg_en",
+        )
+
+    filtered_items = en_items
+    if selected_cat != "All Categories":
+        filtered_items = [it for it in filtered_items if it.category == selected_cat]
+
+    if selected_reg != "All Regions":
+        reg_match = "US" if selected_reg == "USA" else selected_reg
+        filtered_items = [it for it in filtered_items if reg_match in it.region or it.region == "Global"]
+
+    if search_kw.strip():
+        q = search_kw.strip().lower()
+        filtered_items = [
+            it for it in filtered_items
+            if (
+                q in it.term.lower()
+                or q in it.simple_explanation.lower()
+                or q in it.economic_meaning.lower()
+                or q in it.practical_impact.lower()
+                or q in it.primary_source.lower()
+            )
+        ]
+
+    st.markdown(f"**Showing {len(filtered_items)} of {len(en_items)} defined terms**")
+
+    for item in filtered_items:
+        st.markdown(
+            f"""
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-left: 5px solid #1e3a8a; border-radius: 8px; padding: 14px 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                    <span style="font-size: 1.15rem; font-weight: 800; color: #0f172a;">{item.term}</span>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <span style="background: #eff6ff; color: #1e40af; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; border: 1px solid #bfdbfe;">{item.category}</span>
+                        <span style="background: #f1f5f9; color: #334155; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; border: 1px solid #cbd5e1;">📍 {item.region}</span>
+                    </div>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <div style="font-size: 0.80rem; font-weight: 750; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px;">
+                        📖 Plain-English Explanation (For Everyone):
+                    </div>
+                    <div style="font-size: 0.88rem; color: #1e293b; line-height: 1.45; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        {item.simple_explanation}
+                    </div>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <div style="font-size: 0.80rem; font-weight: 750; color: #334155; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px;">
+                        ⚙️ Economic & Financial Meaning:
+                    </div>
+                    <div style="font-size: 0.85rem; color: #475569; line-height: 1.45;">
+                        {item.economic_meaning}
+                    </div>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <div style="font-size: 0.80rem; font-weight: 750; color: #059669; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px;">
+                        💡 Why It Matters & Practical Impact:
+                    </div>
+                    <div style="font-size: 0.85rem; color: #334155; line-height: 1.45;">
+                        {item.practical_impact}
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.74rem; color: #64748b; margin-top: 10px; padding-top: 6px; border-top: 1px dashed #e2e8f0;">
+                    <span>🏛️ <strong>Primary Authority:</strong> {item.primary_source}</span>
+                    <span>⏱️ <strong>Frequency:</strong> {item.frequency}</span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )

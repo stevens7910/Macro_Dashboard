@@ -89,6 +89,25 @@ handle_indicator_search_navigation = getattr(search_component, "handle_indicator
 render_indicator_search_bar = getattr(search_component, "render_indicator_search_bar", lambda: None)
 render_scroll_anchor_effect = getattr(search_component, "render_scroll_anchor_effect", lambda: None)
 
+try:
+    import i18n as i18n_module
+except (ImportError, ModuleNotFoundError):
+    try:
+        import macro_dashboard.i18n as i18n_module
+    except (ImportError, ModuleNotFoundError):
+        import Macro_Dashboard.i18n as i18n_module
+
+init_language_state = getattr(i18n_module, "init_language_state", lambda: "cs")
+render_language_switcher = getattr(i18n_module, "render_language_switcher", lambda container=None, key_suffix="main": "cs")
+install_streamlit_i18n = getattr(i18n_module, "install_streamlit_i18n", lambda: None)
+translate_plotly_figure = getattr(i18n_module, "translate_plotly_figure", lambda fig: fig)
+translate_cz_news_card_item = getattr(i18n_module, "translate_cz_news_card_item", lambda item: item)
+translate_catalog_df = getattr(i18n_module, "translate_catalog_df", lambda df_c: df_c)
+translate_catalog_display_df = getattr(i18n_module, "translate_catalog_display_df", lambda df_d: df_d)
+translate_export_df = getattr(i18n_module, "translate_export_df", lambda df_e, ind: df_e)
+is_en = getattr(i18n_module, "is_en", lambda: False)
+tr = getattr(i18n_module, "tr", lambda s: s)
+
 # =============================================================================
 # 1. KONFIGURACE STRÁNKY A STYLING
 # =============================================================================
@@ -99,6 +118,10 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="auto",  # Mobilně přívětivé: automatické sbalení na telefonu
 )
+
+# Inicializace dvojjazyčného překladače (CZ / EN)
+install_streamlit_i18n()
+init_language_state()
 
 # Zpracování vyhledávání z URL parametrů před jakýmkoliv vykreslením widgetů
 handle_indicator_search_navigation()
@@ -1066,6 +1089,8 @@ def render_plotly_chart(fig: go.Figure, key: Optional[str] = None) -> None:
         except Exception:
             pass
 
+    fig = translate_plotly_figure(fig)
+
     chart_config = {
         "scrollZoom": False,
         "displayModeBar": False,
@@ -1115,7 +1140,7 @@ economy_options = ["🇨🇿 Česká republika", "🇪🇺 Evropská unie", "�
 if "macro_region_top_switch" not in st.session_state:
     st.session_state["macro_region_top_switch"] = "🇨🇿 Česká republika"
 
-col_top_eco, col_top_dev = st.columns([3.4, 1.2])
+col_top_eco, col_top_dev, col_top_lang = st.columns([2.9, 1.1, 0.9])
 with col_top_eco:
     if hasattr(st, "segmented_control"):
         selected_economy = st.segmented_control(
@@ -1155,6 +1180,9 @@ with col_top_dev:
             horizontal=True,
             label_visibility="collapsed"
         )
+
+with col_top_lang:
+    render_language_switcher(st, key_suffix="top")
 
 is_mobile_mode = (device_mode == "📱 Mobil")
 if is_mobile_mode:
@@ -1216,6 +1244,8 @@ if col_sb_nav1.button("📊 Monitor", use_container_width=True, type="secondary"
 if col_sb_nav2.button("📖 Glosář pojmů", use_container_width=True, type="primary" if is_in_glossary else "secondary", help="Otevře srozumitelný výkladový glosář všech makroekonomických pojmů a ukazatelů pro laiky i investory.", key="sb_nav_btn_glossary"):
     st.session_state["current_view"] = "glossary"
     st.rerun()
+
+render_language_switcher(st.sidebar, key_suffix="sidebar")
 
 # Vyhledávací pole pro indikátory s interaktivním našeptávačem (Command Palette / Search Drawer)
 render_indicator_search_bar()
@@ -1473,6 +1503,8 @@ if is_mobile_mode:
         if m_col2.button("📖 Glosář pojmů", use_container_width=True, type="primary" if is_gl_mob else "secondary", key="mob_top_btn_glossary"):
             st.session_state["current_view"] = "glossary"
             st.rerun()
+
+        render_language_switcher(st, key_suffix="mob_quick")
 
         st.markdown("<div style='font-size:0.75rem;font-weight:700;color:#475569;margin:6px 0 4px 0;'>📅 ČASOVÝ HORIZONT GRAFŮ:</div>", unsafe_allow_html=True)
         h_cols = st.columns(4)
@@ -4183,6 +4215,7 @@ for col in selected_indicators:
 
 df_export_active = df_export.rename(columns=rename_dict)
 df_export_active["Datum"] = df_export_active["Datum"].dt.strftime("%d.%m.%Y")
+df_export_active = translate_export_df(df_export_active, INDICATORS)
 
 
 # =============================================================================
@@ -4393,6 +4426,7 @@ def render_cz_news_card(news_item: Optional[Dict[str, str]]):
     """Vykreslí přehlednou kartu s nejnovější ověřenou finanční zprávou, datem publikace, zdrojem a makroekonomickým kontextem."""
     if not news_item:
         return
+    news_item = translate_cz_news_card_item(news_item)
 
     url = news_item.get("url", "")
     live_headline = news_item.get("live_headline", "")
@@ -4590,7 +4624,7 @@ def get_indicators_catalog_df() -> pd.DataFrame:
             "_region_code": info.region
         })
 
-    return pd.DataFrame(catalog_rows)
+    return translate_catalog_df(pd.DataFrame(catalog_rows))
 
 
 # =============================================================================
@@ -5799,9 +5833,9 @@ with main_tab_catalog:
 
     df_filtered_cat = df_cat.copy()
     if cat_country != "Všechny země":
-        df_filtered_cat = df_filtered_cat[df_filtered_cat["Země / Region"] == cat_country]
+        df_filtered_cat = df_filtered_cat[df_filtered_cat["Země / Region"].isin([cat_country, tr(cat_country)])]
     if cat_category != "Všechny kategorie":
-        df_filtered_cat = df_filtered_cat[df_filtered_cat["Kategorie"] == cat_category]
+        df_filtered_cat = df_filtered_cat[df_filtered_cat["Kategorie"].isin([cat_category, tr(cat_category)])]
     if search_query.strip():
         q = search_query.strip().lower()
         df_filtered_cat = df_filtered_cat[
@@ -5823,7 +5857,7 @@ with main_tab_catalog:
 
     # Tlačítko pro stažení katalogu do CSV
     csv_cat_buffer = io.StringIO()
-    display_cat_df.to_csv(csv_cat_buffer, index=False, sep=";", decimal=",", encoding="utf-8-sig")
+    translate_catalog_display_df(display_cat_df).to_csv(csv_cat_buffer, index=False, sep=";", decimal=",", encoding="utf-8-sig")
     st.download_button(
         label="📥 Stáhnout kompletní katalog ukazatelů a zdrojů (CSV)",
         data=csv_cat_buffer.getvalue().encode("utf-8-sig"),
