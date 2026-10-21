@@ -2023,3 +2023,6 @@ def render_glossary_view(active_filter_category: Optional[str] = None):
             """,
             unsafe_allow_html=True,
         )
+
+
+I18N_SYNC_VERSION = "2026.10.21.v3"

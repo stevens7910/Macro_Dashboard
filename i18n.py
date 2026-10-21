@@ -17,6 +17,23 @@ from streamlit.delta_generator import DeltaGenerator
 # 1. LANGUAGE STATE & SWITCHER
 # =============================================================================
 
+I18N_VERSION = "2026.10.21.v2"
+
+_ALL_LANG_SWITCH_KEYS = (
+    "ui_lang_switch_top",
+    "ui_lang_switch_sidebar",
+    "ui_lang_switch_mob_quick",
+    "ui_lang_switch_top_mob",
+    "ui_lang_switch_sidebar_mob",
+)
+
+
+def _sync_all_lang_switch_keys(lang_val: str) -> None:
+    """Keeps all language switcher widget keys synchronized in st.session_state."""
+    for k in _ALL_LANG_SWITCH_KEYS:
+        st.session_state[k] = lang_val
+
+
 def init_language_state() -> str:
     """Initializes language state from URL query params or session_state."""
     qp_lang = st.query_params.get("lang", "")
@@ -24,8 +41,10 @@ def init_language_state() -> str:
         qp_clean = str(qp_lang).strip().lower()
         if qp_clean in ("en", "eng", "gb", "uk", "us"):
             st.session_state["ui_lang"] = "🇬🇧 EN"
+            _sync_all_lang_switch_keys("🇬🇧 EN")
         elif qp_clean in ("cs", "cz"):
             st.session_state["ui_lang"] = "🇨🇿 CZ"
+            _sync_all_lang_switch_keys("🇨🇿 CZ")
         try:
             del st.query_params["lang"]
         except Exception:
@@ -50,42 +69,39 @@ def is_en() -> bool:
 
 
 def render_language_switcher(container: Any = st, key_suffix: str = "top") -> str:
-    """Renders a compact CZ / EN language switcher."""
+    """Renders a compact CZ / EN language switcher synchronized across all placements."""
     init_language_state()
     current_val = st.session_state.get("ui_lang", "🇨🇿 CZ")
     if current_val not in ("🇨🇿 CZ", "🇬🇧 EN"):
         current_val = "🇨🇿 CZ"
 
     widget_key = f"ui_lang_switch_{key_suffix}"
+    # Synchronize this widget's session_state before rendering so secondary switchers never revert ui_lang
+    st.session_state[widget_key] = current_val
 
     def _on_lang_change():
         new_v = st.session_state.get(widget_key)
         if new_v in ("🇨🇿 CZ", "🇬🇧 EN"):
             st.session_state["ui_lang"] = new_v
+            _sync_all_lang_switch_keys(new_v)
 
     try:
-        selected = container.segmented_control(
+        container.segmented_control(
             "Jazyk / Language",
             options=["🇨🇿 CZ", "🇬🇧 EN"],
-            default=current_val,
             label_visibility="collapsed",
             key=widget_key,
             on_change=_on_lang_change,
         )
     except AttributeError:
-        selected = container.radio(
+        container.radio(
             "Jazyk / Language",
             options=["🇨🇿 CZ", "🇬🇧 EN"],
-            index=1 if current_val == "🇬🇧 EN" else 0,
             horizontal=True,
             label_visibility="collapsed",
             key=widget_key,
             on_change=_on_lang_change,
         )
-
-    if selected in ("🇨🇿 CZ", "🇬🇧 EN") and selected != st.session_state.get("ui_lang"):
-        st.session_state["ui_lang"] = selected
-        st.rerun()
 
     return get_lang()
 
@@ -2114,35 +2130,53 @@ _STREAMLIT_PATCHED = False
 
 def install_streamlit_i18n() -> None:
     """
-    Installs transparent i18n wrappers around Streamlit's DeltaGenerator methods so all UI widgets,
-    metrics, tabs, markdown, and captions automatically render in English when is_en() is True,
-    while preserving 100% of underlying Python return values and widget keys.
+    Installs transparent i18n wrappers around Streamlit's DeltaGenerator methods AND top-level
+    `st.*` module functions so all UI widgets, metrics, tabs, markdown, and captions automatically
+    render in English when is_en() is True, while preserving 100% of underlying Python return values.
     """
-    global _STREAMLIT_PATCHED
-    if _STREAMLIT_PATCHED:
-        return
-    _STREAMLIT_PATCHED = True
-
     from streamlit.delta_generator import DeltaGenerator
 
-    orig_markdown = DeltaGenerator.markdown
-    orig_caption = DeltaGenerator.caption
-    orig_info = DeltaGenerator.info
-    orig_warning = DeltaGenerator.warning
-    orig_error = DeltaGenerator.error
-    orig_metric = DeltaGenerator.metric
-    orig_expander = DeltaGenerator.expander
-    orig_button = DeltaGenerator.button
-    orig_download_button = DeltaGenerator.download_button
-    orig_checkbox = DeltaGenerator.checkbox
-    orig_text_input = DeltaGenerator.text_input
-    orig_selectbox = DeltaGenerator.selectbox
-    orig_multiselect = DeltaGenerator.multiselect
-    orig_radio = DeltaGenerator.radio
-    orig_segmented_control = getattr(DeltaGenerator, "segmented_control", None)
-    orig_tabs = DeltaGenerator.tabs
-    orig_dataframe = DeltaGenerator.dataframe
-    orig_write = DeltaGenerator.write
+    if not hasattr(DeltaGenerator, "_i18n_orig_methods"):
+        DeltaGenerator._i18n_orig_methods = {
+            "markdown": DeltaGenerator.markdown,
+            "caption": DeltaGenerator.caption,
+            "info": DeltaGenerator.info,
+            "warning": DeltaGenerator.warning,
+            "error": DeltaGenerator.error,
+            "metric": DeltaGenerator.metric,
+            "expander": DeltaGenerator.expander,
+            "button": DeltaGenerator.button,
+            "download_button": DeltaGenerator.download_button,
+            "checkbox": DeltaGenerator.checkbox,
+            "text_input": DeltaGenerator.text_input,
+            "selectbox": DeltaGenerator.selectbox,
+            "multiselect": DeltaGenerator.multiselect,
+            "radio": DeltaGenerator.radio,
+            "segmented_control": getattr(DeltaGenerator, "segmented_control", None),
+            "tabs": DeltaGenerator.tabs,
+            "dataframe": DeltaGenerator.dataframe,
+            "write": DeltaGenerator.write,
+        }
+
+    orig = DeltaGenerator._i18n_orig_methods
+    orig_markdown = orig["markdown"]
+    orig_caption = orig["caption"]
+    orig_info = orig["info"]
+    orig_warning = orig["warning"]
+    orig_error = orig["error"]
+    orig_metric = orig["metric"]
+    orig_expander = orig["expander"]
+    orig_button = orig["button"]
+    orig_download_button = orig["download_button"]
+    orig_checkbox = orig["checkbox"]
+    orig_text_input = orig["text_input"]
+    orig_selectbox = orig["selectbox"]
+    orig_multiselect = orig["multiselect"]
+    orig_radio = orig["radio"]
+    orig_segmented_control = orig["segmented_control"]
+    orig_tabs = orig["tabs"]
+    orig_dataframe = orig["dataframe"]
+    orig_write = orig["write"]
 
     def _wrap_write(self, *args, **kwargs):
         if is_en():
@@ -2250,6 +2284,8 @@ def install_streamlit_i18n() -> None:
     def _wrap_radio(self, label, options, *args, **kwargs):
         if is_en() and isinstance(label, str):
             label = tr(label)
+        if str(kwargs.get("key", "")).startswith(("lang_switcher_", "ui_lang_switch_")):
+            return orig_radio(self, label, options, *args, **kwargs)
         _wrap_selection_kwargs(kwargs)
         return orig_radio(self, label, options, *args, **kwargs)
 
@@ -2257,7 +2293,7 @@ def install_streamlit_i18n() -> None:
         if is_en() and isinstance(label, str):
             label = tr(label)
         # Do not double-wrap language switcher itself
-        if kwargs.get("key", "").startswith("lang_switcher_"):
+        if str(kwargs.get("key", "")).startswith(("lang_switcher_", "ui_lang_switch_")):
             return orig_segmented_control(self, label, options, *args, **kwargs)
         _wrap_selection_kwargs(kwargs)
         return orig_segmented_control(self, label, options, *args, **kwargs)
@@ -2277,6 +2313,7 @@ def install_streamlit_i18n() -> None:
                 data = translate_catalog_display_df(data)
         return orig_dataframe(self, data, *args, **kwargs)
 
+    # 1. Patch DeltaGenerator class (covers col.*, st.sidebar.*, slots, containers)
     DeltaGenerator.markdown = _wrap_markdown
     DeltaGenerator.caption = _wrap_caption
     DeltaGenerator.info = _wrap_info
@@ -2296,3 +2333,10 @@ def install_streamlit_i18n() -> None:
     DeltaGenerator.tabs = _wrap_tabs
     DeltaGenerator.dataframe = _wrap_dataframe
     DeltaGenerator.write = _wrap_write
+
+    # 2. Rebind top-level `st.*` module attributes (which were bound to _main at `import streamlit` time)
+    main_dg = getattr(st, "_main", None) or getattr(getattr(st, "markdown", None), "__self__", None)
+    if main_dg is not None:
+        for method_name in orig.keys():
+            if hasattr(main_dg, method_name):
+                setattr(st, method_name, getattr(main_dg, method_name))

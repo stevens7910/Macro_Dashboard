@@ -68,7 +68,7 @@ except (ImportError, ModuleNotFoundError):
     except (ImportError, ModuleNotFoundError):
         import Macro_Dashboard.glossary_data as glossary_module
 
-if getattr(glossary_module, "GLOSSARY_VERSION", None) != REQUIRED_MODULE_VERSION:
+if getattr(glossary_module, "GLOSSARY_VERSION", None) != REQUIRED_MODULE_VERSION or getattr(glossary_module, "I18N_SYNC_VERSION", None) != "2026.10.21.v3":
     try:
         glossary_module = importlib.reload(glossary_module)
     except Exception:
@@ -85,6 +85,12 @@ except (ImportError, ModuleNotFoundError):
     except (ImportError, ModuleNotFoundError):
         import Macro_Dashboard.search_component as search_component
 
+if getattr(search_component, "I18N_SYNC_VERSION", None) != "2026.10.21.v3":
+    try:
+        search_component = importlib.reload(search_component)
+    except Exception:
+        pass
+
 handle_indicator_search_navigation = getattr(search_component, "handle_indicator_search_navigation", lambda: None)
 render_indicator_search_bar = getattr(search_component, "render_indicator_search_bar", lambda: None)
 render_scroll_anchor_effect = getattr(search_component, "render_scroll_anchor_effect", lambda: None)
@@ -96,6 +102,12 @@ except (ImportError, ModuleNotFoundError):
         import macro_dashboard.i18n as i18n_module
     except (ImportError, ModuleNotFoundError):
         import Macro_Dashboard.i18n as i18n_module
+
+if getattr(i18n_module, "I18N_VERSION", None) != "2026.10.21.v2":
+    try:
+        i18n_module = importlib.reload(i18n_module)
+    except Exception:
+        pass
 
 init_language_state = getattr(i18n_module, "init_language_state", lambda: "cs")
 render_language_switcher = getattr(i18n_module, "render_language_switcher", lambda container=None, key_suffix="main": "cs")
@@ -1140,7 +1152,12 @@ economy_options = ["🇨🇿 Česká republika", "🇪🇺 Evropská unie", "�
 if "macro_region_top_switch" not in st.session_state:
     st.session_state["macro_region_top_switch"] = "🇨🇿 Česká republika"
 
-col_top_eco, col_top_dev, col_top_lang = st.columns([2.9, 1.1, 0.9])
+_curr_dev_mode = st.session_state.get("ui_device_mode", "💻 PC")
+if _curr_dev_mode == "📱 Mobil":
+    col_top_eco = st.container()
+    col_top_dev, col_top_lang = st.columns(2)
+else:
+    col_top_eco, col_top_dev, col_top_lang = st.columns([3.2, 1.0, 0.8])
 with col_top_eco:
     if hasattr(st, "segmented_control"):
         selected_economy = st.segmented_control(

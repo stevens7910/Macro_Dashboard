@@ -1661,3 +1661,6 @@ def render_indicator_search_bar() -> None:
         if orig_sb_html is not None:
             st.sidebar.html = orig_sb_html
         components.html = orig_comp_html
+
+
+I18N_SYNC_VERSION = "2026.10.21.v3"
